@@ -42,14 +42,14 @@ defmodule Mix.Tasks.Bundlex.Bundle do
 
     # Open and validate bundlex config
     config_files = Mix.Project.config_files()
-      |> Enum.reject(fn(file) -> Path.basename(file) != "bundlex.exs" end)
+      |> Enum.reject(fn(file) -> Path.basename(file) != "bundlex_project.exs" end)
 
     case config_files do
       [config_file] ->
         config = Mix.Config.read!(config_file)
 
         case config do
-          [{:bundlex, platforms_config}] ->
+          [{:bundlex_project, platforms_config}] ->
             case List.keyfind(platforms_config, platform, 0) do
               {_, platform_config} ->
                 erlang_version = read_config_key_string!(platform_config, :erlang_version)

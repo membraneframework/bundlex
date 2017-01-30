@@ -10,4 +10,9 @@ defmodule Bundlex.Platform.AndroidARMv7 do
   def extra_configure_options() do
     []
   end
+
+
+  def required_env_vars() do
+    ["NDK_ROOT"]
+  end
 end
