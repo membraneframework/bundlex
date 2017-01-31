@@ -31,3 +31,4 @@ erl_crash.dump
 /test
 test*
 ansible.retry
+/_target

@@ -1,9 +1,10 @@
-defmodule Bundlex.Platform.Windows32 do
+defmodule Bundlex.Platform.Unix64 do
   @behaviour Bundlex.Platform
 
   def extra_otp_configure_options() do
     []
   end
+
 
   def required_env_vars() do
     []
@@ -14,6 +15,6 @@ defmodule Bundlex.Platform.Windows32 do
   end
 
   def toolchain() do
-    :windows
+    :unix
   end
 end

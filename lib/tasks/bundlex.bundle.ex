@@ -29,6 +29,9 @@ defmodule Mix.Tasks.Bundlex.Bundle do
           "android_armv7" ->
             Bundlex.Platform.AndroidARMv7
 
+          "unix64" ->
+            Bundlex.Platform.Unix64
+
           _ ->
             Mix.raise "Cannot create bundle for unknown platform. Given #{platform} which is not known platform."
         end
@@ -39,6 +42,8 @@ defmodule Mix.Tasks.Bundlex.Bundle do
     end
 
     Mix.shell.info "Building for platform #{platform}"
+
+    patches_config = Mix.Config.read!(Path.join(:code.priv_dir(:bundlex), "patches.exs"))
 
     # Open and validate bundlex config
     config_files = Mix.Project.config_files()
@@ -60,9 +65,26 @@ defmodule Mix.Tasks.Bundlex.Bundle do
                 Mix.shell.info " * Erlang disabled apps: #{inspect(erlang_disabled_apps)}"
                 Mix.shell.info " * Elixir version: #{elixir_version}"
 
-                # TODO
-                # configure = ["./configure"] ++ platform_module.extra_configure_options()
+                Mix.shell.info "-- Checking for required env vars"
+                verify_env_variables(platform_module)
 
+                Mix.shell.info "-- Cleaning target directory"
+                execute_command "rm -rf _target && mkdir -p _target"
+
+                set_up_toolchain(platform_module, platform_config)
+
+                Mix.shell.info "== ERLANG"
+                Mix.shell.info "-- Cloning Erlang VM sources"
+                execute_command "cd _target && git clone --depth 1 -b OTP-#{erlang_version} https://github.com/erlang/otp.git"
+                Mix.shell.info "-- Building Erlang"
+                execute_command "cd _target/otp && ./otp_build autoconf"
+                configure_options = Enum.join(platform_module.extra_otp_configure_options ++ disabled_apps_configure_options(erlang_disabled_apps), " ")
+                execute_command "cd _target/otp && ./otp_build configure #{configure_options}"
+                execute_command "cd _target/otp && ./otp_build boot"
+                execute_command "cd _target/otp && ./otp_build release"
+                apply_patches(platform_module, patches_config, :erlang, :post_compile)
+
+                Mix.Tasks.Escript.run(~w|build|)
               _ ->
                 Mix.raise "Invalid configuration. Unable to find :bundlex, #{inspect(platform)} key in the configuration file."
             end
@@ -76,6 +98,61 @@ defmodule Mix.Tasks.Bundlex.Bundle do
     end
   end
 
+  defp execute_command(cmd) do
+    case Mix.shell.cmd(cmd) do
+      0 -> 0
+      code -> Mix.raise("#{cmd} finished with error #{code}")
+    end
+  end
+
+  defp set_up_toolchain(platform_module, platform_config) do
+    case platform_module.toolchain do
+      :android ->
+        Mix.shell.info "== ANDROID TOOLCHAIN"
+        android_api_version = read_config_key_string!(platform_config, :android_api_version)
+        execute_command "$NDK_ROOT/build/tools/make_standalone_toolchain.py --arch arm --api #{android_api_version} --install-dir _target/android_toolchain"
+        new_path = "#{Path.absname("")}/_target/android_toolchain/bin:#{System.get_env("PATH")}"
+        System.put_env("PATH", new_path)
+      _ -> nil
+    end
+  end
+
+  defp disabled_apps_configure_options(erlang_disabled_apps) do
+    erlang_disabled_apps
+    |> Enum.map(fn app -> "--without-#{app}" end)
+  end
+
+  defp verify_env_variables(platform_module) do
+    platform_module.required_env_vars
+     |> Enum.each(fn var ->
+          value = System.get_env(var)
+          case value do
+            nil -> Mix.raise "#{var} not defined"
+            _ -> Mix.shell.info "#{var}: #{value}"
+          end
+        end)
+  end
+
+  defp apply_patches(platform_module, config, app, stage) do
+    case config do
+      [{:bundlex_patches, patches_config}] ->
+        case List.keyfind(patches_config, app, 0) do
+          {_, app_config} ->
+            case List.keyfind(app_config, stage, 0) do
+              {_, patches} ->
+                patches
+                |> Enum.filter(fn p -> Enum.member?(platform_module.patches_to_apply, "#{app}/#{p.name}") end)
+                |> Enum.each(fn p -> apply_patch(app, p) end)
+            end
+        end
+    end
+  end
+
+  defp apply_patch(app, %{dir: dir, name: name}) do
+    patch_path = Path.join(:code.priv_dir(:bundlex), "patches/#{app}/#{name}.patch")
+    Mix.shell.info "-- Applying patch: #{app}/#{name}"
+    execute_command "cd _target/#{dir} && patch -p0 < #{patch_path}"
+  end
 
   defp read_config_key_string!(config, key) do
     case List.keyfind(config, key, 0) do

@@ -1,0 +1,58 @@
+diff --git release/arm-unknown-linux-androideabi/Install release/arm-unknown-linux-androideabi/Install
+index ffc7864..9c990fc 100755
+--- release/arm-unknown-linux-androideabi/Install
++++ release/arm-unknown-linux-androideabi/Install
+@@ -1,4 +1,4 @@
+-#!/bin/sh
++#!/system/bin/sh
+ #
+ # %CopyrightBegin%
+ #
+diff --git release/arm-unknown-linux-androideabi/erts-8.2.1/bin/erl.src release/arm-unknown-linux-androideabi/erts-8.2.1/bin/erl.src
+index 21b9077..c68151f 100755
+--- release/arm-unknown-linux-androideabi/erts-8.2.1/bin/erl.src
++++ release/arm-unknown-linux-androideabi/erts-8.2.1/bin/erl.src
+@@ -1,4 +1,4 @@
+-#!/bin/sh
++#!/system/bin/sh
+ #
+ # %CopyrightBegin%
+ # 
+@@ -21,7 +21,7 @@
+ ROOTDIR="%FINAL_ROOTDIR%"
+ BINDIR=$ROOTDIR/erts-8.2.1/bin
+ EMU=beam
+-PROGNAME=`echo $0 | sed 's/.*\///'`
++PROGNAME=erl
+ export EMU
+ export ROOTDIR
+ export BINDIR
+diff --git release/arm-unknown-linux-androideabi/erts-8.2.1/bin/start.src release/arm-unknown-linux-androideabi/erts-8.2.1/bin/start.src
+index bdd1469..b782706 100755
+--- release/arm-unknown-linux-androideabi/erts-8.2.1/bin/start.src
++++ release/arm-unknown-linux-androideabi/erts-8.2.1/bin/start.src
+@@ -1,4 +1,4 @@
+-#!/bin/sh
++#!/system/bin/sh
+ #
+ # %CopyrightBegin%
+ # 
+diff --git release/arm-unknown-linux-androideabi/erts-8.2.1/bin/start_erl.src release/arm-unknown-linux-androideabi/erts-8.2.1/bin/start_erl.src
+index 34e0369..2586606 100755
+--- release/arm-unknown-linux-androideabi/erts-8.2.1/bin/start_erl.src
++++ release/arm-unknown-linux-androideabi/erts-8.2.1/bin/start_erl.src
+@@ -1,4 +1,4 @@
+-#!/bin/sh
++#!/system/bin/sh
+ #
+ #
+ # %CopyrightBegin%
+@@ -37,7 +37,7 @@ VSN=`awk '{print $2}' $DataFile`
+ 
+ BINDIR=$ROOTDIR/erts-$ERTS_VSN/bin
+ EMU=beam
+-PROGNAME=`echo $0 | sed 's/.*\///'`
++PROGNAME=erl
+ export EMU
+ export ROOTDIR
+ export BINDIR
