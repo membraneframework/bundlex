@@ -18,28 +18,7 @@ defmodule Mix.Tasks.Bundlex.Bundle do
 
     # TODO ensure that git and other build tools are in place
 
-
-    # Determine platform platform
-    platform = cond do
-      platform = opts[:platform] ->
-        platform_module = case platform do
-          "windows32" ->
-            Bundlex.Platform.Windows32
-
-          "android_armv7" ->
-            Bundlex.Platform.AndroidARMv7
-
-          "unix64" ->
-            Bundlex.Platform.Unix64
-
-          _ ->
-            Mix.raise "Cannot create bundle for unknown platform. Given #{platform} which is not known platform."
-        end
-        platform = String.to_atom(platform)
-
-      true ->
-        Mix.raise "Cannot create bundle for unspecified platform. Please pass platform platform as --platform option."
-    end
+    {platform, platform_module} = Bundlex.Platform.get_platform_from_opts!(opts)
 
     Mix.shell.info "Building for platform #{platform}"
 
