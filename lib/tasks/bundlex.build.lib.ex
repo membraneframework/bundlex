@@ -18,11 +18,8 @@ defmodule Mix.Tasks.Bundlex.Build.Lib do
     Mix.shell.info "Building for platform #{platform}"
 
     # Build makefile
-    makefile =
-      Makefile.new()
-      |> Makefile.append_commands!(platform_module.toolchain_module.before_all!(platform))
-
-    # FIXME
-    IO.puts inspect(makefile)
+    Makefile.new
+    |> Makefile.append_commands!(platform_module.toolchain_module.before_all!(platform))
+    |> Makefile.save!
   end
 end

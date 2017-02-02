@@ -9,7 +9,7 @@ defmodule Bundlex.Makefile do
   }
 
 
-  defstruct commands: ""
+  defstruct commands: []
 
 
   @doc """
@@ -26,7 +26,7 @@ defmodule Bundlex.Makefile do
   """
   @spec append_command!(t, String.t) :: t
   def append_command!(makefile, command) do
-    %{makefile | commands: makefile.commands <> "\n" <> command}
+    %{makefile | commands: makefile.commands ++ [command]}
   end
 
 
@@ -38,5 +38,18 @@ defmodule Bundlex.Makefile do
     Enum.reduce(commands, makefile, fn(item, acc) ->
       append_command!(acc, item)
     end)
+  end
+
+
+  @spec save!(t) :: :ok
+  def save!(makefile) do
+    content = "bundlex: global\n\nglobal:\n"
+
+    content = makefile.commands
+    |> Enum.reduce(content, fn(item, acc) ->
+      acc <> "\t" <> item <> "\n"
+    end)
+
+    File.write!("Makefile.bundlex", content)
   end
 end

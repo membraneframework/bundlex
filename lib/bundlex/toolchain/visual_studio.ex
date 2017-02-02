@@ -38,7 +38,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
         Mix.raise "Unable to find vcvarsall.bat script within Visual Studio root directory. Is your Visual Studio installation valid?"
 
       true ->
-        Mix.shell.info "Running vcvarsall.bat #{vcvarsall_arg}"
+        Mix.shell.info "Adding vcvarsall.bat #{vcvarsall_arg}"
 
         "\"#{vcvarsall_path}\" #{vcvarsall_arg}"
     end
