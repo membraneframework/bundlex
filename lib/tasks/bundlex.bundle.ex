@@ -14,14 +14,14 @@ defmodule Mix.Tasks.Bundlex.Bundle do
   @switches [platform: :string]
   @spec run(OptionParser.argv) :: :ok
   def run(args) do
+    # Parse options
     {opts, _} = OptionParser.parse!(args, aliases: [t: :platform], strict: @switches)
 
-    # TODO ensure that git and other build tools are in place
-
     {platform, platform_module} = Bundlex.Platform.get_platform_from_opts!(opts)
-
     Mix.shell.info "Building for platform #{platform}"
 
+
+    # Build
     patches_config = Mix.Config.read!(Path.join(:code.priv_dir(:bundlex), "patches.exs"))
 
     # Open and validate bundlex config

@@ -2,7 +2,7 @@ defmodule Bundlex.Platform do
   @callback extra_otp_configure_options() :: [] | [String.t]
   @callback required_env_vars() :: [] | [String.t]
   @callback patches_to_apply() :: [] | [String.t]
-  @callback toolchain() :: atom
+  @callback toolchain_module() :: module
 
 
   @doc """
@@ -22,7 +22,7 @@ defmodule Bundlex.Platform do
   def get_platform_from_opts!(opts) do
     cond do
       platform = opts[:platform] ->
-        {String.to_atom(platform), get_module(platform)}
+        {String.to_atom(platform), get_module!(platform)}
 
       true ->
         Mix.raise "Cannot create bundle for unspecified platform. Please pass platform platform as --platform option."
@@ -30,10 +30,13 @@ defmodule Bundlex.Platform do
   end
 
 
-  defp get_module(platform_name) do
+  defp get_module!(platform_name) do
     case platform_name do
       "windows32" ->
         Bundlex.Platform.Windows32
+
+      "windows64" ->
+        Bundlex.Platform.Windows64
 
       "android_armv7" ->
         Bundlex.Platform.AndroidARMv7

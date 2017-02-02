@@ -1,4 +1,4 @@
-defmodule Bundlex.Platform.Windows32 do
+defmodule Bundlex.Platform.Windows64 do
   @behaviour Bundlex.Platform
 
 
