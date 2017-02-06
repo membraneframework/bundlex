@@ -39,7 +39,7 @@ defmodule Mix.Tasks.Compile.Bundlex.Lib do
     before_all = platform_module.toolchain_module.before_all!(platform_name)
 
     # NIFs
-    nif_compiler_commands = case build_config |> List.keyfind(:nif, 0) do
+    {nif_compiler_commands, nif_post_copy_commands} = case build_config |> List.keyfind(:nif, 0) do
       {:nif, nifs_config} ->
         Bundlex.Output.info2 "NIFs"
 
@@ -70,17 +70,25 @@ defmodule Mix.Tasks.Compile.Bundlex.Lib do
             acc ++ platform_module.toolchain_module.compiler_commands(includes, libs, sources, nif_name)
           end)
 
-          compiler_commands
+
+        post_copy_commands =
+          nifs_config
+          |> Enum.reduce([], fn({nif_name, _nif_config}, acc) ->
+            acc ++ platform_module.toolchain_module.post_copy_commands(nif_name)
+          end)
+
+        {compiler_commands, post_copy_commands}
 
       _ ->
-        # Nothing
+        {[], []}
     end
 
-    # Build makefile
+    # Build & run makefile
     Bundlex.Output.info2 "Building"
     Makefile.new
     |> Makefile.append_commands!(before_all)
     |> Makefile.append_commands!(nif_compiler_commands)
+    |> Makefile.append_commands!(nif_post_copy_commands)
     |> Makefile.run!(platform_name)
 
     Bundlex.Output.info2 "Done"

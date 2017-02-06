@@ -17,12 +17,12 @@ defmodule Bundlex.Helper.ErlangHelper do
 
   defp get_includes_windows! do
     # FIXME should be a wildcard
-    case DirectoryHelper.wildcard("c:\\Program Files\\erl8.0\\erts-8.0") do
+    case DirectoryHelper.wildcard("c:\\Program Files\\erl8.0\\erts-8.0\\include") do
       nil ->
-        Mix.raise "Unable to determine location of Erlang"
+        Mix.raise "Unable to determine location of Erlang include dir"
 
       directory ->
-        Path.join(directory, "includes")
+        directory
     end
   end
 end

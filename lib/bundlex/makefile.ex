@@ -48,10 +48,8 @@ defmodule Bundlex.Makefile do
 
 
   defp run_windows!(makefile) do
-    content = "@echo off\nREM This is Bundlex makefile generated automatically at #{DateTime.utc_now |> to_string}\n\n"
-
     content = makefile.commands
-    |> Enum.reduce(content, fn(item, acc) ->
+    |> Enum.reduce("", fn(item, acc) ->
       # TODO check errorlevel
 
       case item do
@@ -66,13 +64,13 @@ defmodule Bundlex.Makefile do
 
     File.write!(@windows_script_name, content)
 
-    case Mix.shell.cmd(@windows_script_name) do
+    case Mix.shell.cmd(@windows_script_name, stderr_to_stdout: true) do
       0 ->
-        File.rm!(@windows_script_name)
+        # File.rm!(@windows_script_name)
         Bundlex.Output.info3 "Build script finished gracefully"
 
       other ->
-        File.rm!(@windows_script_name)
+        # File.rm!(@windows_script_name)
         Mix.raise "Build script finished with error code #{other}"
     end
   end
