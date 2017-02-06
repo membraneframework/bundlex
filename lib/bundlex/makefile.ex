@@ -41,15 +41,19 @@ defmodule Bundlex.Makefile do
   end
 
 
-  @spec save!(t) :: :ok
-  def save!(makefile) do
-    content = "bundlex: global\n\nglobal:\n"
+  @spec save!(t, Bundlex.Platform.platform_name_t) :: :ok
+  def save!(makefile, :windows32), do: save_windows!(makefile)
+  def save!(makefile, :windows64), do: save_windows!(makefile)
+
+
+  defp save_windows!(makefile) do
+    content = "@echo off\nREM This is Bundlex makefile generated automatically at #{DateTime.utc_now |> to_string}\n\n"
 
     content = makefile.commands
     |> Enum.reduce(content, fn(item, acc) ->
-      acc <> "\t" <> item <> "\n"
+      acc <> item <> "\n"
     end)
 
-    File.write!("Makefile.bundlex", content)
+    File.write!("bundlex.bat", content)
   end
 end

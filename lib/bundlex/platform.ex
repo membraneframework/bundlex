@@ -1,4 +1,7 @@
 defmodule Bundlex.Platform do
+
+  @type platform_name_t :: atom
+
   @callback extra_otp_configure_options() :: [] | [String.t]
   @callback required_env_vars() :: [] | [String.t]
   @callback patches_to_apply() :: [] | [String.t]
@@ -18,7 +21,7 @@ defmodule Bundlex.Platform do
 
   Otherwise raises Mix error.
   """
-  @spec get_platform_from_opts!(OptionParser.parsed) :: {atom, module}
+  @spec get_platform_from_opts!(OptionParser.parsed) :: {platform_name_t, module}
   def get_platform_from_opts!(opts) do
     cond do
       platform = opts[:platform] ->

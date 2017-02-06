@@ -20,6 +20,6 @@ defmodule Mix.Tasks.Bundlex.Build.Lib do
     # Build makefile
     Makefile.new
     |> Makefile.append_commands!(platform_module.toolchain_module.before_all!(platform))
-    |> Makefile.save!
+    |> Makefile.save!(platform)
   end
 end

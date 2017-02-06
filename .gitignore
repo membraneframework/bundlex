@@ -32,3 +32,5 @@ erl_crash.dump
 test*
 ansible.retry
 /_target
+*.bat
+*.sh
