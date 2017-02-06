@@ -1,6 +1,7 @@
 defmodule Mix.Tasks.Compile.Bundlex.Lib do
   use Mix.Task
   alias Bundlex.Makefile
+  alias Bundlex.MixHelper
 
 
   @moduledoc """
@@ -18,7 +19,13 @@ defmodule Mix.Tasks.Compile.Bundlex.Lib do
 
   @spec run(OptionParser.argv) :: :ok
   def run(args) do
-    Bundlex.Output.info1 "Bulding Bundlex Library"
+    # Get app
+    app = MixHelper.get_app!()
+    Bundlex.Output.info1 "Bulding Bundlex Library for app #{app}"
+
+
+    # Get config
+
 
     # Parse options
     Bundlex.Output.info2 "Target platform"
