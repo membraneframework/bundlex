@@ -12,6 +12,8 @@ defmodule Bundlex.Toolchain.VisualStudio do
   """
 
   use Bundlex.Toolchain
+  alias Bundlex.Helper.DirectoryHelper
+
 
   @directory_wildcard "c:\\Program Files (x86)\\Microsoft Visual Studio *"
   @directory_env "VISUAL_STUDIO_ROOT"
@@ -27,8 +29,19 @@ defmodule Bundlex.Toolchain.VisualStudio do
   end
 
 
+  def compiler_commands(includes, sources, libs, output) do
+    # FIXME add erlang include path
+
+    includes_part = includes |> Enum.map(fn(include) -> "/I #{include}" end) |> Enum.join(" ")
+    sources_part = sources |> Enum.map(fn(source) -> "c_src\\#{source}" end) |> Enum.join(" ")
+    libs_part = libs |> Enum.join(" ")
+
+    ["cl /LD #{includes_part} #{sources_part} #{libs_part} /link /OUT:#{output}.dll"]
+  end
+
+
   # Runs vcvarsall.bat script
-  def run_vcvarsall(vcvarsall_arg) do
+  defp run_vcvarsall(vcvarsall_arg) do
     vcvarsall_path =
       determine_visual_studio_root()
       |> build_vcvarsall_path()
@@ -55,11 +68,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
   defp determine_visual_studio_root(nil) do
     Bundlex.Output.info3 "Trying to find Visual Studio in \"#{@directory_wildcard}\"..."
 
-    directory = Path.wildcard(@directory_wildcard)
-      |> Enum.sort
-      |> List.last
-
-    case directory do
+    case DirectoryHelper.wildcard(@directory_wildcard) do
       nil ->
         Mix.raise "Unable to find Visual Studio root directory. Please ensure that it is either located in \"#{@directory_wildcard}\" or #{@directory_env} environment variable pointing to its root is set."
 

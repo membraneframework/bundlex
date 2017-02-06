@@ -15,6 +15,12 @@ defmodule Bundlex.Toolchain do
 
 
 
+  @doc """
+  Builds list of compiler commands valid for certain toolchain.
+  """
+  @callback compiler_commands([String.t], [String.t], [String.t], String.t) :: [String.t]
+
+
   defmacro __using__(_) do
     quote location: :keep do
       @behaviour Bundlex.Toolchain

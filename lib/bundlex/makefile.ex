@@ -3,6 +3,7 @@ defmodule Bundlex.Makefile do
   Structure encapsulating makefile generator.
   """
 
+  @windows_script_name "bundlex.bat"
 
   @type t :: %Bundlex.Makefile{
     commands: String.t,
@@ -41,19 +42,38 @@ defmodule Bundlex.Makefile do
   end
 
 
-  @spec save!(t, Bundlex.Platform.platform_name_t) :: :ok
-  def save!(makefile, :windows32), do: save_windows!(makefile)
-  def save!(makefile, :windows64), do: save_windows!(makefile)
+  @spec run!(t, Bundlex.Platform.platform_name_t) :: :ok
+  def run!(makefile, :windows32), do: run_windows!(makefile)
+  def run!(makefile, :windows64), do: run_windows!(makefile)
 
 
-  defp save_windows!(makefile) do
+  defp run_windows!(makefile) do
     content = "@echo off\nREM This is Bundlex makefile generated automatically at #{DateTime.utc_now |> to_string}\n\n"
 
     content = makefile.commands
     |> Enum.reduce(content, fn(item, acc) ->
-      acc <> item <> "\n"
+      # TODO check errorlevel
+
+      case item do
+        {command, label} ->
+          acc <> "echo #{label}\n" <> item <> "\n"
+
+        command ->
+          acc <> item <> "\n"
+      end
     end)
 
-    File.write!("bundlex.bat", content)
+
+    File.write!(@windows_script_name, content)
+
+    case Mix.shell.cmd(@windows_script_name) do
+      0 ->
+        File.rm!(@windows_script_name)
+        Bundlex.Output.info3 "Build script finished gracefully"
+
+      other ->
+        File.rm!(@windows_script_name)
+        Mix.raise "Build script finished with error code #{other}"
+    end
   end
 end
