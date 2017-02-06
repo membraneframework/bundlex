@@ -38,7 +38,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
         Mix.raise "Unable to find vcvarsall.bat script within Visual Studio root directory. Is your Visual Studio installation valid?"
 
       true ->
-        Mix.shell.info "Adding vcvarsall.bat #{vcvarsall_arg}"
+        Bundlex.Output.info3 "Adding call to \"vcvarsall.bat #{vcvarsall_arg}\""
 
         "\"#{vcvarsall_path}\" #{vcvarsall_arg}"
     end
@@ -53,7 +53,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
   # Determines root directory of the Visual Studio.
   # Case when we don't have a root path passed via an environment variable.
   defp determine_visual_studio_root(nil) do
-    Mix.shell.info "Trying to find Visual Studio in \"#{@directory_wildcard}\"..."
+    Bundlex.Output.info3 "Trying to find Visual Studio in \"#{@directory_wildcard}\"..."
 
     directory = Path.wildcard(@directory_wildcard)
       |> Enum.sort
@@ -64,7 +64,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
         Mix.raise "Unable to find Visual Studio root directory. Please ensure that it is either located in \"#{@directory_wildcard}\" or #{@directory_env} environment variable pointing to its root is set."
 
       directory ->
-        Mix.shell.info "Found Visual Studio in #{directory}"
+        Bundlex.Output.info3 "Found Visual Studio in #{directory}"
 
         directory
     end
@@ -73,7 +73,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
   # Determines root directory of the Visual Studio.
   # Case when we have a root path passed via an environment variable.
   defp determine_visual_studio_root(directory) do
-    Mix.shell.info "Using #{directory} passed via #{@directory_env} environment variable as Visual Studio root."
+    Bundlex.Output.info3 "Using #{directory} passed via #{@directory_env} environment variable as Visual Studio root."
 
     directory
   end

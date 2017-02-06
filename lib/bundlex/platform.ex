@@ -25,10 +25,12 @@ defmodule Bundlex.Platform do
   def get_platform_from_opts!(opts) do
     cond do
       platform = opts[:platform] ->
+        Bundlex.Output.info3 "Selected target platform #{platform} via options."
         platform_name = String.to_atom(platform)
         {platform_name, get_module!(platform_name)}
 
       true ->
+        Bundlex.Output.info3 "Automatically detecting target platform to match current platform..."
         get_current_platform!()
     end
   end
@@ -58,27 +60,14 @@ defmodule Bundlex.Platform do
 
         {platform_name, get_module!(platform_name)}
 
-      # TODO add detection for more platforms
+      other ->
+        # TODO add detection for more platforms
+        Mix.raise "Unable to detect current platform. Erlang returned #{inspect(other)} which I don't know how to handle."
     end
   end
 
 
-  defp get_module!(platform_name) do
-    case platform_name do
-      :windows32 ->
-        Bundlex.Platform.Windows32
-
-      :windows64 ->
-        Bundlex.Platform.Windows64
-
-      :android_armv7 ->
-        Bundlex.Platform.AndroidARMv7
-
-      :unix64 ->
-        Bundlex.Platform.Unix64
-
-      _ ->
-        Mix.raise "Cannot create bundle for unknown platform. Given #{platform_name} which is not known platform."
-    end
-  end
+  defp get_module!(:windows32), do: Bundlex.Platform.Windows32
+  defp get_module!(:windows64), do: Bundlex.Platform.Windows64
+  defp get_module!(:android_armv7), do: Bundlex.Platform.AndroidARMv7
 end

@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Compile.Bundlex.Build.Lib do
+defmodule Mix.Tasks.Compile.Bundlex.Lib do
   use Mix.Task
   alias Bundlex.Makefile
 
@@ -18,15 +18,24 @@ defmodule Mix.Tasks.Compile.Bundlex.Build.Lib do
 
   @spec run(OptionParser.argv) :: :ok
   def run(args) do
+    Bundlex.Output.info1 "Bulding Bundlex Library"
+
     # Parse options
+    Bundlex.Output.info2 "Target platform"
     {opts, _} = OptionParser.parse!(args, aliases: [t: :platform], switches: @switches)
 
     {platform, platform_module} = Bundlex.Platform.get_platform_from_opts!(opts)
-    Mix.shell.info "Building for platform #{platform}"
+    Bundlex.Output.info3 "Building for platform #{platform}"
+
+
+    # Toolchain
+    Bundlex.Output.info2 "Toolchain"
+    before_all = platform_module.toolchain_module.before_all!(platform)
+
 
     # Build makefile
     Makefile.new
-    |> Makefile.append_commands!(platform_module.toolchain_module.before_all!(platform))
+    |> Makefile.append_commands!(before_all)
     |> Makefile.save!(platform)
   end
 end
