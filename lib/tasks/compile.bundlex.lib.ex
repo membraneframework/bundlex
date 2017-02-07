@@ -10,13 +10,6 @@ defmodule Mix.Tasks.Compile.Bundlex.Lib do
   """
 
   @shortdoc "Builds a library for the given platform"
-  @switches [
-    platform: :string,
-    "no-deps": :string,
-    "no-archives-check": :string,
-    "no-elixir-version-check": :string,
-    "no-warnings-as-errors": :string,
-  ]
 
   @spec run(OptionParser.argv) :: :ok
   def run(args) do
@@ -26,9 +19,7 @@ defmodule Mix.Tasks.Compile.Bundlex.Lib do
 
     # Parse options
     Bundlex.Output.info2 "Target platform"
-    {opts, _} = OptionParser.parse!(args, aliases: [t: :platform], switches: @switches)
-
-    {platform_name, platform_module} = Bundlex.Platform.get_platform_from_opts!(opts)
+    {platform_name, platform_module} = Bundlex.Platform.get_current_platform!()
     Bundlex.Output.info3 "Building for platform #{platform_name}"
 
     # Configuration
@@ -39,7 +30,7 @@ defmodule Mix.Tasks.Compile.Bundlex.Lib do
     before_all = platform_module.toolchain_module.before_all!(platform_name)
 
     # NIFs
-    {nif_compiler_commands, nif_post_copy_commands} = case build_config |> List.keyfind(:nif, 0) do
+    nif_compiler_commands = case build_config |> List.keyfind(:nif, 0) do
       {:nif, nifs_config} ->
         Bundlex.Output.info2 "NIFs"
 
@@ -70,17 +61,10 @@ defmodule Mix.Tasks.Compile.Bundlex.Lib do
             acc ++ platform_module.toolchain_module.compiler_commands(includes, libs, sources, nif_name)
           end)
 
-
-        post_copy_commands =
-          nifs_config
-          |> Enum.reduce([], fn({nif_name, _nif_config}, acc) ->
-            acc ++ platform_module.toolchain_module.post_copy_commands(nif_name)
-          end)
-
-        {compiler_commands, post_copy_commands}
+        compiler_commands
 
       _ ->
-        {[], []}
+        []
     end
 
     # Build & run makefile
@@ -88,7 +72,6 @@ defmodule Mix.Tasks.Compile.Bundlex.Lib do
     Makefile.new
     |> Makefile.append_commands!(before_all)
     |> Makefile.append_commands!(nif_compiler_commands)
-    |> Makefile.append_commands!(nif_post_copy_commands)
     |> Makefile.run!(platform_name)
 
     Bundlex.Output.info2 "Done"

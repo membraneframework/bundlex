@@ -32,22 +32,11 @@ defmodule Bundlex.Toolchain.VisualStudio do
   def compiler_commands(includes, libs, sources, output) do
     # FIXME escape quotes properly
 
-    includes_part = includes |> Enum.map(fn(include) -> "/I \"#{include}\"" end) |> Enum.join(" ")
-    sources_part = sources |> Enum.map(fn(source) -> "\"c_src\\#{source}\"" end) |> Enum.join(" ")
+    includes_part = includes |> Enum.map(fn(include) -> "/I \"#{DirectoryHelper.fix_slashes(include)}\"" end) |> Enum.join(" ")
+    sources_part = sources |> Enum.map(fn(source) -> "\"c_src\\#{DirectoryHelper.fix_slashes(source)}\"" end) |> Enum.join(" ")
     libs_part = libs |> Enum.join(" ")
 
     ["cl /LD #{includes_part} #{sources_part} #{libs_part} /link /OUT:#{output}.dll"]
-  end
-
-
-  def post_copy_commands(output) do
-    []
-    # FIXME
-    # first of all elixir returns wrong slashes
-    #   https://github.com/elixir-lang/elixir/issues/1236
-    # secondly we need to figure out the best directory for NIFs
-    #
-    # ["copy #{output}.dll #{Mix.Project.app_path()}"]
   end
 
 
