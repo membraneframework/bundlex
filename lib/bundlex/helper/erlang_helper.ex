@@ -14,6 +14,11 @@ defmodule Bundlex.Helper.ErlangHelper do
   def get_includes!(:windows32), do: get_includes_windows!()
   def get_includes!(:windows64), do: get_includes_windows!()
 
+  def get_includes!(:macosx) do
+    # Assumes that user has erlang installed via brew
+    Bundlex.Helper.DirectoryHelper.wildcard("/usr/local/Cellar/erlang/*/lib/erlang/usr/include/")
+  end
+
 
   defp get_includes_windows! do
     # FIXME should be a wildcard

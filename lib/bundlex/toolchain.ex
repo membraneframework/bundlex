@@ -22,13 +22,6 @@ defmodule Bundlex.Toolchain do
 
 
 
-  @doc """
-  Builds list of post-build commands copying output files to right locations
-  valid for certain toolchain.
-  """
-  @callback post_copy_commands(String.t) :: [String.t]
-
-
   defmacro __using__(_) do
     quote location: :keep do
       @behaviour Bundlex.Toolchain

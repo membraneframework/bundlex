@@ -60,6 +60,9 @@ defmodule Bundlex.Platform do
 
         {platform_name, get_module!(platform_name)}
 
+      {:unix, :darwin} ->
+        {:macosx, get_module!(:macosx)}
+
       other ->
         # TODO add detection for more platforms
         Mix.raise "Unable to detect current platform. Erlang returned #{inspect(other)} which I don't know how to handle."
@@ -69,5 +72,6 @@ defmodule Bundlex.Platform do
 
   defp get_module!(:windows32), do: Bundlex.Platform.Windows32
   defp get_module!(:windows64), do: Bundlex.Platform.Windows64
+  defp get_module!(:macosx), do: Bundlex.Platform.MacOSX
   defp get_module!(:android_armv7), do: Bundlex.Platform.AndroidARMv7
 end

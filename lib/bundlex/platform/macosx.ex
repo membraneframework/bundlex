@@ -1,5 +1,6 @@
-defmodule Bundlex.Platform.Unix64 do
+defmodule Bundlex.Platform.MacOSX do
   @behaviour Bundlex.Platform
+
 
   def extra_otp_configure_options() do
     []
@@ -10,11 +11,13 @@ defmodule Bundlex.Platform.Unix64 do
     []
   end
 
+
   def patches_to_apply() do
     []
   end
 
-  def toolchain() do
-    :unix
+
+  def toolchain_module() do
+    Bundlex.Toolchain.XCode
   end
 end
