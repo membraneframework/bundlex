@@ -47,6 +47,7 @@ defmodule Bundlex.Makefile do
   def run!(makefile, :windows32), do: run_windows!(makefile)
   def run!(makefile, :windows64), do: run_windows!(makefile)
   def run!(makefile, :macosx), do: run_unix!(makefile)
+  def run!(makefile, :linux), do: run_unix!(makefile)
 
 
   defp run_windows!(makefile) do
