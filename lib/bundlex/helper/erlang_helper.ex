@@ -19,6 +19,11 @@ defmodule Bundlex.Helper.ErlangHelper do
     Bundlex.Helper.DirectoryHelper.wildcard("/usr/local/Cellar/erlang/*/lib/erlang/usr/include/")
   end
 
+  def get_includes!(:linux) do
+    # FIXME
+    Bundlex.Helper.DirectoryHelper.wildcard("/usr/local/erlang/usr/include/")
+  end
+
 
   defp get_includes_windows! do
     # FIXME should be a wildcard
