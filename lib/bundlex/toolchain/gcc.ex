@@ -13,6 +13,6 @@ defmodule Bundlex.Toolchain.GCC do
     sources_part = sources |> Enum.map(fn(source) -> "\"c_src/#{source}\"" end) |> Enum.join(" ")
     libs_part = libs |> Enum.map(fn(lib) -> "-l#{lib}" end) |> Enum.join(" ")
 
-    ["gcc -fPIC -W -dynamiclib -undefined dynamic_lookup -o #{output}.so #{includes_part} #{libs_part} #{sources_part}"]
+    ["gcc -fPIC -W -rdynamic -undefined -shared -o #{output}.so #{includes_part} #{libs_part} #{sources_part}"]
   end
 end
