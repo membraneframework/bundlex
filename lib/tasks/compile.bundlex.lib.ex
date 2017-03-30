@@ -13,6 +13,8 @@ defmodule Mix.Tasks.Compile.Bundlex.Lib do
 
   @spec run(OptionParser.argv) :: :ok
   def run(args) do
+    :ok = Application.ensure_started(:porcelain)
+
     # Get app
     app = MixHelper.get_app!()
     Bundlex.Output.info1 "Bulding Bundlex Library \"#{app}\""
@@ -53,12 +55,17 @@ defmodule Mix.Tasks.Compile.Bundlex.Lib do
               _ -> []
             end
 
+            pkg_configs = case nif_config |> List.keyfind(:pkg_configs, 0) do
+              {:pkg_configs, pkg_configs} -> pkg_configs
+              _ -> []
+            end
+
             sources = case nif_config |> List.keyfind(:sources, 0) do
               {:sources, sources} -> sources
               _ -> Mix.raise "NIF #{nif_name} does not define any sources"
             end
 
-            acc ++ platform_module.toolchain_module.compiler_commands(includes, libs, sources, nif_name)
+            acc ++ platform_module.toolchain_module.compiler_commands(includes, libs, sources, pkg_configs, nif_name)
           end)
 
         compiler_commands

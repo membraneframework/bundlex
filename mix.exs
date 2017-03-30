@@ -12,7 +12,7 @@ defmodule Bundlex.Mixfile do
      name: "Bundlex",
      source_url: "https://github.com/radiokit/bundlex",
      preferred_cli_env: [espec: :test],
-     deps: []]
+     deps: [{:porcelain, "~> 2.0"}]]
   end
 
 

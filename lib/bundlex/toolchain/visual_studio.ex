@@ -29,7 +29,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
   end
 
 
-  def compiler_commands(includes, libs, sources, output) do
+  def compiler_commands(includes, libs, sources, _pkg_configs, output) do
     # FIXME escape quotes properly
 
     includes_part = includes |> Enum.map(fn(include) -> "/I \"#{DirectoryHelper.fix_slashes(include)}\"" end) |> Enum.join(" ")

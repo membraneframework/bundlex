@@ -17,8 +17,10 @@ defmodule Bundlex.Toolchain do
 
   @doc """
   Builds list of compiler commands valid for certain toolchain.
+
+  It will receive includes, libs, sources, pkg_configs, nif_name.
   """
-  @callback compiler_commands([String.t], [String.t], [String.t], String.t) :: [String.t]
+  @callback compiler_commands([String.t], [String.t], [String.t], [String.t], String.t) :: [String.t]
 
 
 
