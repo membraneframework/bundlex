@@ -45,9 +45,18 @@ defmodule Mix.Tasks.Compile.Bundlex.Lib do
           |> Enum.reduce([], fn({nif_name, nif_config}, acc) ->
             Bundlex.Output.info3 to_string(nif_name)
 
+            # If no erlang include found do not add it to all includes
             includes = case nif_config |> List.keyfind(:includes, 0) do
-              {:includes, includes} -> [erlang_includes|includes]
-              _ -> [erlang_includes]
+              {:includes, includes} ->
+                case erlang_includes do
+                  nil -> includes
+                  _ -> [erlang_includes|includes]
+                end
+              _ ->
+                case erlang_includes do
+                  nil -> []
+                  _ -> erlang_includes
+                end
             end
 
             libs = case nif_config |> List.keyfind(:libs, 0) do
