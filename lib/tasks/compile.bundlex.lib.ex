@@ -55,7 +55,7 @@ defmodule Mix.Tasks.Compile.Bundlex.Lib do
               _ ->
                 case erlang_includes do
                   nil -> []
-                  _ -> erlang_includes
+                  _ -> [erlang_includes]
                 end
             end
 
