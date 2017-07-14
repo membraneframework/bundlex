@@ -32,9 +32,9 @@ defmodule Bundlex.Toolchain.GCC do
       end)
 
     commands_linker =
-      ["gcc -rdynamic -undefined -shared #{objects} #{libs_part} #{pkg_config_libs_part} -o #{output}.so"]
+      ["gcc -rdynamic -undefined -shared #{objects} #{libs_part} #{pkg_config_libs_part} -o priv/lib/#{output}.so"]
 
-    commands_sources ++ commands_linker
+    ["mkdir -p priv/lib"] ++ commands_sources ++ commands_linker
   end
 
 

@@ -36,7 +36,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
     sources_part = sources |> Enum.map(fn(source) -> "\"c_src\\#{DirectoryHelper.fix_slashes(source)}\"" end) |> Enum.join(" ")
     libs_part = libs |> Enum.join(" ")
 
-    ["cl /LD #{includes_part} #{sources_part} #{libs_part} /link /OUT:#{output}.dll"]
+    ["mkdir priv\\lib", "cl /LD #{includes_part} #{sources_part} #{libs_part} /link /OUT:#{output}.dll"]
   end
 
 
