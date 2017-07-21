@@ -48,7 +48,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
 
     case File.exists?(vcvarsall_path) do
       false ->
-        Mix.raise "Unable to find vcvarsall.bat script within Visual Studio root directory. Is your Visual Studio installation valid?"
+        Mix.raise "Unable to find vcvarsall.bat script within Visual Studio root directory. Is your Visual Studio installation valid? (and file is in VC directory?)"
 
       true ->
         Bundlex.Output.info3 "Adding call to \"vcvarsall.bat #{vcvarsall_arg}\""
