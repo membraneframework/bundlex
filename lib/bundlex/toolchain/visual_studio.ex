@@ -15,12 +15,13 @@ defmodule Bundlex.Toolchain.VisualStudio do
   alias Bundlex.Helper.DirectoryHelper
 
 
-  @directory_wildcard "c:\\Program Files (x86)\\Microsoft Visual Studio *"
+  @directory_wildcard_x64 "c:\\Program Files (x86)\\Microsoft Visual Studio *"
+  @directory_wildcard_x86 "c:\\Program Files\\Microsoft Visual Studio *"
   @directory_env "VISUAL_STUDIO_ROOT"
 
 
   def before_all!(:windows32) do
-    [run_vcvarsall("amd64_x86")]
+    [run_vcvarsall("x86")]
   end
 
 
@@ -66,17 +67,8 @@ defmodule Bundlex.Toolchain.VisualStudio do
   # Determines root directory of the Visual Studio.
   # Case when we don't have a root path passed via an environment variable.
   defp determine_visual_studio_root(nil) do
-    Bundlex.Output.info3 "Trying to find Visual Studio in \"#{@directory_wildcard}\"..."
-
-    case DirectoryHelper.wildcard(@directory_wildcard) do
-      nil ->
-        Mix.raise "Unable to find Visual Studio root directory. Please ensure that it is either located in \"#{@directory_wildcard}\" or #{@directory_env} environment variable pointing to its root is set."
-
-      directory ->
-        Bundlex.Output.info3 "Found Visual Studio in #{directory}"
-
-        directory
-    end
+    visual_studio_path()
+      |> determine_visual_studio_root_with_wildcard()
   end
 
   # Determines root directory of the Visual Studio.
@@ -87,10 +79,30 @@ defmodule Bundlex.Toolchain.VisualStudio do
     directory
   end
 
+  defp determine_visual_studio_root_with_wildcard(wildcard) do
+    Bundlex.Output.info3 "Trying to find Visual Studio in \"#{wildcard}\"..."
+
+    case DirectoryHelper.wildcard(wildcard) do
+      nil ->
+        Mix.raise "Unable to find Visual Studio root directory. Please ensure that it is either located in \"#{wildcard}\" or #{@directory_env} environment variable pointing to its root is set."
+
+      directory ->
+        Bundlex.Output.info3 "Found Visual Studio in #{directory}"
+
+        directory
+    end
+  end
 
   # Builds path to the vcvarsall.bat script that can be used to set environment
   # variables necessary to use Visual Studio compilers.
   defp build_vcvarsall_path(root) do
     Path.join([root, "VC", "vcvarsall.bat"])
+  end
+
+  defp visual_studio_path() do
+    case :erlang.system_info(:wordsize) do
+      4 -> @directory_wildcard_x86
+      _ -> @directory_wildcard_x64
+    end
   end
 end
