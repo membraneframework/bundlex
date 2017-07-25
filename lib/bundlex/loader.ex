@@ -22,12 +22,16 @@ defmodule Bundlex.Loader do
       app_name = unquote(app_name)
       nif_name = unquote(nif_name)
 
-      path = case Mix.Project.deps_paths[app_name] do
-        nil ->
-          "./#{nif_name}"
+      path = if function_exported?(Mix.Project, :deps_paths, 0) do
+        case Mix.Project.deps_paths[app_name] do
+          nil ->
+            "./priv/lib/#{nif_name}"
 
-        dependency_path ->
-          "#{dependency_path}/#{nif_name}"
+          dependency_path ->
+            "#{dependency_path}/priv/lib/#{nif_name}"
+        end
+      else
+        "#{:code.priv_dir(app_name)}/lib/#{nif_name}"
       end
 
       :ok = :erlang.load_nif(path |> to_charlist(), 0)

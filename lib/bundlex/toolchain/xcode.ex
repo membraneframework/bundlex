@@ -17,6 +17,6 @@ defmodule Bundlex.Toolchain.XCode do
       out |> String.trim
     end) |> Enum.join(" ")
 
-    ["cc -fPIC -W -dynamiclib -undefined dynamic_lookup -o #{output}.so #{includes_part} #{libs_part} #{pkg_configs_part} #{sources_part}"]
+    ["mkdir -p priv/lib", "cc -fPIC -W -dynamiclib -undefined dynamic_lookup -o priv/lib/#{output}.so #{includes_part} #{libs_part} #{pkg_configs_part} #{sources_part}"]
   end
 end
