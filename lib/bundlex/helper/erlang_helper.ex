@@ -27,7 +27,7 @@ defmodule Bundlex.Helper.ErlangHelper do
 
   defp get_includes_windows! do
     # FIXME should be a wildcard
-    case DirectoryHelper.wildcard("c:\\Program Files\\erl8.0\\erts-8.0\\include") do
+    case DirectoryHelper.wildcard("c:\\Program Files\\erl8.3\\erts-8.3\\include") do
       nil ->
         Mix.raise "Unable to determine location of Erlang include dir (do you have Erlang 19.0 installed?)"
 
