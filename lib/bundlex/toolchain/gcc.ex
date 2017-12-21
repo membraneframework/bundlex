@@ -11,7 +11,7 @@ defmodule Bundlex.Toolchain.GCC do
 
     includes_part = includes |> Enum.map(fn(include) -> "-I\"#{include}\"" end) |> Enum.join(" ")
     libs_part = libs |> Enum.map(fn(lib) -> "-l#{lib}" end) |> Enum.join(" ")
-    
+
     pkg_config_libs_part = pkg_configs |> Enum.map(fn(pkg_config) ->
       %Porcelain.Result{status: 0, out: out} = Porcelain.exec("pkg-config", ["--libs", pkg_config])
       out |> String.trim
@@ -24,11 +24,11 @@ defmodule Bundlex.Toolchain.GCC do
 
     objects = sources |> Enum.map(fn(source) -> object_path(source) end) |> Enum.join(" ")
 
- 
+
     commands_sources =
       sources
       |> Enum.map(fn(source) ->
-        "gcc -fPIC -W -O2 -g #{includes_part} #{libs_part} #{pkg_config_cflags_part} \"#{source_path(source)}\" -c -o \"#{object_path(source)}\""
+        "gcc -fPIC -std=c11 -W -O2 -g #{includes_part} #{libs_part} #{pkg_config_cflags_part} \"#{source_path(source)}\" -c -o \"#{object_path(source)}\""
       end)
 
     commands_linker =
