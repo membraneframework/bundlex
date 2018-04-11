@@ -25,12 +25,12 @@ defmodule Bundlex.Platform do
   def get_platform_from_opts!(opts) do
     cond do
       platform = opts[:platform] ->
-        Bundlex.Output.info3 "Selected target platform #{platform} via options."
+        Bundlex.Output.info_substage "Selected target platform #{platform} via options."
         platform_name = String.to_atom(platform)
         {platform_name, get_module!(platform_name)}
 
       true ->
-        Bundlex.Output.info3 "Automatically detecting target platform to match current platform..."
+        Bundlex.Output.info_substage "Automatically detecting target platform to match current platform..."
         get_current_platform!()
     end
   end

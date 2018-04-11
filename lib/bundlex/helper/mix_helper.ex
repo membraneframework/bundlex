@@ -4,6 +4,7 @@ defmodule Bundlex.Helper.MixHelper do
   Mix configuration files.
   """
 
+  alias Bundlex.Config
 
   @doc """
   Helper function for retreiving app name from mix.exs and failing if it was
@@ -20,38 +21,20 @@ defmodule Bundlex.Helper.MixHelper do
     end
   end
 
+  @spec get_config :: {:ok, Config.t}
+  def get_config() do
+    Mix.Project.config()
+    |> Keyword.get(:bundlex_project)
+    |> get_module_config()
+  end
 
-  @doc """
-  Helper function for retreiving configuration for bundlex for given build type
-  (library or project) and platform.
-  """
-  @spec get_config!(atom, :bundlex_lib | :bundlex_project, Bundlex.Platform.platform_name_t) :: any
-  def get_config!(app, build_type, platform_name) do
-    case Mix.Project.config() |> List.keyfind(:config_path, 0) do
-      {:config_path, config_path} ->
-        config = Mix.Config.read!(config_path)
-        case config |> List.keyfind(app, 0) do
-          {app, app_config} ->
-            case app_config |> List.keyfind(build_type, 0) do
-              {build_type, build_type_config} ->
-                case build_type_config |> List.keyfind(platform_name, 0) do
-                  {platform_name, platform_config} ->
-                    platform_config
-
-                  _ ->
-                    Mix.raise "Unable to read config for app #{inspect(app)} with keys #{inspect(build_type)}, #{inspect(platform_name)}, check your #{config_path}"
-                end
-
-              _ ->
-                Mix.raise "Unable to read config for app #{inspect(app)} with key #{inspect(build_type)}, check your #{config_path}"
-            end
-
-          _ ->
-            Mix.raise "Unable to read config for app #{inspect(app)}, check your #{config_path}"
-        end
-
-      _ ->
-        Mix.raise "Unable to determine config path"
+  def get_module_config(module) do
+    with true <- function_exported?(module, :project, 0) do
+      {:ok, module.project()}
+    else
+      _ -> {:error, :no_config}
     end
   end
+
+
 end
