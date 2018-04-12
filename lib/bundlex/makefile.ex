@@ -3,8 +3,8 @@ defmodule Bundlex.Makefile do
   Structure encapsulating makefile generator.
   """
 
-  @windows_script_name "bundlex.bat"
-  @unix_script_name "bundlex.sh"
+  @script_name unix: "bundlex.sh", windows: "bundlex.bat"
+  @script_prefix unix: "#!/bin/sh\n", windows: ""
 
   @type t :: %__MODULE__{
     commands: command_t
@@ -26,13 +26,7 @@ defmodule Bundlex.Makefile do
 
 
   @spec run!(t, Bundlex.Platform.platform_name_t) :: :ok
-  def run!(makefile, :windows32), do: do_run!(makefile, :windows)
-  def run!(makefile, :windows64), do: do_run!(makefile, :windows)
-  def run!(makefile, :macosx), do: do_run!(makefile, :unix)
-  def run!(makefile, :linux), do: do_run!(makefile, :unix)
-
-
-  defp do_run!(%__MODULE__{commands: commands}, family) do
+  def run!(%__MODULE__{commands: commands}, _platform) do
     commands
     |> Enum.each(fn cmd ->
         ret = cmd |> Mix.shell.cmd
@@ -40,65 +34,23 @@ defmodule Bundlex.Makefile do
           Mix.raise("Command #{cmd} returned non-zero code: #{ret}")
         end
       end)
+    :ok
   end
-  #
-  # defp run_windows!(makefile) do
-  #   content = makefile.commands
-  #   |> Enum.reduce("", fn(item, acc) ->
-  #     # TODO check errorlevel
-  #
-  #     case item do
-  #       {command, label} ->
-  #         acc <> "echo #{label}\n" <> item <> "\n"
-  #
-  #       command ->
-  #         acc <> item <> "\n"
-  #     end
-  #   end)
-  #
-  #
-  #   File.write!(@windows_script_name, content)
-  #
-  #   case Mix.shell.cmd(@windows_script_name, stderr_to_stdout: true) do
-  #     0 ->
-  #       # FIXME
-  #       # File.rm!(@windows_script_name)
-  #       Bundlex.Output.info_substage "Build script finished gracefully"
-  #
-  #     other ->
-  #       # FIXME
-  #       # File.rm!(@windows_script_name)
-  #       Mix.raise "Build script finished with error code #{other}"
-  #   end
-  # end
-  #
-  #
-  # defp run_unix!(makefile) do
-  #   content = makefile.commands
-  #   |> Enum.reduce("#!/bin/sh\n", fn(item, acc) ->
-  #     case item do
-  #       {command, label} ->
-  #         acc <> "echo #{label}\n" <> item <> "\n"
-  #
-  #       command ->
-  #         acc <> item <> "\n"
-  #     end
-  #   end)
-  #
-  #
-  #   File.write!(@unix_script_name, content)
-  #   File.chmod!(@unix_script_name, 0o755)
-  #
-  #   case Mix.shell.cmd("./#{@unix_script_name}", stderr_to_stdout: true) do
-  #     0 ->
-  #       # FIXME
-  #       # File.rm!(@windows_script_name)
-  #       Bundlex.Output.info_substage "Build script finished gracefully"
-  #
-  #     other ->
-  #       # FIXME
-  #       # File.rm!(@windows_script_name)
-  #       Mix.raise "Build script finished with error code #{other}"
-  #   end
-  # end
+
+  @spec store!(t, Bundlex.Platform.platform_name_t) :: {:ok, String.t}
+  def store!(%__MODULE__{commands: commands}, platform) do
+    family = platform |> family!()
+    script_name = @script_name[family]
+    script_prefix = @script_prefix[family]
+    script = script_prefix <> (commands |> Enum.join("\n"))
+    File.write!(script_name, script)
+    if family == :unix, do: File.chmod!(script_name, 0o755)
+    {:ok, script_name}
+  end
+
+  defp family!(:windows32), do: :windows
+  defp family!(:windows64), do: :windows
+  defp family!(:macosx), do: :unix
+  defp family!(:linux), do: :unix
+
 end

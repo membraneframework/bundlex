@@ -1,6 +1,6 @@
 defmodule Mix.Tasks.Compile.Bundlex.Lib do
   use Mix.Task
-  alias Bundlex.{Config, Makefile, Output}
+  alias Bundlex.{Config, Project, Makefile, Output}
   alias Bundlex.Helper.{MixHelper, ErlangHelper, EnumHelper}
 
 
@@ -55,7 +55,14 @@ defmodule Mix.Tasks.Compile.Bundlex.Lib do
 
 
     Output.info_stage "Building"
-    Makefile.new(commands) |> Makefile.run!(platform_name)
+    makefile = Makefile.new(commands)
+    Output.info_substage("Running makefile")
+    makefile |> Makefile.run!(platform_name)
+    if(System.get_env("BUNDLEX_STORE_MAKEFILES") || "false" |> String.downcase == "true") do
+      Output.info_substage "Storing makefile"
+      {:ok, filename} = makefile |> Makefile.store!(platform_name)
+      Output.info_substage "Stored #{File.cwd! |> Path.join(filename)}"
+    end
     Output.info_stage "Done"
   end
 
