@@ -19,11 +19,11 @@ defmodule Mix.Tasks.Compile.Bundlex.Lib do
     Output.info_main "Bulding Bundlex Library: #{inspect app}"
 
     Output.info_stage("Reading config")
-    config = with {:ok, config} <- MixHelper.get_config(),
-                  {:ok, config} <- Config.parse(config) do
+    config = with {:ok, project_module} <- Project.get(app),
+                  {:ok, config} <- Config.parse(project_module.project()) do
               config
             else
-              {:error, reason} -> Mix.raise("Cannot get config for app: #{inspect app}, reason #{inspect reason}")
+              {:error, reason} -> Mix.raise("Cannot get config for app: #{inspect app}, reason: #{inspect reason}")
             end
 
     # Parse options

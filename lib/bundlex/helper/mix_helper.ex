@@ -4,7 +4,6 @@ defmodule Bundlex.Helper.MixHelper do
   Mix configuration files.
   """
 
-  alias Bundlex.Config
 
   @doc """
   Helper function for retreiving app name from mix.exs and failing if it was
@@ -21,20 +20,12 @@ defmodule Bundlex.Helper.MixHelper do
     end
   end
 
-  @spec get_config :: {:ok, Config.t}
-  def get_config() do
-    Mix.Project.config()
-    |> Keyword.get(:bundlex_project)
-    |> get_module_config()
-  end
-
-  def get_module_config(module) do
-    with true <- function_exported?(module, :project, 0) do
-      {:ok, module.project()}
-    else
-      _ -> {:error, :no_config}
+  def get_mixfile_env(application) do
+    case :erlang.get({:bundlex_project, application}) do
+      %Macro.Env{} = env -> {:ok, env}
+      :undefined -> {:error, {:mixfile_env_undefined, application}}
+      invalid_env -> {:error, {:mixfile_env_invalid, application, invalid_env}}
     end
   end
-
 
 end
