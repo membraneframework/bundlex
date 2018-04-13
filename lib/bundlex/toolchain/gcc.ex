@@ -38,8 +38,8 @@ defmodule Bundlex.Toolchain.GCC do
   end
 
 
-  defp source_path(source), do: "c_src/#{source}"
+  defp source_path(source), do: source
 
 
-  defp object_path(source), do: "c_src/#{source}.o" |> String.replace(~r(\.c\.o$), ".o")
+  defp object_path(source), do: "#{source}.o" |> String.replace(~r(\.c\.o$), ".o")
 end

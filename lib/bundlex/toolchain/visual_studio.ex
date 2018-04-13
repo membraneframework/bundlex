@@ -34,7 +34,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
     # FIXME escape quotes properly
 
     includes_part = includes |> Enum.map(fn(include) -> "/I \"#{DirectoryHelper.fix_slashes(include)}\"" end) |> Enum.join(" ")
-    sources_part = sources |> Enum.map(fn(source) -> "\"c_src\\#{DirectoryHelper.fix_slashes(source)}\"" end) |> Enum.join(" ")
+    sources_part = sources |> Enum.map(fn(source) -> "\"#{DirectoryHelper.fix_slashes(source)}\"" end) |> Enum.join(" ")
     libs_part = libs |> Enum.join(" ")
 
     ["mkdir priv\\lib", "cl /LD #{includes_part} #{sources_part} #{libs_part} /link /OUT:priv\\lib\\#{output}.dll"]

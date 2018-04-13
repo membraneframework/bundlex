@@ -21,9 +21,9 @@ defmodule Bundlex.Helper.MixHelper do
   end
 
   def get_mixfile_env(application) do
-    case :erlang.get({:bundlex_project, application}) do
+    case Application.get_env(:bundlex, application) do
       %Macro.Env{} = env -> {:ok, env}
-      :undefined -> {:error, {:mixfile_env_undefined, application}}
+      nil -> {:error, {:mixfile_env_undefined, application}}
       invalid_env -> {:error, {:mixfile_env_invalid, application, invalid_env}}
     end
   end
