@@ -20,13 +20,14 @@ defmodule Bundlex.Toolchain do
 
   It will receive includes, libs, sources, pkg_configs, nif_name.
   """
-  @callback compiler_commands([String.t], [String.t], [String.t], [String.t], String.t) :: [String.t]
+  @callback compiler_commands(Bundlex.NIF.t, app_name :: atom,  nif_name :: atom) :: [String.t]
 
 
 
   defmacro __using__(_) do
     quote location: :keep do
-      @behaviour Bundlex.Toolchain
+      @behaviour unquote(__MODULE__)
+      alias unquote(__MODULE__)
 
 
       # Default implementations
@@ -40,4 +41,13 @@ defmodule Bundlex.Toolchain do
       ]
     end
   end
+
+  def output_path(app_name) do
+    [Mix.Project.build_path, "lib", "#{app_name}", "priv", "bundlex"] |> Path.join()
+  end
+
+  def output_path(app_name, nif_name) do
+    output_path(app_name) |> Path.join("#{nif_name}")
+  end
+
 end

@@ -36,7 +36,7 @@ defmodule Mix.Tasks.Compile.Bundlex.Lib do
 
     Output.info_stage "Resolving NIFs"
     commands = commands ++
-      case NIF.resolve_nifs(project, platform) do
+      case NIF.resolve_nifs(app, project, platform) do
          {:ok, nifs_commands} -> nifs_commands
          {:error, reason} -> Mix.raise("Error parsing NIFs, reason: #{inspect reason}")
       end

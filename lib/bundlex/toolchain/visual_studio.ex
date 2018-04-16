@@ -30,14 +30,14 @@ defmodule Bundlex.Toolchain.VisualStudio do
   end
 
 
-  def compiler_commands(includes, libs, sources, _pkg_configs, output) do
+  def compiler_commands(nif, app_name, nif_name) do
     # FIXME escape quotes properly
 
-    includes_part = includes |> Enum.map(fn(include) -> "/I \"#{DirectoryHelper.fix_slashes(include)}\"" end) |> Enum.join(" ")
-    sources_part = sources |> Enum.map(fn(source) -> "\"#{DirectoryHelper.fix_slashes(source)}\"" end) |> Enum.join(" ")
-    libs_part = libs |> Enum.join(" ")
+    includes_part = nif.includes |> Enum.map(fn(include) -> "/I \"#{DirectoryHelper.fix_slashes(include)}\"" end) |> Enum.join(" ")
+    sources_part = nif.sources |> Enum.map(fn(source) -> "\"#{DirectoryHelper.fix_slashes(source)}\"" end) |> Enum.join(" ")
+    libs_part = nif.libs |> Enum.join(" ")
 
-    ["mkdir priv\\lib", "cl /LD #{includes_part} #{sources_part} #{libs_part} /link /OUT:priv\\lib\\#{output}.dll"]
+    ["mkdir #{Toolchain.output_path(app_name)}", "cl /LD #{includes_part} #{sources_part} #{libs_part} /link /OUT:#{Toolchain.output_path(app_name, nif_name)}.dll"]
   end
 
 

@@ -3,7 +3,17 @@ defmodule Bundlex.NIF do
   alias Helper.{EnumHelper, ErlangHelper}
   alias Bundlex.{Project, Output}
 
-  def resolve_nifs(project, platform) do
+  @type t :: %__MODULE__{includes: [String.t], libs: [String.t], pkg_configs: [String.t], sources: [String.t]}
+  defstruct includes: [], libs: [], pkg_configs: [], sources: []
+
+  def merge(%__MODULE__{} = nif1, %__MODULE__{} = nif2) do
+    Map.merge(nif1, nif2, fn
+        :__struct__, __MODULE__, __MODULE__ -> __MODULE__
+        _k, v1, v2 -> v1 ++ v2
+      end)
+  end
+
+  def resolve_nifs(app, project, platform) do
     {platform_name, platform_module} = platform
     with {:ok, nifs} <- get_nifs(project) do
      if nifs |> Enum.empty? do
@@ -12,17 +22,17 @@ defmodule Bundlex.NIF do
      else
        erlang_includes = ErlangHelper.get_includes!(platform_name)
        Output.info_substage "Found Erlang includes: #{inspect erlang_includes}"
-       nifs |> EnumHelper.flat_map_with(& resolve_nif &1, erlang_includes, project.src_path, platform_module)
+       nifs |> EnumHelper.flat_map_with(& resolve_nif &1, erlang_includes, project.src_path, platform_module, app)
      end
     else
       {:error, reason} -> {:error, {project, reason}}
     end
   end
 
-  defp resolve_nif({nif_name, nif_config}, erlang_includes, src_path, platform_module) do
+  defp resolve_nif({nif_name, nif_config}, erlang_includes, src_path, platform_module, app) do
     with {:ok, nif} <- parse_nif({nif_name, nif_config}, src_path) do
-      commands = platform_module.toolchain_module.compiler_commands(
-        erlang_includes ++ nif.includes, nif.libs, nif.sources, nif.pkg_configs, nif_name)
+      nif = nif |> Map.update!(:includes, & erlang_includes ++ &1)
+      commands = platform_module.toolchain_module.compiler_commands(nif, app, nif_name)
       {:ok, commands}
     end
   end
@@ -30,10 +40,8 @@ defmodule Bundlex.NIF do
   defp parse_nif({nif_name, nif_config}, src_path) do
     Output.info_substage "Parsing NIF #{inspect nif_name}"
 
-    keys = [:includes, :libs, :pkg_configs, :sources]
-    defaults = keys |> Enum.map(& {&1, []})
-    values = nif_config |> Keyword.take(keys)
-    values = defaults |> Keyword.merge(values) |> Map.new
+    {deps, values} = nif_config |> Keyword.pop(:deps, [])
+    values = values |> __struct__()
 
     parse_src = fn ->
       if values.sources |> Enum.empty?,
@@ -46,8 +54,7 @@ defmodule Bundlex.NIF do
     |> Map.update!(:sources, fn src -> src |> Enum.map(& Path.join(src_path, &1)) end)
 
     get_deps = fn ->
-      nif_config
-      |> Keyword.get(:deps, [])
+      deps
       |> EnumHelper.flat_map_with(fn {app, nifs} ->
           with {:ok, project} <- app |> Project.get() do
                 parse_deps(project, nifs |> Helper.listify)
@@ -58,7 +65,7 @@ defmodule Bundlex.NIF do
     with :ok <- parse_src.(),
          {:ok, parsed_deps} <- get_deps.() do
       parsed_deps
-      |> Enum.reduce(values, & Map.merge(&1, &2, fn _k, v1, v2 -> v1 ++ v2 end))
+      |> Enum.reduce(values, &merge/2)
       ~> (nif -> {:ok, nif})
     end
 
