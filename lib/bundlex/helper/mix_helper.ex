@@ -4,7 +4,6 @@ defmodule Bundlex.Helper.MixHelper do
   Mix configuration files.
   """
 
-
   @doc """
   Helper function for retreiving app name from mix.exs and failing if it was
   not found.
@@ -16,7 +15,9 @@ defmodule Bundlex.Helper.MixHelper do
         app
 
       _ ->
-        Mix.raise "Unable to determine app name, check if :app key is present in return value of project/0 in mix.exs"
+        Mix.raise(
+          "Unable to determine app name, check if :app key is present in return value of project/0 in mix.exs"
+        )
     end
   end
 
@@ -27,5 +28,4 @@ defmodule Bundlex.Helper.MixHelper do
       invalid_env -> {:error, {:mixfile_env_invalid, application, invalid_env}}
     end
   end
-
 end

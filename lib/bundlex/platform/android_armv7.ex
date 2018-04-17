@@ -5,7 +5,6 @@ defmodule Bundlex.Platform.AndroidARMv7 do
     ["--xcomp-conf=xcomp/erl-xcomp-arm-android.conf"]
   end
 
-
   def required_env_vars() do
     ["NDK_ROOT", "NDK_PLAT"]
   end

@@ -18,9 +18,12 @@ defmodule Bundlex.Loader do
     funs = Module.delete_attribute(module, :bundlex_defnifs)
     nif_name = Module.delete_attribute(module, :bundlex_nif_name)
     app_name = Module.delete_attribute(module, :bundlex_app_name)
-    defs = funs
-    |> Enum.map(fn fun ->
+
+    defs =
+      funs
+      |> Enum.map(fn fun ->
         {name, _location, args} = fun
+
         quote do
           def unquote(fun) do
             unquote(args)
@@ -28,15 +31,18 @@ defmodule Bundlex.Loader do
           end
         end
       end)
-    nif_module_content = quote do
-      @moduledoc false
-      require Bundlex.Loader
-      @on_load :load_nif
-      def load_nif() do
-        Bundlex.Loader.load_nif!(unquote(app_name), unquote(nif_name))
+
+    nif_module_content =
+      quote do
+        @moduledoc false
+        require Bundlex.Loader
+        @on_load :load_nif
+        def load_nif() do
+          Bundlex.Loader.load_nif!(unquote(app_name), unquote(nif_name))
+        end
+
+        unquote(defs)
       end
-      unquote(defs)
-    end
 
     Module.create(module |> Module.concat(Nif), nif_module_content, env)
   end
@@ -67,7 +73,12 @@ defmodule Bundlex.Loader do
   @spec load_nif!(atom, atom) :: any
   defmacro load_nif!(app_name \\ nil, nif_name) do
     quote do
-      app_name = unquote(app_name || Application.get_application(__MODULE__) || Bundlex.Helper.MixHelper.get_app!)
+      app_name =
+        unquote(
+          app_name || Application.get_application(__MODULE__) ||
+            Bundlex.Helper.MixHelper.get_app!()
+        )
+
       nif_name = unquote(nif_name)
 
       path = Bundlex.Toolchain.output_path(app_name, nif_name)
@@ -77,9 +88,9 @@ defmodule Bundlex.Loader do
       else
         {:error, reason} ->
           raise """
-          Bundlex cannot load nif #{inspect nif_name} of app #{inspect app_name}
+          Bundlex cannot load nif #{inspect(nif_name)} of app #{inspect(app_name)}
           from "#{path}", check bundlex.exs file for information about nifs.
-          Reason: #{inspect reason}
+          Reason: #{inspect(reason)}
           """
       end
     end

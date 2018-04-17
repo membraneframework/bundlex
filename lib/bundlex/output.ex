@@ -1,6 +1,6 @@
 defmodule Bundlex.Output do
   def info(msg) do
-    Mix.shell.info("Bundlex: " <> msg)
+    Mix.shell().info("Bundlex: " <> msg)
   end
 
   def info_main(msg) do

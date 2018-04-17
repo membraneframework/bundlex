@@ -13,19 +13,18 @@ defmodule Bundlex.Project do
   end
 
   def project_module?(module) do
-    function_exported?(module, :bundlex_project?, 0)
-    and module.bundlex_project?()
+    function_exported?(module, :bundlex_project?, 0) and module.bundlex_project?()
   end
 
   def get(application) do
     with {:ok, %Macro.Env{file: file}} <- MixHelper.get_mixfile_env(application) do
       bundlex_file_path = file |> Path.dirname() |> Path.join(@bundlex_file_name)
-      #FIXME: use Code.require_file and store project in agent for multiple usage
-      modules = Code.load_file(bundlex_file_path) |> Keyword.keys
+      # FIXME: use Code.require_file and store project in agent for multiple usage
+      modules = Code.load_file(bundlex_file_path) |> Keyword.keys()
+
       modules
       |> Enum.find(&project_module?/1)
       |> Helper.wrap_nil({:no_bundlex_project_in_file, bundlex_file_path})
     end
   end
-
 end
