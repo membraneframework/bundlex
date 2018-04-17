@@ -6,6 +6,8 @@ defmodule Bundlex.Platform do
   @callback patches_to_apply() :: [] | [String.t()]
   @callback toolchain_module() :: module
 
+  alias Bundlex.Output
+
   @doc """
   Converts platform passed as options into platform atom valid for further use
   and module that contains platform-specific callbacks.
@@ -70,7 +72,7 @@ defmodule Bundlex.Platform do
 
       other ->
         # TODO add detection for more platforms
-        Mix.raise(
+        Output.raise(
           "Unable to detect current platform. Erlang returned #{inspect(other)} which I don't know how to handle."
         )
     end

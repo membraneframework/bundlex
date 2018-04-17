@@ -24,7 +24,7 @@ defmodule Mix.Tasks.Compile.Bundlex do
         project_module
       else
         {:error, reason} ->
-          Mix.raise("Cannot get project for app: #{inspect(app)}, reason: #{inspect(reason)}")
+          Output.raise("Cannot get project for app: #{inspect(app)}, reason: #{inspect(reason)}")
       end
 
     # Parse options
@@ -42,7 +42,7 @@ defmodule Mix.Tasks.Compile.Bundlex do
       commands ++
         case NIF.resolve_nifs(app, project, platform) do
           {:ok, nifs_commands} -> nifs_commands
-          {:error, reason} -> Mix.raise("Error parsing NIFs, reason: #{inspect(reason)}")
+          {:error, reason} -> Output.raise("Error parsing NIFs, reason: #{inspect(reason)}")
         end
 
     Output.info_stage("Building")

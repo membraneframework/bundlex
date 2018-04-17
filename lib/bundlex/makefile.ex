@@ -3,6 +3,8 @@ defmodule Bundlex.Makefile do
   Structure encapsulating makefile generator.
   """
 
+  alias Bundlex.Output
+
   @script_name unix: "bundlex.sh", windows: "bundlex.bat"
   @script_prefix unix: "#!/bin/sh\n", windows: ""
 
@@ -29,7 +31,7 @@ defmodule Bundlex.Makefile do
       ret = cmd |> Mix.shell().cmd
 
       if ret != 0 do
-        Mix.raise("Command #{cmd} returned non-zero code: #{ret}")
+        Output.raise("Command #{cmd} returned non-zero code: #{ret}")
       end
     end)
 

@@ -3,7 +3,7 @@ defmodule Bundlex.Toolchain do
   Invokes commands that should be called before whole compilation process
   for given platform.
 
-  Implementations should call `Mix.raise/1` in case of failure which will
+  Implementations should call `Output.raise/1` in case of failure which will
   cause breaking the compilation process.
 
   In case of success implementations should return list of commands to be

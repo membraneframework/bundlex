@@ -14,4 +14,9 @@ defmodule Bundlex.Output do
   def info_substage(msg) do
     info("  - " <> msg)
   end
+
+  def raise(msg) do
+    Mix.raise("Bundlex: " <> msg)
+  end
+
 end

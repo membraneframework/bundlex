@@ -8,6 +8,9 @@ defmodule Bundlex.Helper.MixHelper do
   Helper function for retreiving app name from mix.exs and failing if it was
   not found.
   """
+
+  alias Bundlex.Output
+
   @spec get_app! :: atom
   def get_app! do
     case Mix.Project.config() |> List.keyfind(:app, 0) do
@@ -15,7 +18,7 @@ defmodule Bundlex.Helper.MixHelper do
         app
 
       _ ->
-        Mix.raise(
+        Output.raise(
           "Unable to determine app name, check if :app key is present in return value of project/0 in mix.exs"
         )
     end

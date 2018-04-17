@@ -13,6 +13,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
 
   use Bundlex.Toolchain
   alias Bundlex.Helper.DirectoryHelper
+  alias Bundlex.Output
 
   @directory_wildcard_x64 "c:\\Program Files (x86)\\Microsoft Visual Studio *"
   @directory_wildcard_x86 "c:\\Program Files\\Microsoft Visual Studio *"
@@ -55,7 +56,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
 
     case File.exists?(vcvarsall_path) do
       false ->
-        Mix.raise(
+        Output.raise(
           "Unable to find vcvarsall.bat script within Visual Studio root directory. Is your Visual Studio installation valid? (and file is in VC directory?)"
         )
 
@@ -93,7 +94,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
 
     case DirectoryHelper.wildcard(wildcard) do
       nil ->
-        Mix.raise(
+        Output.raise(
           "Unable to find Visual Studio root directory. Please ensure that it is either located in \"#{
             wildcard
           }\" or #{@directory_env} environment variable pointing to its root is set."
