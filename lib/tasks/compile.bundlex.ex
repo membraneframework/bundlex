@@ -11,6 +11,7 @@ defmodule Mix.Tasks.Compile.Bundlex do
 
   @spec run(OptionParser.argv()) :: :ok
   def run(_args) do
+    Application.put_env(:porcelain, :driver, Porcelain.Driver.Basic)
     :ok = Application.ensure_started(:porcelain)
     commands = []
 
