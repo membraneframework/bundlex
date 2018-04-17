@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Compile.Bundlex.Lib do
+defmodule Mix.Tasks.Compile.Bundlex do
   use Mix.Task
   alias Bundlex.{Project, Makefile, NIF, Output}
   alias Bundlex.Helper.MixHelper
