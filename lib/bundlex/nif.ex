@@ -40,18 +40,19 @@ defmodule Bundlex.NIF do
   end
 
   defp resolve_nif({nif_name, nif_config}, erlang_includes, src_path, platform_module, app) do
-    with {:ok, nif} <- parse_nif({nif_name, nif_config}, src_path) do
+    with {:ok, nif} <- parse_nif({nif_name, nif_config}, src_path, app) do
       nif = nif |> Map.update!(:includes, &(erlang_includes ++ &1))
       commands = platform_module.toolchain_module.compiler_commands(nif, app, nif_name)
       {:ok, commands}
     end
   end
 
-  defp parse_nif({nif_name, nif_config}, src_path) do
+  defp parse_nif({nif_name, nif_config}, src_path, app) do
     Output.info_substage("Parsing NIF #{inspect(nif_name)}")
 
-    {deps, values} = nif_config |> Keyword.pop(:deps, [])
-    values = values |> __struct__()
+    {deps, nif_config} = nif_config |> Keyword.pop(:deps, [])
+    {src_base, nif_config} = nif_config |> Keyword.pop(:src_base, "#{app}")
+    values = nif_config |> __struct__()
 
     parse_src = fn ->
       if values.sources |> Enum.empty?(),
@@ -62,14 +63,12 @@ defmodule Bundlex.NIF do
     values =
       values
       |> Map.update!(:includes, &[src_path | &1])
-      |> Map.update!(:sources, fn src -> src |> Enum.map(&Path.join(src_path, &1)) end)
+      |> Map.update!(:sources, fn src -> src |> Enum.map(&Path.join([src_path, src_base, &1])) end)
 
     get_deps = fn ->
       deps
       |> EnumHelper.flat_map_with(fn {app, nifs} ->
-        with {:ok, project} <- app |> Project.get() do
-          parse_deps(project, nifs |> Helper.listify())
-        end
+        parse_deps(app, nifs |> Helper.listify())
       end)
     end
 
@@ -81,11 +80,12 @@ defmodule Bundlex.NIF do
     end
   end
 
-  defp parse_deps(project, names) do
-    with {:ok, nifs} <- get_nifs(project, names) do
-      nifs |> EnumHelper.map_with(&parse_nif(&1, project.src_path))
+  defp parse_deps(app, names) do
+    with {:ok, project} <- app |> Project.get(),
+         {:ok, nifs} <- get_nifs(project, names) do
+      nifs |> EnumHelper.map_with(&parse_nif(&1, project.src_path, app))
     else
-      {:error, reason} -> {:error, {project, reason}}
+      {:error, reason} -> {:error, {app, reason}}
     end
   end
 
