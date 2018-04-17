@@ -5,10 +5,10 @@ defmodule Bundlex.Mixfile do
     [
       app: :bundlex,
       version: "0.0.1",
-      elixir: "~> 1.3",
+      elixir: "~> 1.6",
       elixirc_paths: elixirc_paths(Mix.env()),
       description: "Bundlex Multi-Platform build system for Elixir",
-      maintainers: ["Marcin Lewandowski"],
+      maintainers: ["Marcin Lewandowski", "Mateusz Front"],
       licenses: ["Proprietary"],
       name: "Bundlex",
       source_url: "https://github.com/radiokit/bundlex",
