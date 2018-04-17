@@ -49,7 +49,7 @@ defmodule Mix.Tasks.Compile.Bundlex do
     Output.info_stage("Building")
     makefile = Makefile.new(commands)
     Output.info_substage("Running makefile")
-    makefile |> Makefile.run!(platform_name)
+    makefile |> Makefile.run!()
 
     if(System.get_env("BUNDLEX_STORE_MAKEFILES") || "false" |> String.downcase() == "true") do
       Output.info_substage("Storing makefile")

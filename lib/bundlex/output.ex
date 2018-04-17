@@ -18,5 +18,4 @@ defmodule Bundlex.Output do
   def raise(msg) do
     Mix.raise("Bundlex: " <> msg)
   end
-
 end

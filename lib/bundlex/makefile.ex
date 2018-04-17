@@ -24,8 +24,8 @@ defmodule Bundlex.Makefile do
     %__MODULE__{commands: commands}
   end
 
-  @spec run!(t, Bundlex.Platform.platform_name_t()) :: :ok
-  def run!(%__MODULE__{commands: commands}, _platform) do
+  @spec run!(t) :: :ok
+  def run!(%__MODULE__{commands: commands}) do
     commands
     |> Enum.each(fn cmd ->
       ret = cmd |> Mix.shell().cmd
