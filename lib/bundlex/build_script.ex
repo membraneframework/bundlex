@@ -1,6 +1,6 @@
-defmodule Bundlex.Makefile do
+defmodule Bundlex.BuildScript do
   @moduledoc """
-  Structure encapsulating makefile generator.
+  Structure encapsulating build script generator.
   """
 
   alias Bundlex.Output
@@ -17,7 +17,7 @@ defmodule Bundlex.Makefile do
   defstruct commands: []
 
   @doc """
-  Creates new makefile.
+  Creates new build script.
   """
   @spec new([command_t]) :: t
   def new(commands \\ []) do

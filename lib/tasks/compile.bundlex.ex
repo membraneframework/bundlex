@@ -1,6 +1,6 @@
 defmodule Mix.Tasks.Compile.Bundlex do
   use Mix.Task
-  alias Bundlex.{Project, Makefile, NIF, Output}
+  alias Bundlex.{Project, BuildScript, NIF, Output}
   alias Bundlex.Helper.MixHelper
 
   @moduledoc """
@@ -47,13 +47,13 @@ defmodule Mix.Tasks.Compile.Bundlex do
         end
 
     Output.info_stage("Building")
-    makefile = Makefile.new(commands)
-    Output.info_substage("Running makefile")
-    makefile |> Makefile.run!()
+    build_script = BuildScript.new(commands)
+    Output.info_substage("Running build script")
+    build_script |> BuildScript.run!()
 
-    if(System.get_env("BUNDLEX_STORE_MAKEFILES") || "false" |> String.downcase() == "true") do
-      Output.info_substage("Storing makefile")
-      {:ok, filename} = makefile |> Makefile.store!(platform_name)
+    if((System.get_env("BUNDLEX_STORE_BUILD_SCRIPTS") || "false") |> String.downcase() == "true") do
+      Output.info_substage("Storing build script")
+      {:ok, filename} = build_script |> BuildScript.store!(platform_name)
       Output.info_substage("Stored #{File.cwd!() |> Path.join(filename)}")
     end
 
