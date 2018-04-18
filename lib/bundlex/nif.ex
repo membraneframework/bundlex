@@ -102,13 +102,10 @@ defmodule Bundlex.NIF do
 
   defp filter_nifs(nifs, names) do
     filtered_nifs = nifs |> Keyword.take(names)
-
     diff =
-      filtered_nifs
-      |> Keyword.keys()
+      names
       |> MapSet.new()
-      |> MapSet.difference(names |> MapSet.new())
-
+      |> MapSet.difference(filtered_nifs |> Keyword.keys() |> MapSet.new())
     if diff |> Enum.empty?() do
       {:ok, filtered_nifs}
     else
