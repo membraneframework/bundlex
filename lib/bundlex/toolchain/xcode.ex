@@ -26,7 +26,7 @@ defmodule Bundlex.Toolchain.XCode do
 
     [
       "mkdir -p #{Toolchain.output_path(app_name)}",
-      "cc -fPIC -W -dynamiclib -undefined dynamic_lookup -o #{
+      "cc -fPIC -Wall -Wextra -dynamiclib -undefined dynamic_lookup -o #{
         Toolchain.output_path(app_name, nif_name)
       }.so #{includes_part} #{libs_part} #{pkg_configs_part} #{sources_part}"
     ]
