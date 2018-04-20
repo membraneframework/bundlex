@@ -40,16 +40,23 @@ defmodule Bundlex.NIF do
   end
 
   defp resolve_nif({nif_name, nif_config}, erlang_includes, src_path, platform_module, app) do
-    with {:ok, nif} <- parse_nif({nif_name, nif_config}, src_path, app) do
+    with {:export_only?, false} <- {:export_only?, nif_config |> Keyword.get(:export_only?, false)},
+         {:ok, nif} <- parse_nif({nif_name, nif_config}, src_path, app) do
       nif = nif |> Map.update!(:includes, &(erlang_includes ++ &1))
       commands = platform_module.toolchain_module.compiler_commands(nif, app, nif_name)
       {:ok, commands}
+    else
+      {:export_only?, true} ->
+        Output.info_substage("Ignoring export-only nif #{inspect nif_name}")
+        {:ok, []}
+      {:error, reason} -> {:error, reason}
     end
   end
 
   defp parse_nif({nif_name, nif_config}, src_path, app) do
     Output.info_substage("Parsing NIF #{inspect(nif_name)}")
 
+    nif_config = nif_config |> Keyword.delete(:export_only?)
     {deps, nif_config} = nif_config |> Keyword.pop(:deps, [])
     {src_base, nif_config} = nif_config |> Keyword.pop(:src_base, "#{app}")
     values = nif_config |> __struct__()
