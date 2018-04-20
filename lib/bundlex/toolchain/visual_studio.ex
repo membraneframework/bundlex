@@ -13,33 +13,42 @@ defmodule Bundlex.Toolchain.VisualStudio do
 
   use Bundlex.Toolchain
   alias Bundlex.Helper.DirectoryHelper
-
+  alias Bundlex.Output
 
   @directory_wildcard_x64 "c:\\Program Files (x86)\\Microsoft Visual Studio *"
   @directory_wildcard_x86 "c:\\Program Files\\Microsoft Visual Studio *"
   @directory_env "VISUAL_STUDIO_ROOT"
 
-
   def before_all!(:windows32) do
     [run_vcvarsall("x86")]
   end
-
 
   def before_all!(:windows64) do
     [run_vcvarsall("amd64")]
   end
 
-
-  def compiler_commands(includes, libs, sources, _pkg_configs, output) do
+  def compiler_commands(nif, app_name, nif_name) do
     # FIXME escape quotes properly
 
-    includes_part = includes |> Enum.map(fn(include) -> "/I \"#{DirectoryHelper.fix_slashes(include)}\"" end) |> Enum.join(" ")
-    sources_part = sources |> Enum.map(fn(source) -> "\"c_src\\#{DirectoryHelper.fix_slashes(source)}\"" end) |> Enum.join(" ")
-    libs_part = libs |> Enum.join(" ")
+    includes_part =
+      nif.includes
+      |> Enum.map(fn include -> "/I \"#{DirectoryHelper.fix_slashes(include)}\"" end)
+      |> Enum.join(" ")
 
-    ["mkdir priv\\lib", "cl /LD #{includes_part} #{sources_part} #{libs_part} /link /OUT:priv\\lib\\#{output}.dll"]
+    sources_part =
+      nif.sources
+      |> Enum.map(fn source -> "\"#{DirectoryHelper.fix_slashes(source)}\"" end)
+      |> Enum.join(" ")
+
+    libs_part = nif.libs |> Enum.join(" ")
+
+    [
+      "mkdir #{Toolchain.output_path(app_name)}",
+      "cl /LD #{includes_part} #{sources_part} #{libs_part} /link /OUT:#{
+        Toolchain.output_path(app_name, nif_name)
+      }.dll"
+    ]
   end
-
 
   # Runs vcvarsall.bat script
   defp run_vcvarsall(vcvarsall_arg) do
@@ -49,15 +58,16 @@ defmodule Bundlex.Toolchain.VisualStudio do
 
     case File.exists?(vcvarsall_path) do
       false ->
-        Mix.raise "Unable to find vcvarsall.bat script within Visual Studio root directory. Is your Visual Studio installation valid? (and file is in VC directory?)"
+        Output.raise(
+          "Unable to find vcvarsall.bat script within Visual Studio root directory. Is your Visual Studio installation valid? (and file is in VC directory?)"
+        )
 
       true ->
-        Bundlex.Output.info3 "Adding call to \"vcvarsall.bat #{vcvarsall_arg}\""
+        Bundlex.Output.info_substage("Adding call to \"vcvarsall.bat #{vcvarsall_arg}\"")
 
         "call \"#{vcvarsall_path}\" #{vcvarsall_arg}"
     end
   end
-
 
   # Determines root directory of the Visual Studio.
   defp determine_visual_studio_root() do
@@ -68,26 +78,32 @@ defmodule Bundlex.Toolchain.VisualStudio do
   # Case when we don't have a root path passed via an environment variable.
   defp determine_visual_studio_root(nil) do
     visual_studio_path()
-      |> determine_visual_studio_root_with_wildcard()
+    |> determine_visual_studio_root_with_wildcard()
   end
 
   # Determines root directory of the Visual Studio.
   # Case when we have a root path passed via an environment variable.
   defp determine_visual_studio_root(directory) do
-    Bundlex.Output.info3 "Using #{directory} passed via #{@directory_env} environment variable as Visual Studio root."
+    Bundlex.Output.info_substage(
+      "Using #{directory} passed via #{@directory_env} environment variable as Visual Studio root."
+    )
 
     directory
   end
 
   defp determine_visual_studio_root_with_wildcard(wildcard) do
-    Bundlex.Output.info3 "Trying to find Visual Studio in \"#{wildcard}\"..."
+    Bundlex.Output.info_substage("Trying to find Visual Studio in \"#{wildcard}\"...")
 
     case DirectoryHelper.wildcard(wildcard) do
       nil ->
-        Mix.raise "Unable to find Visual Studio root directory. Please ensure that it is either located in \"#{wildcard}\" or #{@directory_env} environment variable pointing to its root is set."
+        Output.raise(
+          "Unable to find Visual Studio root directory. Please ensure that it is either located in \"#{
+            wildcard
+          }\" or #{@directory_env} environment variable pointing to its root is set."
+        )
 
       directory ->
-        Bundlex.Output.info3 "Found Visual Studio in #{directory}"
+        Bundlex.Output.info_substage("Found Visual Studio in #{directory}")
 
         directory
     end

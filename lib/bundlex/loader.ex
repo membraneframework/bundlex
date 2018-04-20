@@ -4,37 +4,95 @@ defmodule Bundlex.Loader do
   libraries.
   """
 
+  defmacro __using__(args) do
+    quote do
+      import unquote(__MODULE__), only: [defnif: 1, defnifp: 1]
+      @after_compile Bundlex.Loader
+      @bundlex_nif_name unquote(args |> Keyword.fetch!(:nif))
+      @bundlex_app_name unquote(args |> Keyword.get(:app))
+      Module.register_attribute(__MODULE__, :bundlex_defnifs, accumulate: true)
+    end
+  end
+
+  def __after_compile__(%{module: module} = env, _code) do
+    funs = Module.delete_attribute(module, :bundlex_defnifs)
+    nif_name = Module.delete_attribute(module, :bundlex_nif_name)
+    app_name = Module.delete_attribute(module, :bundlex_app_name)
+
+    defs =
+      funs
+      |> Enum.map(fn fun ->
+        {name, _location, args} = fun
+
+        quote do
+          def unquote(fun) do
+            unquote(args)
+            raise "Nif fail: #{unquote(module)}.#{unquote(name)}"
+          end
+        end
+      end)
+
+    nif_module_content =
+      quote do
+        @moduledoc false
+        require Bundlex.Loader
+        @on_load :load_nif
+        def load_nif() do
+          Bundlex.Loader.load_nif!(unquote(app_name), unquote(nif_name))
+        end
+
+        unquote(defs)
+      end
+
+    Module.create(module |> Module.concat(Nif), nif_module_content, env)
+  end
+
+  defmacro defnif({name, _pos, args} = definition) do
+    quote do
+      @bundlex_defnifs unquote(Macro.escape(definition))
+      @compile {:inline, [unquote({name, length(args)})]}
+      defdelegate unquote(definition), to: __MODULE__.Nif
+    end
+  end
+
+  defmacro defnifp({name, _pos, args} = definition) do
+    quote do
+      @bundlex_defnifs unquote(Macro.escape(definition))
+      @compile {:inline, [unquote({name, length(args)})]}
+      defp unquote(definition) do
+        __MODULE__.Nif.unquote(definition)
+      end
+    end
+  end
 
   @doc """
   Loads NIF for given app_name and given name.
-
-  This aims to be a workadound for https://github.com/elixir-lang/elixir/issues/5746
-
-  First argument has to be an atom, the same as `:app` in the `mix.exs` of the
-  library. It is used to retreive real path of the dependency on the hard drive.
-
   Second argument has to be an atom, the same as name of the NIF in the bundlex
-  library config.
+  project.
   """
-  @spec load_lib_nif!(atom, atom) :: any
-  defmacro load_lib_nif!(app_name, nif_name) do
+  @spec load_nif!(atom, atom) :: any
+  defmacro load_nif!(app_name \\ nil, nif_name) do
     quote do
-      app_name = unquote(app_name)
+      app_name =
+        unquote(
+          app_name || Application.get_application(__MODULE__) ||
+            Bundlex.Helper.MixHelper.get_app!()
+        )
+
       nif_name = unquote(nif_name)
 
-      path = if function_exported?(Mix.Project, :deps_paths, 0) do
-        case Mix.Project.deps_paths[app_name] do
-          nil ->
-            "./priv/lib/#{nif_name}"
+      path = Bundlex.Toolchain.output_path(app_name, nif_name)
 
-          dependency_path ->
-            "#{dependency_path}/priv/lib/#{nif_name}"
-        end
+      with :ok <- :erlang.load_nif(path |> to_charlist(), 0) do
+        :ok
       else
-        "#{:code.priv_dir(app_name)}/lib/#{nif_name}"
+        {:error, reason} ->
+          raise """
+          Bundlex cannot load nif #{inspect(nif_name)} of app #{inspect(app_name)}
+          from "#{path}", check bundlex.exs file for information about nifs.
+          Reason: #{inspect(reason)}
+          """
       end
-
-      :ok = :erlang.load_nif(path |> to_charlist(), 0)
     end
   end
 end

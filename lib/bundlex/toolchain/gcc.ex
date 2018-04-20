@@ -5,41 +5,54 @@ defmodule Bundlex.Toolchain.GCC do
 
   use Bundlex.Toolchain
 
-
-  def compiler_commands(includes, libs, sources, pkg_configs, output) do
+  def compiler_commands(nif, app_name, nif_name) do
     # FIXME escape quotes properly
 
-    includes_part = includes |> Enum.map(fn(include) -> "-I\"#{include}\"" end) |> Enum.join(" ")
-    libs_part = libs |> Enum.map(fn(lib) -> "-l#{lib}" end) |> Enum.join(" ")
+    includes_part =
+      nif.includes |> Enum.map(fn include -> "-I\"#{include}\"" end) |> Enum.join(" ")
 
-    pkg_config_libs_part = pkg_configs |> Enum.map(fn(pkg_config) ->
-      %Porcelain.Result{status: 0, out: out} = Porcelain.exec("pkg-config", ["--libs", pkg_config])
-      out |> String.trim
-    end) |> Enum.join(" ")
+    libs_part = nif.libs |> Enum.map(fn lib -> "-l#{lib}" end) |> Enum.join(" ")
 
-    pkg_config_cflags_part = pkg_configs |> Enum.map(fn(pkg_config) ->
-      %Porcelain.Result{status: 0, out: out} = Porcelain.exec("pkg-config", ["--cflags", pkg_config])
-      out |> String.trim
-    end) |> Enum.join(" ")
+    pkg_config_libs_part =
+      nif.pkg_configs
+      |> Enum.map(fn pkg_config ->
+        %Porcelain.Result{status: 0, out: out} =
+          Porcelain.exec("pkg-config", ["--libs", pkg_config])
 
-    objects = sources |> Enum.map(fn(source) -> object_path(source) end) |> Enum.join(" ")
+        out |> String.trim()
+      end)
+      |> Enum.join(" ")
 
+    pkg_config_cflags_part =
+      nif.pkg_configs
+      |> Enum.map(fn pkg_config ->
+        %Porcelain.Result{status: 0, out: out} =
+          Porcelain.exec("pkg-config", ["--cflags", pkg_config])
+
+        out |> String.trim()
+      end)
+      |> Enum.join(" ")
+
+    objects = nif.sources |> Enum.map(fn source -> object_path(source) end) |> Enum.join(" ")
 
     commands_sources =
-      sources
-      |> Enum.map(fn(source) ->
-        "gcc -fPIC -std=c11 -W -O2 -g #{includes_part} #{libs_part} #{pkg_config_cflags_part} \"#{source_path(source)}\" -c -o \"#{object_path(source)}\""
+      nif.sources
+      |> Enum.map(fn source ->
+        "gcc -fPIC -std=c11 -W -O2 -g #{includes_part} #{libs_part} #{pkg_config_cflags_part} \"#{
+          source_path(source)
+        }\" -c -o \"#{object_path(source)}\""
       end)
 
-    commands_linker =
-      ["gcc -rdynamic -undefined -shared #{objects} #{libs_part} #{pkg_config_libs_part} -o priv/lib/#{output}.so"]
+    commands_linker = [
+      "gcc -rdynamic -undefined -shared #{objects} #{libs_part} #{pkg_config_libs_part} -o #{
+        Toolchain.output_path(app_name, nif_name)
+      }.so"
+    ]
 
-    ["mkdir -p priv/lib"] ++ commands_sources ++ commands_linker
+    ["mkdir -p #{Toolchain.output_path(app_name)}"] ++ commands_sources ++ commands_linker
   end
 
+  defp source_path(source), do: source
 
-  defp source_path(source), do: "c_src/#{source}"
-
-
-  defp object_path(source), do: "c_src/#{source}.o" |> String.replace(~r(\.c\.o$), ".o")
+  defp object_path(source), do: "#{source}.o" |> String.replace(~r(\.c\.o$), ".o")
 end

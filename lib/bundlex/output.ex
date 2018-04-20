@@ -1,15 +1,21 @@
 defmodule Bundlex.Output do
-  def info1(msg) do
-    Mix.shell.info("!!! " <> String.upcase(msg))
+  def info(msg) do
+    Mix.shell().info("Bundlex: " <> msg)
   end
 
-
-  def info2(msg) do
-    Mix.shell.info("### " <> String.upcase(msg))
+  def info_main(msg) do
+    info("!!! " <> msg)
   end
 
+  def info_stage(msg) do
+    info("### " <> msg)
+  end
 
-  def info3(msg) do
-    Mix.shell.info("  - " <> msg)
+  def info_substage(msg) do
+    info("  - " <> msg)
+  end
+
+  def raise(msg) do
+    Mix.raise("Bundlex: " <> msg)
   end
 end
