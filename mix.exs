@@ -21,6 +21,7 @@ defmodule Bundlex.Mixfile do
   defp elixirc_paths(_), do: ["lib"]
 
   defp deps() do
+    Application.put_env(:porcelain, :driver, Porcelain.Driver.Basic)
     [
       {:porcelain, "~> 2.0"}
     ]
