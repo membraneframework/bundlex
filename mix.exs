@@ -22,6 +22,7 @@ defmodule Bundlex.Mixfile do
 
   defp deps() do
     Application.put_env(:porcelain, :driver, Porcelain.Driver.Basic)
+
     [
       {:porcelain, "~> 2.0"}
     ]

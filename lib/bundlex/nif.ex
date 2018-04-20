@@ -40,16 +40,19 @@ defmodule Bundlex.NIF do
   end
 
   defp resolve_nif({nif_name, nif_config}, erlang_includes, src_path, platform_module, app) do
-    with {:export_only?, false} <- {:export_only?, nif_config |> Keyword.get(:export_only?, false)},
+    with {:export_only?, false} <-
+           {:export_only?, nif_config |> Keyword.get(:export_only?, false)},
          {:ok, nif} <- parse_nif({nif_name, nif_config}, src_path, app) do
       nif = nif |> Map.update!(:includes, &(erlang_includes ++ &1))
       commands = platform_module.toolchain_module.compiler_commands(nif, app, nif_name)
       {:ok, commands}
     else
       {:export_only?, true} ->
-        Output.info_substage("Ignoring export-only nif #{inspect nif_name}")
+        Output.info_substage("Ignoring export-only nif #{inspect(nif_name)}")
         {:ok, []}
-      {:error, reason} -> {:error, reason}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -109,10 +112,12 @@ defmodule Bundlex.NIF do
 
   defp filter_nifs(nifs, names) do
     filtered_nifs = nifs |> Keyword.take(names)
+
     diff =
       names
       |> MapSet.new()
       |> MapSet.difference(filtered_nifs |> Keyword.keys() |> MapSet.new())
+
     if diff |> Enum.empty?() do
       {:ok, filtered_nifs}
     else

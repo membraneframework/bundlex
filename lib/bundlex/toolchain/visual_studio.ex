@@ -31,11 +31,13 @@ defmodule Bundlex.Toolchain.VisualStudio do
     # FIXME escape quotes properly
 
     includes_part =
-      nif.includes |> Enum.map(fn include -> "/I \"#{DirectoryHelper.fix_slashes(include)}\"" end)
+      nif.includes
+      |> Enum.map(fn include -> "/I \"#{DirectoryHelper.fix_slashes(include)}\"" end)
       |> Enum.join(" ")
 
     sources_part =
-      nif.sources |> Enum.map(fn source -> "\"#{DirectoryHelper.fix_slashes(source)}\"" end)
+      nif.sources
+      |> Enum.map(fn source -> "\"#{DirectoryHelper.fix_slashes(source)}\"" end)
       |> Enum.join(" ")
 
     libs_part = nif.libs |> Enum.join(" ")

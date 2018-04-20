@@ -50,7 +50,9 @@ defmodule Mix.Tasks.Compile.Bundlex do
     Output.info_substage("Running build script")
     build_script |> BuildScript.run!()
 
-    if((System.get_env("BUNDLEX_STORE_BUILD_SCRIPTS") || "false") |> String.downcase() == "true") do
+    if(
+      (System.get_env("BUNDLEX_STORE_BUILD_SCRIPTS") || "false") |> String.downcase() == "true"
+    ) do
       Output.info_substage("Storing build script")
       {:ok, filename} = build_script |> BuildScript.store!(platform_name)
       Output.info_substage("Stored #{File.cwd!() |> Path.join(filename)}")
