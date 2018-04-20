@@ -6,7 +6,7 @@ Bundlex is a multi-platform tool for compiling C code along with elixir projects
 
 To install, you need to configure Mix project as follows:
 
-```
+```elixir
 defmodule MyApp.Mixfile do
   use Mix.Project
   # Addition of below line is required until https://github.com/elixir-lang/elixir/issues/7561 is fixed
@@ -31,7 +31,7 @@ end
 
 and create `bundlex.exs` file in the project root folder, containing bundlex project module:
 
-```
+```elixir
 defmodule Membrane.Element.Mad.BundlexProject do
   use Bundlex.Project
 
@@ -49,7 +49,7 @@ Now your project does not contain any C sources, but should compile successfully
 
 Adding C sources can be done in `project/0` function of bundlex project module in the following way:
 
-```
+```elixir
 defmodule MyApp.BundlexProject do
   use Bundlex.Project
 
@@ -85,7 +85,7 @@ Besides the `sources` key, also other options are supported, for full list see d
 
 Loading NIF in a module is depicted below:
 
-```
+```elixir
 defmodule MyApp.SomeNativeStuff do
   use Bundlex.Loader, nif: :my_nif
 
@@ -101,7 +101,7 @@ end
 ```
 
 Note that unlike when using `:erlang.load_nif/2`, here `def`s and `defp`s can be used to create usual functions, native ones are declared with `defnif` and `defnifp`. This is achieved by creating a new module under the hood, and that is why module passed to C macro `ERL_NIF_INIT` has to be succeeded by `.Nif`, i.e.
-```
+```C
 ERL_NIF_INIT(MyApp.SomeNativeStuff.Nif, funs, load, NULL, upgrade, unload)
 ```
 
