@@ -62,7 +62,7 @@ defmodule MyApp.BundlexProject do
   defp nif(:linux) do
     [
       my_nif: [
-        sources: ["something.c", "for_linux_only.c"]
+        sources: ["something.c", "linux_specific.c"]
       ]
     ]
   end
@@ -80,6 +80,11 @@ end
 The sources should reside in `project_root/c_src/my_app` directory.
 
 Besides the `sources` key, also other options are supported, for full list see documentation for `Budnex.Project.nif_config_t` type.
+
+### Compilation options
+
+Setting env variable `BUNDLEX_STORE_BUILD_SCRIPTS=true` makes bundlex store build
+scripts (`bundlex.sh`/`bundlex.bat`) in projects root folders for analysis.
 
 ### Loading NIFs in modules
 
