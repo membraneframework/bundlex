@@ -79,7 +79,7 @@ end
 
 The sources should reside in `project_root/c_src/my_app` directory.
 
-Besides the `sources` key, also other options are supported, for full list see documentation for `Budnex.Project.nif_config_t` type.
+Besides the `sources` key, also other options are supported, for full list see documentation for `Bundlex.Project.nif_config_t` type.
 
 ### Compilation options
 
