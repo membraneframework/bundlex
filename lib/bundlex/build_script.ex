@@ -28,9 +28,11 @@ defmodule Bundlex.BuildScript do
   def run!(%__MODULE__{commands: commands}) do
     cmd = commands |> join_commands()
     ret = cmd |> Mix.shell().cmd()
+
     if ret != 0 do
       Output.raise("Build script:\n\n#{cmd}\n\nreturned non-zero code: #{ret}")
     end
+
     :ok
   end
 

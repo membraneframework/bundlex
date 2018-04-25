@@ -55,11 +55,12 @@ defmodule Bundlex.Project do
   def get(application \\ MixHelper.get_app!()) do
     Agent.start(fn -> %{} end, name: @project_store_name)
     module = Agent.get(@project_store_name, & &1[application])
+
     if module do
       {:ok, module}
     else
       with {:ok, module} <- get_module_from_project_file(application) do
-        Agent.update(@project_store_name, & &1 |> Map.put(application, module))
+        Agent.update(@project_store_name, &(&1 |> Map.put(application, module)))
         {:ok, module}
       end
     end
@@ -67,6 +68,7 @@ defmodule Bundlex.Project do
 
   defp get_module_from_project_file(application) do
     IO.inspect(:loading)
+
     with {:ok, %Macro.Env{file: file}} <- MixHelper.get_mixfile_env(application) do
       bundlex_file_path = file |> Path.dirname() |> Path.join(@bundlex_file_name)
       # FIXME: use Code.require_file and store project in agent for multiple usage
