@@ -65,11 +65,8 @@ defmodule Bundlex.Project do
   end
 
   defp get_module_from_project_file(application) do
-    IO.inspect(:loading)
-
     with {:ok, %Macro.Env{file: file}} <- MixHelper.get_mixfile_env(application) do
       bundlex_file_path = file |> Path.dirname() |> Path.join(@bundlex_file_name)
-      # FIXME: use Code.require_file and store project in agent for multiple usage
       modules = Code.require_file(bundlex_file_path) |> Keyword.keys()
 
       modules
