@@ -38,9 +38,9 @@ defmodule Bundlex.Toolchain.GCC do
     commands_sources =
       nif.sources
       |> Enum.map(fn source ->
-        "gcc -fPIC -std=c11 -Wall -Wextra -O2 -g #{includes_part} #{libs_part} #{pkg_config_cflags_part} \"#{
-          source_path(source)
-        }\" -c -o \"#{object_path(source)}\""
+        "gcc -fPIC -std=c11 -Wall -Wextra -O2 -g #{includes_part} #{libs_part} #{
+          pkg_config_cflags_part
+        } \"#{source_path(source)}\" -c -o \"#{object_path(source)}\""
       end)
 
     commands_linker = [
