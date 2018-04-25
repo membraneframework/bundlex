@@ -33,7 +33,7 @@ defmodule Bundlex.Project do
         ]
 
   @type config_t :: [
-          nif: [{nif_name_t, nif_config_t}]
+          nifs: [{nif_name_t, nif_config_t}]
         ]
 
   @callback project() :: config_t

@@ -102,7 +102,7 @@ defmodule Bundlex.NIF do
 
   defp get_nifs(project, names \\ :all) do
     with {:config, config} when is_list(config) <- {:config, project.project()} do
-      nifs = config |> Keyword.get(:nif, [])
+      nifs = config |> Keyword.get(:nifs, [])
       nifs |> filter_nifs(names)
     else
       {:config, config} -> {:error, {:invalid_config, config}}

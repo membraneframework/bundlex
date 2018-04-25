@@ -55,22 +55,28 @@ defmodule MyApp.BundlexProject do
 
   def project() do
     [
-      nif: nif(Bundlex.platform)
+      nifs: nifs(Bundlex.platform)
     ]
   end
 
-  defp nif(:linux) do
+  defp nifs(:linux) do
     [
       my_nif: [
         sources: ["something.c", "linux_specific.c"]
+      ],
+      my_other_nif: [
+        ...
       ]
     ]
   end
 
-  defp nif(_platform) do
+  defp nifs(_platform) do
     [
       my_nif: [
         sources: ["something.c", "multiplatform.c"]
+      ],
+      my_other_nif: [
+        ...
       ]
     ]
   end
