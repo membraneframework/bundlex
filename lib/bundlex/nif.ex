@@ -1,7 +1,7 @@
 defmodule Bundlex.NIF do
   use Bundlex.Helper
   alias Helper.{EnumHelper, ErlangHelper}
-  alias Bundlex.{Project, Output}
+  alias Bundlex.{Output, Platform, Project}
 
   @type t :: %__MODULE__{
           includes: [String.t()],
@@ -19,19 +19,17 @@ defmodule Bundlex.NIF do
   end
 
   def resolve_nifs(app, project, platform) do
-    {platform_name, platform_module} = platform
-
     with {:ok, nifs} <- get_nifs(project) do
       if nifs |> Enum.empty?() do
         Output.info_substage("No nifs found")
         {:ok, []}
       else
-        erlang_includes = ErlangHelper.get_includes!(platform_name)
+        erlang_includes = ErlangHelper.get_includes!(platform)
         Output.info_substage("Found Erlang includes: #{inspect(erlang_includes)}")
 
         nifs
         |> EnumHelper.flat_map_with(
-          &resolve_nif(&1, erlang_includes, project.src_path, platform_module, app)
+          &resolve_nif(&1, erlang_includes, project.src_path, platform, app)
         )
       end
     else
@@ -39,12 +37,15 @@ defmodule Bundlex.NIF do
     end
   end
 
-  defp resolve_nif({nif_name, nif_config}, erlang_includes, src_path, platform_module, app) do
+  defp resolve_nif({nif_name, nif_config}, erlang_includes, src_path, platform, app) do
     with {:export_only?, false} <-
            {:export_only?, nif_config |> Keyword.get(:export_only?, false)},
          {:ok, nif} <- parse_nif({nif_name, nif_config}, src_path, app) do
       nif = nif |> Map.update!(:includes, &(erlang_includes ++ &1))
-      commands = platform_module.toolchain_module.compiler_commands(nif, app, nif_name)
+
+      commands =
+        Platform.get_module!(platform).toolchain_module.compiler_commands(nif, app, nif_name)
+
       {:ok, commands}
     else
       {:export_only?, true} ->

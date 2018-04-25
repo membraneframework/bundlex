@@ -1,5 +1,11 @@
 defmodule Bundlex do
+  alias __MODULE__.Platform
+
+  @spec platform() :: Platform.name_t()
+  @doc """
+  Returns current platform name as atom
+  """
   def platform() do
-    Bundlex.Platform.get_current_platform!()
+    Platform.get_current!()
   end
 end

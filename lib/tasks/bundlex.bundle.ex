@@ -17,7 +17,8 @@ defmodule Mix.Tasks.Bundlex.Bundle do
     # Parse options
     {opts, _} = OptionParser.parse!(args, aliases: [t: :platform], strict: @switches)
 
-    {platform, platform_module} = Bundlex.Platform.get_platform_from_opts!(opts)
+    platform = Bundlex.Platform.get_from_opts!(opts)
+    platform_module = Bundlex.Platform.get_module!(platform)
     Mix.shell().info("Building for platform #{platform}")
 
     # Build

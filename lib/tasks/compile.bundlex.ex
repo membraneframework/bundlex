@@ -1,6 +1,6 @@
 defmodule Mix.Tasks.Compile.Bundlex do
   use Mix.Task
-  alias Bundlex.{Project, BuildScript, NIF, Output}
+  alias Bundlex.{BuildScript, NIF, Output, Platform, Project}
   alias Bundlex.Helper.MixHelper
 
   @moduledoc """
@@ -29,12 +29,12 @@ defmodule Mix.Tasks.Compile.Bundlex do
 
     # Parse options
     Output.info_stage("Target platform")
-    platform = {platform_name, platform_module} = Bundlex.Platform.get_current_platform!()
-    Output.info_substage("Building for platform #{platform_name}")
+    platform = Platform.get_current!()
+    Output.info_substage("Building for platform #{platform}")
 
     # Toolchain
     Output.info_stage("Toolchain")
-    commands = commands ++ platform_module.toolchain_module.before_all!(platform_name)
+    commands = commands ++ Platform.get_module!(platform).toolchain_module.before_all!(platform)
 
     Output.info_stage("Resolving NIFs")
 
@@ -47,16 +47,17 @@ defmodule Mix.Tasks.Compile.Bundlex do
 
     Output.info_stage("Building")
     build_script = BuildScript.new(commands)
-    Output.info_substage("Running build script")
-    build_script |> BuildScript.run!()
 
     if(
       (System.get_env("BUNDLEX_STORE_BUILD_SCRIPTS") || "false") |> String.downcase() == "true"
     ) do
       Output.info_substage("Storing build script")
-      {:ok, filename} = build_script |> BuildScript.store!(platform_name)
+      {:ok, filename} = build_script |> BuildScript.store!(platform)
       Output.info_substage("Stored #{File.cwd!() |> Path.join(filename)}")
     end
+
+    Output.info_substage("Running build script")
+    build_script |> BuildScript.run!()
 
     Output.info_stage("Done")
   end
