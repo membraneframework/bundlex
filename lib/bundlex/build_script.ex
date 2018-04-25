@@ -26,15 +26,11 @@ defmodule Bundlex.BuildScript do
 
   @spec run!(t) :: :ok
   def run!(%__MODULE__{commands: commands}) do
-    commands
-    |> Enum.each(fn cmd ->
-      ret = cmd |> Mix.shell().cmd
-
-      if ret != 0 do
-        Output.raise("Command #{cmd} returned non-zero code: #{ret}")
-      end
-    end)
-
+    cmd = commands |> join_commands()
+    ret = cmd |> Mix.shell().cmd()
+    if ret != 0 do
+      Output.raise("Build script:\n\n#{cmd}\n\nreturned non-zero code: #{ret}")
+    end
     :ok
   end
 
@@ -43,10 +39,16 @@ defmodule Bundlex.BuildScript do
     family = platform |> family!()
     script_name = @script_name[family]
     script_prefix = @script_prefix[family]
-    script = script_prefix <> (commands |> Enum.join("\n"))
+    script = script_prefix <> (commands |> join_commands()) <> "\n"
     File.write!(script_name, script)
     if family == :unix, do: File.chmod!(script_name, 0o755)
     {:ok, script_name}
+  end
+
+  defp join_commands(commands) do
+    commands
+    |> Enum.map(&"(#{&1})")
+    |> Enum.join(" && \\\n")
   end
 
   defp family!(:windows32), do: :windows
