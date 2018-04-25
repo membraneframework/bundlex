@@ -47,8 +47,6 @@ defmodule Mix.Tasks.Compile.Bundlex do
 
     Output.info_stage("Building")
     build_script = BuildScript.new(commands)
-    Output.info_substage("Running build script")
-    build_script |> BuildScript.run!()
 
     if(
       (System.get_env("BUNDLEX_STORE_BUILD_SCRIPTS") || "false") |> String.downcase() == "true"
@@ -57,6 +55,9 @@ defmodule Mix.Tasks.Compile.Bundlex do
       {:ok, filename} = build_script |> BuildScript.store!(platform)
       Output.info_substage("Stored #{File.cwd!() |> Path.join(filename)}")
     end
+
+    Output.info_substage("Running build script")
+    build_script |> BuildScript.run!()
 
     Output.info_stage("Done")
   end
