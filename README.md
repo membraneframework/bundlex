@@ -79,7 +79,16 @@ end
 
 The sources should reside in `project_root/c_src/my_app` directory.
 
-Besides the `sources` key, also other options are supported, for full list see documentation for `Budnex.Project.nif_config_t` type.
+Configuration of each NIF can contain following options:
+* `sources` - C files to be compiled (at least one must be provided),
+* `includes` - Paths to look for header files (empty list by default).
+* `libs` - Names of libraries to link (empty list by default).
+* `pkg_configs` - Names of libraries that should be linked with pkg config (empty list by default).
+* `deps` - Dependencies in the form `{app_name, nif_name}`, where `app_name` is the application name of the dependency, and `nif_name` is the name of nif specified in bundlex file of this dependency. Sources, includes,
+libs and pkg_configs from those nifs will be appended. Empty list by default.
+* `export_only?` - Flag specifying whether NIF is only to be added as dependency and should not be compiled itself. `false` by default.
+* `src_base` - Native files should reside in `project_root/c_src/<src_base>`.
+Current app name by default.
 
 ### Compilation options
 
