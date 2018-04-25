@@ -5,6 +5,8 @@ defmodule Bundlex.Project do
   @src_dir_name "c_src"
   @bundlex_file_name "bundlex.exs"
 
+  @project_store_name :bundlex_project_store
+
   @type nif_name_t :: atom
 
   @typedoc """
@@ -50,11 +52,25 @@ defmodule Bundlex.Project do
     function_exported?(module, :bundlex_project?, 0) and module.bundlex_project?()
   end
 
-  def get(application) do
+  def get(application \\ MixHelper.get_app!()) do
+    Agent.start(fn -> %{} end, name: @project_store_name)
+    module = Agent.get(@project_store_name, & &1[application])
+    if module do
+      {:ok, module}
+    else
+      with {:ok, module} <- get_module_from_project_file(application) do
+        Agent.update(@project_store_name, & &1 |> Map.put(application, module))
+        {:ok, module}
+      end
+    end
+  end
+
+  defp get_module_from_project_file(application) do
+    IO.inspect(:loading)
     with {:ok, %Macro.Env{file: file}} <- MixHelper.get_mixfile_env(application) do
       bundlex_file_path = file |> Path.dirname() |> Path.join(@bundlex_file_name)
       # FIXME: use Code.require_file and store project in agent for multiple usage
-      modules = Code.load_file(bundlex_file_path) |> Keyword.keys()
+      modules = Code.require_file(bundlex_file_path) |> Keyword.keys()
 
       modules
       |> Enum.find(&project_module?/1)
