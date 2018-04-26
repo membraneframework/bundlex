@@ -57,7 +57,7 @@ defmodule Mix.Tasks.Compile.Bundlex do
     end
 
     Output.info_substage("Running build script")
-    build_script |> BuildScript.run!()
+    build_script |> BuildScript.run!(platform)
 
     Output.info_stage("Done")
   end

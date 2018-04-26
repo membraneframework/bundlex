@@ -42,11 +42,14 @@ defmodule Bundlex.Toolchain.VisualStudio do
 
     libs_part = nif.libs |> Enum.join(" ")
 
+    dir_part = "\"#{Toolchain.output_path(app_name)}\""
+
     [
-      "mkdir #{Toolchain.output_path(app_name)}",
-      "cl /LD #{includes_part} #{sources_part} #{libs_part} /link /OUT:#{
+      "if EXIST #{dir_part} rmdir /S /Q #{dir_part}",
+      "mkdir #{dir_part}",
+      "cl /LD #{includes_part} #{sources_part} #{libs_part} /link /DLL /OUT:\"#{
         Toolchain.output_path(app_name, nif_name)
-      }.dll"
+      }.dll\""
     ]
   end
 
@@ -65,7 +68,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
       true ->
         Bundlex.Output.info_substage("Adding call to \"vcvarsall.bat #{vcvarsall_arg}\"")
 
-        "call \"#{vcvarsall_path}\" #{vcvarsall_arg}"
+        "if not defined VCINSTALLDIR \"#{vcvarsall_path}\" #{vcvarsall_arg}"
     end
   end
 
