@@ -3,9 +3,9 @@ defmodule Bundlex.BuildScript do
   Structure encapsulating build script generator.
   """
 
-  alias Bundlex.Output
+  alias Bundlex.Platform
 
-  @script_name unix: "bundlex.sh", windows: "bundlex.bat"
+  @script_ext unix: ".sh", windows: ".bat"
   @script_prefix unix: "#!/bin/sh\n", windows: ""
 
   @type t :: %__MODULE__{
@@ -24,27 +24,41 @@ defmodule Bundlex.BuildScript do
     %__MODULE__{commands: commands}
   end
 
-  @spec run!(t) :: :ok
-  def run!(%__MODULE__{commands: commands}) do
-    cmd = commands |> join_commands()
-    ret = cmd |> Mix.shell().cmd()
+  @spec run(t, Platform.name_t()) :: :ok
+  def run(%__MODULE__{} = bs, platform) do
+    bs
+    |> store_tmp(platform, fn script_name, script ->
+      ret = "./#{script_name}" |> Mix.shell().cmd()
 
-    if ret != 0 do
-      Output.raise("Build script:\n\n#{cmd}\n\nreturned non-zero code: #{ret}")
-    end
-
-    :ok
+      if ret == 0 do
+        :ok
+      else
+        {:error, {:run_build_script, return_code: ret, script: script}}
+      end
+    end)
   end
 
-  @spec store!(t, Bundlex.Platform.platform_name_t()) :: {:ok, String.t()}
-  def store!(%__MODULE__{commands: commands}, platform) do
+  @spec store(t, Platform.name_t(), String.t()) :: {:ok, {String.t(), String.t()}}
+  def store(%__MODULE__{commands: commands}, platform, name \\ "bundlex") do
     family = platform |> family!()
-    script_name = @script_name[family]
+    script_name = name <> @script_ext[family]
     script_prefix = @script_prefix[family]
     script = script_prefix <> (commands |> join_commands()) <> "\n"
-    File.write!(script_name, script)
-    if family == :unix, do: File.chmod!(script_name, 0o755)
-    {:ok, script_name}
+
+    with :ok <- File.write(script_name, script),
+         :ok <- if(family == :unix, do: File.chmod!(script_name, 0o755), else: :ok) do
+      {:ok, {script_name, script}}
+    end
+  end
+
+  @spec store_tmp(t, Platform.name_t(), (String.t(), String.t() -> x)) :: x | {:error, any}
+        when x: {:ok, any} | {:error, any}
+  def store_tmp(%__MODULE__{} = bs, platform, fun) do
+    with {:ok, {script_name, script}} <- bs |> store(platform, "bundlex_tmp"),
+         res = fun.(script_name, script),
+         :ok <- File.rm(script_name) do
+      res
+    end
   end
 
   defp join_commands(commands) do
