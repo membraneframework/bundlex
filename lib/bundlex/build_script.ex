@@ -43,7 +43,7 @@ defmodule Bundlex.BuildScript do
     family = platform |> family!()
     script_name = name <> @script_ext[family]
     script_prefix = @script_prefix[family]
-    script = script_prefix <> (commands |> join_commands()) <> "\n"
+    script = script_prefix <> (commands |> join_commands(family)) <> "\n"
 
     with :ok <- File.write(script_name, script),
          :ok <- if(family == :unix, do: File.chmod!(script_name, 0o755), else: :ok) do
@@ -61,10 +61,16 @@ defmodule Bundlex.BuildScript do
     end
   end
 
-  defp join_commands(commands) do
+  defp join_commands(commands, :unix) do
     commands
     |> Enum.map(&"(#{&1})")
     |> Enum.join(" && \\\n")
+  end
+
+  defp join_commands(commands, :windows) do
+    commands
+    |> Enum.map(&"(#{&1})")
+    |> Enum.join("\n")
   end
 
   defp family!(:windows32), do: :windows
