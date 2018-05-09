@@ -50,7 +50,12 @@ defmodule Bundlex.Toolchain.VisualStudio do
 
     libs_part = nif.libs |> Enum.join(" ")
 
-    dir_part = "\"#{Toolchain.output_path(app_name)}\""
+    unquoted_dir_part =
+      app_name
+      |> Toolchain.output_path()
+      |> DirectoryHelper.fix_slashes()
+
+    dir_part = "\"#{unquoted_dir_part}\""
 
     [
       "if EXIST #{dir_part} rmdir /S /Q #{dir_part}",
