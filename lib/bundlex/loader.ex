@@ -4,6 +4,8 @@ defmodule Bundlex.Loader do
   libraries.
   """
 
+  alias Bundlex.Helper.DirectoryHelper
+
   defmacro __using__(args) do
     quote do
       import unquote(__MODULE__), only: [defnif: 1, defnifp: 1]
@@ -83,14 +85,14 @@ defmodule Bundlex.Loader do
 
       path = Bundlex.Toolchain.output_path(app_name, nif_name)
 
-      with :ok <- :erlang.load_nif(path |> to_charlist(), 0) do
+      with :ok <- :erlang.load_nif(path |> DirectoryHelper.fix_slashes() |> to_charlist(), 0) do
         :ok
       else
-        {:error, reason} ->
+        {:error, {reason, text}} ->
           raise """
           Bundlex cannot load nif #{inspect(nif_name)} of app #{inspect(app_name)}
           from "#{path}", check bundlex.exs file for information about nifs.
-          Reason: #{inspect(reason)}
+          Reason: #{inspect(reason)}, #{to_string(text)}
           """
       end
     end

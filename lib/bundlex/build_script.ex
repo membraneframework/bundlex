@@ -4,9 +4,10 @@ defmodule Bundlex.BuildScript do
   """
 
   alias Bundlex.Platform
+  alias Bundlex.Helper.DirectoryHelper
 
   @script_ext unix: ".sh", windows: ".bat"
-  @script_prefix unix: "#!/bin/sh\n", windows: ""
+  @script_prefix unix: "#!/bin/sh\n", windows: "@echo off\r\n"
 
   @type t :: %__MODULE__{
           commands: command_t
@@ -28,7 +29,7 @@ defmodule Bundlex.BuildScript do
   def run(%__MODULE__{} = bs, platform) do
     bs
     |> store_tmp(platform, fn script_name, script ->
-      ret = "./#{script_name}" |> Mix.shell().cmd()
+      ret = "./#{script_name}" |> DirectoryHelper.fix_slashes() |> Mix.shell().cmd()
 
       if ret == 0 do
         :ok
@@ -69,8 +70,7 @@ defmodule Bundlex.BuildScript do
 
   defp join_commands(commands, :windows) do
     commands
-    |> Enum.map(&"(#{&1})")
-    |> Enum.join("\n")
+    |> Enum.join("\r\n")
   end
 
   defp family!(:windows32), do: :windows
