@@ -52,12 +52,22 @@ defmodule Mix.Tasks.Compile.Bundlex do
       (System.get_env("BUNDLEX_STORE_BUILD_SCRIPTS") || "false") |> String.downcase() == "true"
     ) do
       Output.info_substage("Storing build script")
-      {:ok, filename} = build_script |> BuildScript.store!(platform)
+      {:ok, {filename, _script}} = build_script |> BuildScript.store(platform)
       Output.info_substage("Stored #{File.cwd!() |> Path.join(filename)}")
     end
 
     Output.info_substage("Running build script")
-    build_script |> BuildScript.run!()
+
+    case build_script |> BuildScript.run(platform) do
+      :ok ->
+        :ok
+
+      {:error, {:run_build_script, return_code: ret, script: script}} ->
+        Output.raise("Build script:\n\n#{script}\n\nreturned non-zero code: #{ret}")
+
+      {:error, reason} ->
+        Output.raise("Error running build script, reason #{inspect(reason)}")
+    end
 
     Output.info_stage("Done")
   end
