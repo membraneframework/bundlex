@@ -81,7 +81,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
       true ->
         Bundlex.Output.info_substage("Adding call to \"vcvarsall.bat #{vcvarsall_arg}\"")
 
-        "if not defined VCINSTALLDIR \"#{vcvarsall_path}\" #{vcvarsall_arg}"
+        "if not defined VCINSTALLDIR call \"#{vcvarsall_path}\" #{vcvarsall_arg}"
     end
   end
 
