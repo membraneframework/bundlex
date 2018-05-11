@@ -31,15 +31,21 @@ defmodule Bundlex.Helper do
     x - r
   end
 
-  defmacro x ~> f do
+  defmacro x ~> match_clauses when is_list(match_clauses) do
     quote do
       case unquote(x) do
-        unquote(f)
+        unquote(match_clauses)
       end
     end
   end
 
-  defmacro x ~>> f do
+  defmacro x ~> lambda do
+    quote do
+      unquote({:&, [], [lambda]}).(unquote x)
+    end
+  end
+
+  defmacro x ~>> match_clauses do
     default =
       quote do
         _ -> unquote(x)
@@ -47,7 +53,7 @@ defmodule Bundlex.Helper do
 
     quote do
       case unquote(x) do
-        unquote(f ++ default)
+        unquote(match_clauses ++ default)
       end
     end
   end

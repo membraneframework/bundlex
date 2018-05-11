@@ -5,12 +5,13 @@ defmodule Bundlex.BuildScript do
 
   alias Bundlex.Platform
   alias Bundlex.Helper.DirectoryHelper
+  use Bundlex.Helper
 
   @script_ext unix: ".sh", windows: ".bat"
   @script_prefix unix: "#!/bin/sh\n", windows: "@echo off\r\n"
 
   @type t :: %__MODULE__{
-          commands: command_t
+          commands: [command_t]
         }
 
   @type command_t :: String.t()
@@ -44,7 +45,7 @@ defmodule Bundlex.BuildScript do
     family = platform |> family!()
     script_name = name <> @script_ext[family]
     script_prefix = @script_prefix[family]
-    script = script_prefix <> (commands |> join_commands(family)) <> "\n"
+    script = script_prefix <> (commands |> join_commands(family))
 
     with :ok <- File.write(script_name, script),
          :ok <- if(family == :unix, do: File.chmod!(script_name, 0o755), else: :ok) do
@@ -66,11 +67,13 @@ defmodule Bundlex.BuildScript do
     commands
     |> Enum.map(&"(#{&1})")
     |> Enum.join(" && \\\n")
+    ~> &1 <> "\n"
   end
 
   defp join_commands(commands, :windows) do
     commands
     |> Enum.join("\r\n")
+    ~> &1 <> "\r\n"
   end
 
   defp family!(:windows32), do: :windows
