@@ -12,7 +12,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
   """
 
   use Bundlex.Toolchain
-  alias Bundlex.Helper.DirectoryHelper
+  alias Bundlex.Helper.{DirectoryHelper, GitHelper}
   alias Bundlex.Output
 
   @directory_wildcard_x64 "c:\\Program Files (x86)\\Microsoft Visual Studio *"
@@ -40,13 +40,29 @@ defmodule Bundlex.Toolchain.VisualStudio do
       |> Enum.map(fn source -> "\"#{DirectoryHelper.fix_slashes(source)}\"" end)
       |> Enum.join(" ")
 
+    if not (nif.libs |> Enum.empty?()) and not GitHelper.lfs_present?() do
+      Output.raise(
+        "Git LFS is not installed, being necessary for downloading windows *.lib files for dlls #{
+          inspect(nif.libs)
+        }. Install from https://git-lfs.github.com/."
+      )
+    end
+
     libs_part = nif.libs |> Enum.join(" ")
 
+    unquoted_dir_part =
+      app_name
+      |> Toolchain.output_path()
+      |> DirectoryHelper.fix_slashes()
+
+    dir_part = "\"#{unquoted_dir_part}\""
+
     [
-      "mkdir #{Toolchain.output_path(app_name)}",
-      "cl /LD #{includes_part} #{sources_part} #{libs_part} /link /OUT:#{
+      "if EXIST #{dir_part} rmdir /S /Q #{dir_part}",
+      "mkdir #{dir_part}",
+      "cl /LD #{includes_part} #{sources_part} #{libs_part} /link /DLL /OUT:\"#{
         Toolchain.output_path(app_name, nif_name)
-      }.dll"
+      }.dll\""
     ]
   end
 
@@ -65,7 +81,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
       true ->
         Bundlex.Output.info_substage("Adding call to \"vcvarsall.bat #{vcvarsall_arg}\"")
 
-        "call \"#{vcvarsall_path}\" #{vcvarsall_arg}"
+        "if not defined VCINSTALLDIR call \"#{vcvarsall_path}\" #{vcvarsall_arg}"
     end
   end
 
