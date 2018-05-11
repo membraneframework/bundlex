@@ -67,13 +67,13 @@ defmodule Bundlex.BuildScript do
     commands
     |> Enum.map(&"(#{&1})")
     |> Enum.join(" && \\\n")
-    ~> &1 <> "\n"
+    ~> (&1 <> "\n")
   end
 
   defp join_commands(commands, :windows) do
     commands
     |> Enum.join("\r\n")
-    ~> &1 <> "\r\n"
+    ~> (&1 <> "\r\n")
   end
 
   defp family!(:windows32), do: :windows

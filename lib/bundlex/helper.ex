@@ -1,10 +1,8 @@
 defmodule Bundlex.Helper do
-  import Kernel
-
   defmacro __using__(_args) do
     quote do
-      import Bundlex.Helper, only: [~>: 2, ~>>: 2, provided: 2, int_part: 2]
-      alias Bundlex.Helper
+      import unquote(__MODULE__), only: [~>: 2, ~>>: 2, provided: 2, int_part: 2]
+      alias unquote(__MODULE__)
     end
   end
 
@@ -41,7 +39,7 @@ defmodule Bundlex.Helper do
 
   defmacro x ~> lambda do
     quote do
-      unquote({:&, [], [lambda]}).(unquote x)
+      unquote({:&, [], [lambda]}).(unquote(x))
     end
   end
 
@@ -120,7 +118,7 @@ defmodule Bundlex.Helper do
 
   defmacro stacktrace do
     quote do
-      # in order to exclude `Process.info/2` call
+      # drop excludes `Process.info/2` call
       Process.info(self(), :current_stacktrace)
       ~> ({:current_stacktrace, trace} -> trace)
       |> Enum.drop(1)
