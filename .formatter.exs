@@ -1,6 +1,6 @@
 locals_without_parens = [
   defnif: 1,
-  defnifp: 1,
+  defnifp: 1
 ]
 
 [

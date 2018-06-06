@@ -64,9 +64,10 @@ defmodule Bundlex.Project do
     end
   end
 
+  # TODO: add explanation of getting projects paths
   defp get_module_from_project_file(application) do
-    with {:ok, %Macro.Env{file: file}} <- MixHelper.get_mixfile_env(application) do
-      bundlex_file_path = file |> Path.dirname() |> Path.join(@bundlex_file_name)
+    with {:ok, dir} <- get_project_path(application) do
+      bundlex_file_path = dir |> Path.join(@bundlex_file_name)
       modules = Code.require_file(bundlex_file_path) |> Keyword.keys()
 
       modules
@@ -74,4 +75,28 @@ defmodule Bundlex.Project do
       |> Helper.wrap_nil({:no_bundlex_project_in_file, bundlex_file_path})
     end
   end
+
+  defp get_project_path(application) do
+    case Mix.Project.deps_paths() |> Map.get(application) do
+      nil ->
+        with {:ok, %Macro.Env{file: file}} <- MixHelper.get_mixfile_env(application) do
+          {:ok, file |> Path.dirname()}
+        end
+
+      path ->
+        {:ok, path}
+    end
+  end
+
+  # defp get_module_from_project_file(application) do
+  #
+
+  #     bundlex_file_path = file |> Path.dirname() |> Path.join(@bundlex_file_name)
+  #     modules = Code.require_file(bundlex_file_path) |> Keyword.keys()
+  #
+  #     modules
+  #     |> Enum.find(&project_module?/1)
+  #     |> Helper.wrap_nil({:no_bundlex_project_in_file, bundlex_file_path})
+  #   end
+  # end
 end
