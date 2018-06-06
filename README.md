@@ -2,6 +2,8 @@
 
 Bundlex is a multi-platform tool for compiling C code along with elixir projects, for use in NIFs. The tool provides also convenient way of loading compiled NIFs in elixir modules.
 
+This tool is a part of [Membrane Framework](https://membraneframework.org/)
+
 ## Instalation
 
 To install, you need to configure Mix project as follows:
@@ -23,7 +25,7 @@ defmodule MyApp.Mixfile do
 
   defp deps() do
     [
-      {:bundlex, git: "git@github.com:radiokit/bundlex.git"} # add bundlex to deps
+      {:bundlex, "~> 0.1"} # add bundlex to deps
     ]
   end
 end

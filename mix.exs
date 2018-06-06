@@ -11,6 +11,7 @@ defmodule Bundlex.Mixfile do
       package: package(),
       name: "Bundlex",
       source_url: link(),
+      docs: docs(),
       preferred_cli_env: [espec: :test],
       deps: deps()
     ]
@@ -27,7 +28,17 @@ defmodule Bundlex.Mixfile do
     [
       maintainers: ["Membrane Team"],
       licenses: ["Apache 2.0"],
-      links: %{"GitHub" => link()}
+      links: %{
+        "GitHub" => link(),
+        "Membrane Framework Homepage" => "https://membraneframework.org"
+      }
+    ]
+  end
+
+  defp docs do
+    [
+      main: "readme",
+      extras: ["README.md"]
     ]
   end
 
