@@ -4,14 +4,13 @@ defmodule Bundlex.Mixfile do
   def project do
     [
       app: :bundlex,
-      version: "0.0.1",
+      version: "0.1.0",
       elixir: "~> 1.6",
       elixirc_paths: elixirc_paths(Mix.env()),
       description: "Bundlex Multi-Platform build system for Elixir",
-      maintainers: ["Marcin Lewandowski", "Mateusz Front"],
-      licenses: ["Proprietary"],
+      package: package(),
       name: "Bundlex",
-      source_url: "https://github.com/radiokit/bundlex",
+      source_url: link(),
       preferred_cli_env: [espec: :test],
       deps: deps()
     ]
@@ -20,10 +19,23 @@ defmodule Bundlex.Mixfile do
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
+  defp link do
+    "https://github.com/membraneframework/bundlex"
+  end
+
+  defp package do
+    [
+      maintainers: ["Membrane Team"],
+      licenses: ["Apache 2.0"],
+      links: %{"GitHub" => link()}
+    ]
+  end
+
   defp deps() do
     Application.put_env(:porcelain, :driver, Porcelain.Driver.Basic)
 
     [
+      {:ex_doc, "~> 0.18", only: :dev, runtime: false},
       {:porcelain, "~> 2.0"}
     ]
   end
