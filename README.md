@@ -1,5 +1,7 @@
 # Bundlex
 
+[![Build Status](https://travis-ci.com/membraneframework/bundlex.svg?branch=master)](https://travis-ci.com/membraneframework/bundlex)
+
 Bundlex is a multi-platform tool for compiling C code along with elixir projects, for use in NIFs. The tool provides also convenient way of loading compiled NIFs in elixir modules.
 
 This tool is a part of [Membrane Framework](https://membraneframework.org/)
