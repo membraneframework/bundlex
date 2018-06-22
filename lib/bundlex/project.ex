@@ -1,6 +1,6 @@
 defmodule Bundlex.Project do
-  alias Bundlex.Helper.MixHelper
   use Bundlex.Helper
+  alias Helper.MixHelper
 
   @src_dir_name "c_src"
   @bundlex_file_name "bundlex.exs"
@@ -32,10 +32,16 @@ defmodule Bundlex.Project do
           src_base: String.t()
         ]
 
+  @typedoc """
+  Type describing project configuration.
+  """
   @type config_t :: [
           nifs: [{nif_name_t, nif_config_t}]
         ]
 
+  @doc """
+  Callback returning project configuration.
+  """
   @callback project() :: config_t
 
   defmacro __using__(_args) do
@@ -46,10 +52,19 @@ defmodule Bundlex.Project do
     end
   end
 
+  @doc """
+  Determines if a module is a bundlex project module.
+  """
+  @spec project_module?(module) :: boolean
   def project_module?(module) do
     function_exported?(module, :bundlex_project?, 0) and module.bundlex_project?()
   end
 
+  @doc """
+  Returns the bundlex project module of given application. If the module has not
+  been loaded yet, it is loaded from `project_dir/#{@bundlex_file_name}` file.
+  """
+  @spec get(application :: atom) :: {:ok, module} | {:error, any()}
   def get(application \\ MixHelper.get_app!()) do
     Agent.start(fn -> %{} end, name: @project_store_name)
     module = Agent.get(@project_store_name, & &1[application])
@@ -57,16 +72,16 @@ defmodule Bundlex.Project do
     if module do
       {:ok, module}
     else
-      with {:ok, module} <- get_module_from_project_file(application) do
+      with {:ok, module} <- load(application) do
         Agent.update(@project_store_name, &(&1 |> Map.put(application, module)))
         {:ok, module}
       end
     end
   end
 
-  # TODO: add explanation of getting projects paths
-  defp get_module_from_project_file(application) do
-    with {:ok, dir} <- get_project_path(application) do
+  @spec load(application :: atom) :: {:ok, module} | {:error, any()}
+  defp load(application) do
+    with {:ok, dir} <- MixHelper.get_project_dir(application) do
       bundlex_file_path = dir |> Path.join(@bundlex_file_name)
       modules = Code.require_file(bundlex_file_path) |> Keyword.keys()
 
@@ -75,28 +90,4 @@ defmodule Bundlex.Project do
       |> Helper.wrap_nil({:no_bundlex_project_in_file, bundlex_file_path})
     end
   end
-
-  defp get_project_path(application) do
-    case Mix.Project.deps_paths() |> Map.get(application) do
-      nil ->
-        with {:ok, %Macro.Env{file: file}} <- MixHelper.get_mixfile_env(application) do
-          {:ok, file |> Path.dirname()}
-        end
-
-      path ->
-        {:ok, path}
-    end
-  end
-
-  # defp get_module_from_project_file(application) do
-  #
-
-  #     bundlex_file_path = file |> Path.dirname() |> Path.join(@bundlex_file_name)
-  #     modules = Code.require_file(bundlex_file_path) |> Keyword.keys()
-  #
-  #     modules
-  #     |> Enum.find(&project_module?/1)
-  #     |> Helper.wrap_nil({:no_bundlex_project_in_file, bundlex_file_path})
-  #   end
-  # end
 end
