@@ -1,16 +1,18 @@
 defmodule Bundlex.Mixfile do
   use Mix.Project
 
+  @github_url "https://github.com/membraneframework/bundlex"
+
   def project do
     [
       app: :bundlex,
-      version: "0.1.0",
+      version: "0.1.1",
       elixir: "~> 1.6",
       elixirc_paths: elixirc_paths(Mix.env()),
       description: "Bundlex Multi-Platform build system for Elixir",
       package: package(),
       name: "Bundlex",
-      source_url: link(),
+      source_url: @github_url,
       docs: docs(),
       preferred_cli_env: [espec: :test],
       deps: deps()
@@ -20,16 +22,12 @@ defmodule Bundlex.Mixfile do
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
-  defp link do
-    "https://github.com/membraneframework/bundlex"
-  end
-
   defp package do
     [
       maintainers: ["Membrane Team"],
       licenses: ["Apache 2.0"],
       links: %{
-        "GitHub" => link(),
+        "GitHub" => @github_url,
         "Membrane Framework Homepage" => "https://membraneframework.org"
       }
     ]

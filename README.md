@@ -13,8 +13,6 @@ To install, you need to configure Mix project as follows:
 ```elixir
 defmodule MyApp.Mixfile do
   use Mix.Project
-  # Addition of below line is required until https://github.com/elixir-lang/elixir/issues/7561 is fixed
-  Application.put_env(:bundlex, :my_app, __ENV__)
 
   def project do
     [

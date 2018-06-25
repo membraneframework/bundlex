@@ -7,6 +7,6 @@ defmodule Bundlex.Helper.ErlangHelper do
   @doc """
   Tries to determine path to includes directory of locally installed Erlang.
   """
-  @spec get_includes!(atom) :: String.t()
+  @spec get_includes!(atom) :: [binary()]
   def get_includes!(_platform), do: [Path.join([:code.root_dir(), "usr", "include"])]
 end

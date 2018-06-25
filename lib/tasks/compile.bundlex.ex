@@ -12,6 +12,8 @@ defmodule Mix.Tasks.Compile.Bundlex do
   @spec run(OptionParser.argv()) :: :ok
   def run(_args) do
     :ok = Application.ensure_started(:porcelain)
+    :ok = MixHelper.store_project_dir()
+
     commands = []
 
     app = MixHelper.get_app!()
