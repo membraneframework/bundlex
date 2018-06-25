@@ -30,12 +30,9 @@ defmodule Bundlex.BuildScript do
   def run(%__MODULE__{} = bs, platform) do
     bs
     |> store_tmp(platform, fn script_name, script ->
-      ret = "./#{script_name}" |> DirectoryHelper.fix_slashes() |> Mix.shell().cmd()
-
-      if ret == 0 do
-        :ok
-      else
-        {:error, {:run_build_script, return_code: ret, script: script}}
+      case "./#{script_name}" |> DirectoryHelper.fix_slashes() |> Mix.shell().cmd() do
+        0 -> :ok
+        ret -> {:error, {:run_build_script, return_code: ret, script: script}}
       end
     end)
   end

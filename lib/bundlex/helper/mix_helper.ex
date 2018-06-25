@@ -38,7 +38,7 @@ defmodule Bundlex.Helper.MixHelper do
     Agent.start(fn -> %{} end, name: @path_store_name)
 
     with {:ok, dir} <- get_project_dir() do
-      Agent.update(@path_store_name, &(&1 |> Map.put(get_app!(), dir)))
+      Agent.update(@path_store_name, &Map.put(&1, get_app!(), dir))
     end
   end
 
@@ -57,6 +57,7 @@ defmodule Bundlex.Helper.MixHelper do
       get_project_dir()
     else
       Agent.start(fn -> %{} end, name: @path_store_name)
+
       case Agent.get(@path_store_name, & &1[application]) || Mix.Project.deps_paths()[application] do
         nil -> {:error, {:unknown_application, application}}
         path -> {:ok, path}
