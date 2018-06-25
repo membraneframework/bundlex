@@ -26,7 +26,7 @@ defmodule Bundlex.BuildScript do
     %__MODULE__{commands: commands}
   end
 
-  @spec run(t, Platform.name_t()) :: :ok
+  @spec run(t, Platform.name_t()) :: :ok | {:error, any()}
   def run(%__MODULE__{} = bs, platform) do
     bs
     |> store_tmp(platform, fn script_name, script ->
@@ -54,7 +54,7 @@ defmodule Bundlex.BuildScript do
   end
 
   @spec store_tmp(t, Platform.name_t(), (String.t(), String.t() -> x)) :: x | {:error, any}
-        when x: {:ok, any} | {:error, any}
+        when x: :ok | {:error, any}
   def store_tmp(%__MODULE__{} = bs, platform, fun) do
     with {:ok, {script_name, script}} <- bs |> store(platform, "bundlex_tmp"),
          res = fun.(script_name, script),
