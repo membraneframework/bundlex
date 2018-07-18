@@ -35,7 +35,13 @@ defmodule Bundlex.Toolchain do
   end
 
   def output_path(app_name) do
-    [Mix.Project.build_path(), "lib", "#{app_name}", "priv", "bundlex"] |> Path.join()
+    # When compiling, `:code.priv_dir/1` does not work yet, but when compiled
+    # with MIX_ENV=prod, `Mix.Project.build_path/0` is inaccessible.
+    if function_exported?(Mix.Project, :build_path, 0) do
+      [Mix.Project.build_path(), "lib", "#{app_name}", "priv", "bundlex"] |> Path.join()
+    else
+      [:code.priv_dir(app_name), "bundlex"] |> Path.join()
+    end
   end
 
   def output_path(app_name, nif_name) do
