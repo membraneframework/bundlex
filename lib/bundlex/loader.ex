@@ -26,10 +26,16 @@ defmodule Bundlex.Loader do
       |> Enum.map(fn fun ->
         {name, _location, args} = fun
 
+        args =
+          args
+          |> Enum.map(fn
+            {:\\, _meta, [arg, _default]} -> arg
+            arg -> arg
+          end)
+
         quote do
           def unquote(fun) do
-            unquote(args)
-            raise "Nif fail: #{unquote(module)}.#{unquote(name)}"
+            raise "Nif fail: #{unquote(module)}.#{unquote(name)}/#{length(unquote(args))}"
           end
         end
       end)
