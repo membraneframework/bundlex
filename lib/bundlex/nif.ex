@@ -41,7 +41,10 @@ defmodule Bundlex.NIF do
     with {:export_only?, false} <-
            {:export_only?, nif_config |> Keyword.get(:export_only?, false)},
          {:ok, nif} <- parse_nif({nif_name, nif_config}, src_path, app) do
-      nif = nif |> Map.update!(:includes, &(erlang_includes ++ &1))
+      nif =
+        nif
+        |> Map.update!(:includes, &(erlang_includes ++ &1))
+        |> Map.update!(:sources, &Enum.uniq/1)
 
       commands =
         Platform.get_module!(platform).toolchain_module.compiler_commands(nif, app, nif_name)
