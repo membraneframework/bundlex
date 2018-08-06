@@ -22,7 +22,7 @@ defmodule Mix.Tasks.Bundlex.Bundle do
     Mix.shell().info("Building for platform #{platform}")
 
     # Build
-    patches_config = Mix.Config.read!(Path.join(:code.priv_dir(:bundlex), "patches.exs"))
+    patches_config = Mix.Config.eval!(Path.join(:code.priv_dir(:bundlex), "patches.exs"))
 
     # Open and validate bundlex config
     config_files =
@@ -31,7 +31,7 @@ defmodule Mix.Tasks.Bundlex.Bundle do
 
     case config_files do
       [config_file] ->
-        config = Mix.Config.read!(config_file)
+        config = Mix.Config.eval!(config_file)
 
         case config do
           [{:bundlex_project, platforms_config}] ->
