@@ -45,7 +45,11 @@ defmodule Bundlex.Mixfile do
 
     [
       {:ex_doc, "~> 0.18", only: :dev, runtime: false},
-      {:porcelain, "~> 2.0"}
+      # Current version results in many warings during compilation, may be uncommented after release (which is unlikely)
+      # {:porcelain, "~> 2.0"}
+      {:porcelain,
+       git: "https://github.com/alco/porcelain.git",
+       ref: "acfc0f0a6987aadb08f495a578e22ef624342685"}
     ]
   end
 end
