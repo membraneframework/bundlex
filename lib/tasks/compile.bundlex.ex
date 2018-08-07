@@ -64,8 +64,8 @@ defmodule Mix.Tasks.Compile.Bundlex do
       :ok ->
         :ok
 
-      {:error, {:run_build_script, return_code: ret, script: script}} ->
-        Output.raise("Build script:\n\n#{script}\n\nreturned non-zero code: #{ret}")
+      {:error, {:run_build_script, return_code: ret, command: cmd}} ->
+        Output.raise("Build script:\n\n#{cmd}\n\nreturned non-zero code: #{ret}")
 
       {:error, reason} ->
         Output.raise("Error running build script, reason #{inspect(reason)}")
