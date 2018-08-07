@@ -9,7 +9,7 @@ defmodule Bundlex.Mixfile do
     [
       app: :bundlex,
       version: @version,
-      elixir: "~> 1.6",
+      elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
       description: "Bundlex Multi-Platform build system for Elixir",
       package: package(),
@@ -48,11 +48,7 @@ defmodule Bundlex.Mixfile do
 
     [
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
-      # Current version results in many warings during compilation, may be uncommented after release (which is unlikely)
-      # {:porcelain, "~> 2.0"}
-      {:porcelain,
-       git: "https://github.com/alco/porcelain.git",
-       ref: "acfc0f0a6987aadb08f495a578e22ef624342685"}
+      {:porcelain, "~> 2.0"}
     ]
   end
 end
