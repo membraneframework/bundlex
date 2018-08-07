@@ -1,12 +1,14 @@
 defmodule Bundlex.Mixfile do
   use Mix.Project
 
+  @version "0.1.3"
+
   @github_url "https://github.com/membraneframework/bundlex"
 
   def project do
     [
       app: :bundlex,
-      version: "0.1.2",
+      version: @version,
       elixir: "~> 1.6",
       elixirc_paths: elixirc_paths(Mix.env()),
       description: "Bundlex Multi-Platform build system for Elixir",
@@ -36,7 +38,8 @@ defmodule Bundlex.Mixfile do
   defp docs do
     [
       main: "readme",
-      extras: ["README.md"]
+      extras: ["README.md"],
+      source_ref: "v#{@version}"
     ]
   end
 
@@ -44,7 +47,7 @@ defmodule Bundlex.Mixfile do
     Application.put_env(:porcelain, :driver, Porcelain.Driver.Basic)
 
     [
-      {:ex_doc, "~> 0.18", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.19", only: :dev, runtime: false},
       # Current version results in many warings during compilation, may be uncommented after release (which is unlikely)
       # {:porcelain, "~> 2.0"}
       {:porcelain,
