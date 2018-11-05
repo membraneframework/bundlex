@@ -44,11 +44,8 @@ defmodule Bundlex.Mixfile do
   end
 
   defp deps() do
-    Application.put_env(:porcelain, :driver, Porcelain.Driver.Basic)
-
     [
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
-      {:porcelain, "~> 2.0"},
       {:bunch, "~> 0.1.2"}
     ]
   end
