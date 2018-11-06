@@ -1,6 +1,6 @@
 defmodule Bundlex.Project do
-  use Bundlex.Helper
-  alias Helper.MixHelper
+  use Bunch
+  alias Bundlex.Helper.MixHelper
 
   @src_dir_name "c_src"
   @bundlex_file_name "bundlex.exs"
@@ -87,7 +87,7 @@ defmodule Bundlex.Project do
 
       modules
       |> Enum.find(&project_module?/1)
-      |> Helper.wrap_nil({:no_bundlex_project_in_file, bundlex_file_path})
+      |> Bunch.error_if_nil({:no_bundlex_project_in_file, bundlex_file_path})
     end
   end
 end

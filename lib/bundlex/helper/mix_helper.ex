@@ -5,7 +5,7 @@ defmodule Bundlex.Helper.MixHelper do
   """
 
   alias Bundlex.Output
-  use Bundlex.Helper
+  use Bunch
 
   @path_store_name :bundlex_path_store
 
