@@ -1,7 +1,7 @@
 defmodule Bundlex.NIF do
-  use Bundlex.Helper
-  alias Helper.{EnumHelper, ErlangHelper}
-  alias Bundlex.{Output, Platform, Project}
+  alias Bundlex.{Helper, Output, Platform, Project}
+  alias Helper.ErlangHelper
+  use Bunch
 
   @type t :: %__MODULE__{
           includes: [String.t()],
@@ -28,7 +28,7 @@ defmodule Bundlex.NIF do
         Output.info_substage("Found Erlang includes: #{inspect(erlang_includes)}")
 
         nifs
-        |> EnumHelper.flat_map_with(
+        |> Bunch.Enum.try_flat_map(
           &resolve_nif(&1, erlang_includes, project.src_path, platform, app)
         )
       end
@@ -81,8 +81,8 @@ defmodule Bundlex.NIF do
 
     get_deps = fn ->
       deps
-      |> EnumHelper.flat_map_with(fn {app, nifs} ->
-        parse_deps(app, nifs |> Helper.listify())
+      |> Bunch.Enum.try_flat_map(fn {app, nifs} ->
+        parse_deps(app, nifs |> Bunch.listify())
       end)
     end
 
@@ -97,7 +97,7 @@ defmodule Bundlex.NIF do
   defp parse_deps(app, names) do
     with {:ok, project} <- app |> Project.get(),
          {:ok, nifs} <- get_nifs(project, names) do
-      nifs |> EnumHelper.map_with(&parse_nif(&1, project.src_path, app))
+      nifs |> Bunch.Enum.try_map(&parse_nif(&1, project.src_path, app))
     else
       {:error, reason} -> {:error, {app, reason}}
     end

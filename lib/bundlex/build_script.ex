@@ -4,7 +4,7 @@ defmodule Bundlex.BuildScript do
   """
 
   alias Bundlex.Platform
-  use Bundlex.Helper
+  use Bunch
 
   @script_ext unix: ".sh", windows: ".bat"
   @script_prefix unix: "#!/bin/sh\n", windows: "@echo off\r\n"

@@ -48,7 +48,8 @@ defmodule Bundlex.Mixfile do
 
     [
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
-      {:porcelain, "~> 2.0"}
+      {:porcelain, "~> 2.0"},
+      {:bunch, "~> 0.1.2"}
     ]
   end
 end
