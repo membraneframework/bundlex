@@ -13,25 +13,8 @@ defmodule Bundlex.Toolchain.GCC do
 
     libs_part = nif.libs |> Enum.map(fn lib -> "-l#{lib}" end) |> Enum.join(" ")
 
-    pkg_config_libs_part =
-      nif.pkg_configs
-      |> Enum.map(fn pkg_config ->
-        %Porcelain.Result{status: 0, out: out} =
-          Porcelain.exec("pkg-config", ["--libs", pkg_config])
-
-        out |> String.trim()
-      end)
-      |> Enum.join(" ")
-
-    pkg_config_cflags_part =
-      nif.pkg_configs
-      |> Enum.map(fn pkg_config ->
-        %Porcelain.Result{status: 0, out: out} =
-          Porcelain.exec("pkg-config", ["--cflags", pkg_config])
-
-        out |> String.trim()
-      end)
-      |> Enum.join(" ")
+    pkg_config_libs_part = Toolchain.pkg_config(nif, ["--libs"])
+    pkg_config_cflags_part = Toolchain.pkg_config(nif, ["--cflags"])
 
     objects = nif.sources |> Enum.map(fn source -> object_path(source) end) |> Enum.join(" ")
 

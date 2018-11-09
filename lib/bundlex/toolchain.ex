@@ -47,4 +47,12 @@ defmodule Bundlex.Toolchain do
   def output_path(app_name, nif_name) do
     output_path(app_name) |> Path.join("#{nif_name}")
   end
+
+  @spec pkg_config(Bundlex.NIF.t(), [String.t()]) :: String.t()
+  def pkg_config(%Bundlex.NIF{pkg_configs: []}, _opts), do: ""
+
+  def pkg_config(%Bundlex.NIF{pkg_configs: packages}, opts) do
+    {output, 0} = System.cmd("pkg-config", opts ++ packages)
+    String.trim_trailing(output)
+  end
 end
