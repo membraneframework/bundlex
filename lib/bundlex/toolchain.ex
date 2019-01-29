@@ -67,6 +67,7 @@ defmodule Bundlex.Toolchain do
     case :code.priv_dir(app_name) do
       {:error, :bad_name} ->
         [Mix.Project.build_path(), "lib", "#{app_name}", "priv", "bundlex"] |> Path.join()
+
       path ->
         [path, "bundlex"] |> Path.join()
     end
