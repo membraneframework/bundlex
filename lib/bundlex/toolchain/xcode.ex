@@ -17,10 +17,10 @@ defmodule Bundlex.Toolchain.XCode do
     pkg_configs_part = Toolchain.pkg_config(nif, ["--cflags", "--libs"])
 
     [
-      "mkdir -p #{Toolchain.output_path(app_name)}",
-      "cc -fPIC -Wall -Wextra -dynamiclib -undefined dynamic_lookup -o #{
+      "mkdir -p \"#{Toolchain.output_path(app_name)}\"",
+      "cc -fPIC -Wall -Wextra -dynamiclib -undefined dynamic_lookup -o \"#{
         Toolchain.output_path(app_name, nif_name)
-      }.so #{includes_part} #{libs_part} #{pkg_configs_part} #{sources_part}"
+      }.so\" #{includes_part} #{libs_part} #{pkg_configs_part} #{sources_part}"
     ]
   end
 end
