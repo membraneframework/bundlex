@@ -6,8 +6,6 @@ defmodule Bundlex.Toolchain.GCC do
   use Bundlex.Toolchain
 
   def compiler_commands(nif, app_name, nif_name) do
-    # FIXME escape quotes properly
-
     includes_part =
       nif.includes |> Enum.map(fn include -> "-I\"#{include}\"" end) |> Enum.join(" ")
 
@@ -23,19 +21,19 @@ defmodule Bundlex.Toolchain.GCC do
       |> Enum.map(fn source ->
         "gcc -fPIC -std=c11 -Wall -Wextra -O2 -g #{includes_part} #{libs_part} #{
           pkg_config_cflags_part
-        } \"#{source_path(source)}\" -c -o \"#{object_path(source)}\""
+        } #{source_path(source)} -c -o #{object_path(source)}"
       end)
 
     commands_linker = [
-      "gcc -rdynamic -undefined -shared #{objects} #{libs_part} #{pkg_config_libs_part} -o #{
+      "gcc -rdynamic -undefined -shared #{objects} #{libs_part} #{pkg_config_libs_part} -o \"#{
         Toolchain.output_path(app_name, nif_name)
-      }.so"
+      }.so\""
     ]
 
-    ["mkdir -p #{Toolchain.output_path(app_name)}"] ++ commands_sources ++ commands_linker
+    ["mkdir -p \"#{Toolchain.output_path(app_name)}\""] ++ commands_sources ++ commands_linker
   end
 
-  defp source_path(source), do: source
+  defp source_path(source), do: "\"#{source}\""
 
-  defp object_path(source), do: "#{source}.o" |> String.replace(~r(\.c\.o$), ".o")
+  defp object_path(source), do: "\"#{source}.o\"" |> String.replace(~r(\.c\.o"$), ".o\"")
 end
