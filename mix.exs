@@ -1,7 +1,7 @@
 defmodule Bundlex.Mixfile do
   use Mix.Project
 
-  @version "0.1.7"
+  @version "0.1.8"
 
   @github_url "https://github.com/membraneframework/bundlex"
 
@@ -46,7 +46,7 @@ defmodule Bundlex.Mixfile do
   defp deps() do
     [
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
-      {:bunch, "~> 0.2"}
+      {:bunch, "~> 1.0"}
     ]
   end
 end
