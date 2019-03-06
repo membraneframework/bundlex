@@ -5,22 +5,28 @@ defmodule Bundlex.Toolchain.XCode do
 
   use Bundlex.Toolchain
 
-  def compiler_commands(nif, app_name, nif_name) do
+  def compiler_commands(native, app) do
     # FIXME escape quotes properly
 
     includes_part =
-      nif.includes |> Enum.map(fn include -> "-I\"#{include}\"" end) |> Enum.join(" ")
+      native.includes |> Enum.map(fn include -> "-I\"#{include}\"" end) |> Enum.join(" ")
 
-    sources_part = nif.sources |> Enum.map(fn source -> "\"#{source}\"" end) |> Enum.join(" ")
-    libs_part = nif.libs |> Enum.map(fn lib -> "-l#{lib}" end) |> Enum.join(" ")
-
-    pkg_configs_part = Toolchain.pkg_config(nif, ["--cflags", "--libs"])
+    sources_part = native.sources |> Enum.map(fn source -> "\"#{source}\"" end) |> Enum.join(" ")
+    lib_dirs_part = native.lib_dirs |> Enum.map(fn lib -> "-L#{lib}" end) |> Enum.join(" ")
+    libs_part = native.libs |> Enum.map(fn lib -> "-l#{lib}" end) |> Enum.join(" ")
+    pkg_configs_part = native.pkg_configs |> Toolchain.pkg_config(["--cflags", "--libs"])
 
     [
-      "mkdir -p \"#{Toolchain.output_path(app_name)}\"",
-      "cc -fPIC -Wall -Wextra -dynamiclib -undefined dynamic_lookup -o \"#{
-        Toolchain.output_path(app_name, nif_name)
-      }.so\" #{includes_part} #{libs_part} #{pkg_configs_part} #{sources_part}"
+      "mkdir -p \"#{Toolchain.output_path(app)}\"",
+      "cc -Wall -Wextra #{flags(native.type)} \
+      -o \"#{Toolchain.output_path(app, native.name)}#{ext(native.type)}\" \
+      #{includes_part} #{lib_dirs_part} #{libs_part} #{pkg_configs_part} #{sources_part}"
     ]
   end
+
+  defp flags(:nif), do: "-fPIC -dynamiclib -undefined dynamic_lookup"
+  defp flags(:cnode), do: ""
+
+  defp ext(:nif), do: ".so"
+  defp ext(:cnode), do: ""
 end

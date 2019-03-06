@@ -10,7 +10,7 @@ defmodule Bundlex.Project do
   @type nif_name_t :: atom
 
   @typedoc """
-  Type describing NIF configuration keyword list. Configuration
+  Type describing Native configuration keyword list. Configuration
   consists of fields:
   * `sources` - C files to be compiled (at least one must be provided),
   * `includes` - Paths to look for header files (empty list by default).
@@ -18,7 +18,7 @@ defmodule Bundlex.Project do
   * `pkg_configs` - Names of libraries that should be linked with pkg config (empty list by default).
   * `deps` - Dependencies in the form `{app_name, nif_name}`, where `app_name` is the application name of the dependency, and `nif_name` is the name of nif specified in bundlex file of this dependency. Sources, includes,
   libs and pkg_configs from those nifs will be appended. Empty list by default.
-  * `export_only?` - Flag specifying whether NIF is only to be added as dependency and should not be compiled itself. `false` by default.
+  * `export_only?` - Flag specifying whether Native is only to be added as dependency and should not be compiled itself. `false` by default.
   * `src_base` - Native files should reside in `project_root/c_src/<src_base>`.
   Current app name by default.
   """
@@ -75,6 +75,18 @@ defmodule Bundlex.Project do
       with {:ok, module} <- load(application) do
         Agent.update(@project_store_name, &(&1 |> Map.put(application, module)))
         {:ok, module}
+      end
+    end
+  end
+
+  def parse(application \\ MixHelper.get_app!()) do
+    with {:ok, module} <- get(application) do
+      project = module.project()
+
+      if Keyword.keyword?(project) do
+        {:ok, module}
+      else
+        {:error, :invalid_project_specification}
       end
     end
   end
