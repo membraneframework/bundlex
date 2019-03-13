@@ -1,15 +1,14 @@
 defmodule Bundlex.Toolchain.VisualStudio do
-  @moduledoc """
-  Toolchain definition for Microsoft Visual Studio.
-
-  It tries to determine Visual Studio root directory before compolation starts
-  and set up appropriate environment variables that will cause using right
-  compiler for given platform by calling vcvarsall.bat script shipped with
-  Visual Studio.
-
-  Visual Studio directory may be override by setting VISUAL_STUDIO_ROOT
-  environment variable.
-  """
+  @moduledoc false
+  # Toolchain definition for Microsoft Visual Studio.
+  #
+  # It tries to determine Visual Studio root directory before compolation starts
+  # and set up native.appropriate environment variables that will cause using right
+  # compiler for given platform by calling vcvarsall.bat script shipped with
+  # Visual Studio.
+  #
+  # Visual Studio directory may be override by setting VISUAL_STUDIO_ROOT
+  # environment variable.
 
   use Bundlex.Toolchain
   alias Bundlex.Helper.{DirectoryHelper, GitHelper}
@@ -28,7 +27,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
     [run_vcvarsall("amd64")]
   end
 
-  def compiler_commands(%Native{type: :nif} = native, app) do
+  def compiler_commands(%Native{type: :nif} = native) do
     # FIXME escape quotes properly
 
     includes_part =
@@ -52,7 +51,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
     libs_part = native.libs |> Enum.join(" ")
 
     unquoted_dir_part =
-      app
+      native.app
       |> Toolchain.output_path()
       |> DirectoryHelper.fix_slashes()
 
@@ -62,7 +61,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
       "if EXIST #{dir_part} rmdir /S /Q #{dir_part}",
       "mkdir #{dir_part}",
       "cl /LD #{includes_part} #{sources_part} #{libs_part} /link /DLL /OUT:\"#{
-        Toolchain.output_path(app, native.name)
+        Toolchain.output_path(native.app, native.name)
       }.dll\""
     ]
   end

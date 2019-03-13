@@ -16,7 +16,7 @@ defmodule Bundlex.Toolchain do
   @doc """
   Builds list of compiler commands valid for certain toolchain.
   """
-  @callback compiler_commands(Bundlex.Native.t(), app :: atom) :: [String.t()]
+  @callback compiler_commands(Bundlex.Native.t()) :: [String.t()]
 
   defmacro __using__(_) do
     quote location: :keep do
@@ -73,13 +73,5 @@ defmodule Bundlex.Toolchain do
 
   def output_path(app_name, nif_name) do
     output_path(app_name) |> Path.join("#{nif_name}")
-  end
-
-  @spec pkg_config(packages :: [String.t()], options :: [String.t()]) :: String.t()
-  def pkg_config([], _options), do: ""
-
-  def pkg_config(packages, options) do
-    {output, 0} = System.cmd("pkg-config", options ++ packages)
-    String.trim_trailing(output)
   end
 end
