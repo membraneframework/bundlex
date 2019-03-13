@@ -19,7 +19,7 @@ defmodule Bundlex.Toolchain.XCode do
     [
       "mkdir -p \"#{Toolchain.output_path(app)}\"",
       "cc -Wall -Wextra #{flags(native.type)} \
-      -o \"#{Toolchain.output_path(app, native.name)}#{ext(native.type)}\" \
+      -o \"#{Toolchain.output_path(app, native.name)}#{extension(native.type)}\" \
       #{includes_part} #{lib_dirs_part} #{libs_part} #{pkg_configs_part} #{sources_part}"
     ]
   end
@@ -27,6 +27,6 @@ defmodule Bundlex.Toolchain.XCode do
   defp flags(:nif), do: "-fPIC -dynamiclib -undefined dynamic_lookup"
   defp flags(:cnode), do: ""
 
-  defp ext(:nif), do: ".so"
-  defp ext(:cnode), do: ""
+  defp extension(:nif), do: ".so"
+  defp extension(:cnode), do: ""
 end

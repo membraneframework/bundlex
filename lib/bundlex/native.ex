@@ -51,7 +51,7 @@ defmodule Bundlex.Native do
         case native.type do
           :cnode ->
             native
-            |> Map.update!(:libs, &(["ei"] ++ &1))
+            |> Map.update!(:libs, &["ei" | &1])
             |> Map.update!(:lib_dirs, &(erlang.lib_dirs ++ &1))
 
           _ ->
@@ -80,9 +80,9 @@ defmodule Bundlex.Native do
 
     withl no_src: false <- native.sources |> Enum.empty?(),
           deps: {:ok, parsed_deps} <- parse_deps(deps) do
-      parsed_deps
-      |> Enum.reduce(native, &merge_lib/2)
-      ~> (native -> {:ok, native})
+      [native | parsed_deps]
+      |> Enum.reduce(&merge_lib/2)
+      ~> {:ok, &1}
     else
       no_src: true -> {:error, {:no_sources_in_native, native.name}}
       deps: error -> error
@@ -102,11 +102,11 @@ defmodule Bundlex.Native do
   defp parse_deps(deps) do
     deps
     |> Bunch.Enum.try_flat_map(fn {app, natives} ->
-      parse_app_deps(app, natives |> Bunch.listify())
+      parse_app_libs(app, natives |> Bunch.listify())
     end)
   end
 
-  defp parse_app_deps(app, names) do
+  defp parse_app_libs(app, names) do
     with {:ok, project} <- app |> Project.parse(),
          {:ok, libs} <- find_libs(project, names) do
       libs |> Bunch.Enum.try_map(&parse_native(&1, project.src_path, app))
