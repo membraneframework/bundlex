@@ -28,8 +28,7 @@ defmodule Bundlex.Project do
   is the application name of the dependency, and `lib_name` is the name of lib
   specified in bundlex project of this dependency.
   * `src_base` - Native files should reside in `project_root/c_src/<src_base>`
-  (native's name by default).
-  Current app name by default.
+  (application name by default).
   """
   @type native_config_t :: [
           sources: [String.t()],
