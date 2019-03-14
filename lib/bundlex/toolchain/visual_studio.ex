@@ -11,7 +11,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
   # environment variable.
 
   use Bundlex.Toolchain
-  alias Bundlex.Helper.{DirectoryHelper, GitHelper}
+  alias Bundlex.Helper.{PathHelper, GitHelper}
   alias Bundlex.Native
   alias Bundlex.Output
 
@@ -32,12 +32,12 @@ defmodule Bundlex.Toolchain.VisualStudio do
 
     includes_part =
       native.includes
-      |> Enum.map(fn include -> "/I \"#{DirectoryHelper.fix_slashes(include)}\"" end)
+      |> Enum.map(fn include -> "/I \"#{PathHelper.fix_slashes(include)}\"" end)
       |> Enum.join(" ")
 
     sources_part =
       native.sources
-      |> Enum.map(fn source -> "\"#{DirectoryHelper.fix_slashes(source)}\"" end)
+      |> Enum.map(fn source -> "\"#{PathHelper.fix_slashes(source)}\"" end)
       |> Enum.join(" ")
 
     if not (native.libs |> Enum.empty?()) and not GitHelper.lfs_present?() do
@@ -53,7 +53,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
     unquoted_dir_part =
       native.app
       |> Toolchain.output_path()
-      |> DirectoryHelper.fix_slashes()
+      |> PathHelper.fix_slashes()
 
     dir_part = "\"#{unquoted_dir_part}\""
 
@@ -110,7 +110,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
   defp determine_visual_studio_root_with_wildcard(wildcard) do
     Bundlex.Output.info_substage("Trying to find Visual Studio in \"#{wildcard}\"...")
 
-    case DirectoryHelper.wildcard(wildcard) do
+    case PathHelper.latest_wildcard(wildcard) do
       nil ->
         Output.raise(
           "Unable to find Visual Studio root directory. Please ensure that it is either located in \"#{

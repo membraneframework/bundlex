@@ -1,25 +1,50 @@
 defmodule Bundlex.Loader do
   @moduledoc """
-  Module containing functions that can be used to ease loading of Bundlex-based
-  libraries.
+  Some utilities to ease loading of Bundlex-based NIFs.
   """
 
-  alias Bundlex.Helper.DirectoryHelper
+  alias Bundlex.Helper.{MixHelper, PathHelper}
 
-  defmacro __using__(args) do
+  @doc """
+  Binds the module to the specified NIF.
+
+  Accepts keyword list, that may contain two arguments:
+  - `:nif` - required, name of the NIF to be bound (the same as specified in `bundlex.exs`)
+  - `:app` - application defining the NIF, defaults to the current application
+
+  After `use`'ing this module you can utilize `defnif/1` and `defnifp/1` macros
+  to create bindings to particular native functions.
+
+  ## Example
+
+      defmodule My.Native.Module do
+        use Bundlex.Loader, nif: :my_nif
+
+        defnif native_function(arg1, arg2, arg3)
+
+        def normal_function(arg1, arg2) do
+          # ...
+        end
+
+        defnifp private_native_function(arg1, arg2)
+
+      end
+  """
+  defmacro __using__(keyword) do
     quote do
       import unquote(__MODULE__), only: [defnif: 1, defnifp: 1]
-      @after_compile Bundlex.Loader
-      @bundlex_nif_name unquote(args |> Keyword.fetch!(:nif))
-      @bundlex_app_name unquote(args |> Keyword.get(:app))
+      @after_compile unquote(__MODULE__)
+      @bundlex_nif_name unquote(keyword |> Keyword.fetch!(:nif))
+      @bundlex_app unquote(keyword |> Keyword.get(:app))
       Module.register_attribute(__MODULE__, :bundlex_defnifs, accumulate: true)
     end
   end
 
+  @doc false
   def __after_compile__(%{module: module} = env, _code) do
     funs = Module.delete_attribute(module, :bundlex_defnifs)
     nif_name = Module.delete_attribute(module, :bundlex_nif_name)
-    app_name = Module.delete_attribute(module, :bundlex_app_name)
+    app = Module.delete_attribute(module, :bundlex_app)
 
     defs =
       funs
@@ -43,10 +68,10 @@ defmodule Bundlex.Loader do
     nif_module_content =
       quote do
         @moduledoc false
-        require Bundlex.Loader
+        require unquote(__MODULE__)
         @on_load :load_nif
         def load_nif() do
-          Bundlex.Loader.load_nif!(unquote(app_name), unquote(nif_name))
+          unquote(__MODULE__).load_nif!(unquote(app), unquote(nif_name))
         end
 
         unquote(defs)
@@ -55,6 +80,14 @@ defmodule Bundlex.Loader do
     Module.create(module |> Module.concat(Nif), nif_module_content, env)
   end
 
+  @doc """
+  Generates function bound to the native implementation. This module has to be
+  `use`d for this macro to work.
+
+  Function name should correspond to the native one.
+
+  See `__using__/1` for examples.
+  """
   defmacro defnif({name, _pos, args} = definition) do
     quote do
       @bundlex_defnifs unquote(Macro.escape(definition))
@@ -63,6 +96,12 @@ defmodule Bundlex.Loader do
     end
   end
 
+  @doc """
+  Works the same way as `defnif/1`, but generates private function. This module
+  has to be `use`d for this macro to work.
+
+  See `__using__/1` for examples.
+  """
   defmacro defnifp({name, _pos, args} = definition) do
     quote do
       @bundlex_defnifs unquote(Macro.escape(definition))
@@ -74,29 +113,26 @@ defmodule Bundlex.Loader do
   end
 
   @doc """
-  Loads NIF for given app_name and given name.
+  Binds calling module to NIF `nif_name` from application `app`.
+
   Second argument has to be an atom, the same as name of the NIF in the bundlex
   project.
+
+  Invoked internally by `__using__/1` macro, which is the preferred way of loading
+  NIFs.
   """
-  @spec load_nif!(atom, atom) :: any
-  defmacro load_nif!(app_name \\ nil, nif_name) do
+  defmacro load_nif!(app \\ nil, nif_name) do
     quote do
-      app_name =
-        unquote(
-          app_name || Application.get_application(__MODULE__) ||
-            Bundlex.Helper.MixHelper.get_app!()
-        )
-
+      app = unquote(app || MixHelper.get_app!(__MODULE__))
       nif_name = unquote(nif_name)
+      path = Bundlex.build_path(app, nif_name)
 
-      path = Bundlex.Toolchain.output_path(app_name, nif_name)
-
-      with :ok <- :erlang.load_nif(path |> DirectoryHelper.fix_slashes() |> to_charlist(), 0) do
+      with :ok <- :erlang.load_nif(path |> PathHelper.fix_slashes() |> to_charlist(), 0) do
         :ok
       else
         {:error, {reason, text}} ->
           raise """
-          Bundlex cannot load nif #{inspect(nif_name)} of app #{inspect(app_name)}
+          Bundlex cannot load nif #{inspect(nif_name)} of app #{inspect(app)}
           from "#{path}", check bundlex.exs file for information about nifs.
           Reason: #{inspect(reason)}, #{to_string(text)}
           """

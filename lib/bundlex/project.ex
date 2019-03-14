@@ -1,43 +1,54 @@
 defmodule Bundlex.Project do
+  @bundlex_file_name "bundlex.exs"
+  @moduledoc """
+  Behaviour that should be implemented by each project using Bundlex in the
+  `#{@bundlex_file_name}` file.
+  """
   use Bunch
+  alias Bunch.KVList
   alias Bundlex.Helper.MixHelper
 
   @src_dir_name "c_src"
-  @bundlex_file_name "bundlex.exs"
 
   @project_store_name :bundlex_project_store
 
-  @type nif_name_t :: atom
+  @type native_name_t :: atom
 
   @typedoc """
-  Type describing Native configuration keyword list. Configuration
-  consists of fields:
+  Type describing configuration of a native.
+
+  It's a keyword list containing the following keys:
   * `sources` - C files to be compiled (at least one must be provided),
   * `includes` - Paths to look for header files (empty list by default).
+  * `libs_dirs` - Paths to look for libraries (empty list by default).
   * `libs` - Names of libraries to link (empty list by default).
-  * `pkg_configs` - Names of libraries that should be linked with pkg config (empty list by default).
-  * `deps` - Dependencies in the form `{app_name, nif_name}`, where `app_name` is the application name of the dependency, and `nif_name` is the name of nif specified in bundlex file of this dependency. Sources, includes,
-  libs and pkg_configs from those nifs will be appended. Empty list by default.
-  * `export_only?` - Flag specifying whether Native is only to be added as dependency and should not be compiled itself. `false` by default.
-  * `src_base` - Native files should reside in `project_root/c_src/<src_base>`.
+  * `pkg_configs` - Names of libraries that should be linked with pkg config
+  (empty list by default).
+  * `deps` - Dependencies in the form of `{app, lib_name}`, where `app`
+  is the application name of the dependency, and `lib_name` is the name of lib
+  specified in bundlex project of this dependency.
+  * `src_base` - Native files should reside in `project_root/c_src/<src_base>`
+  (native's name by default).
   Current app name by default.
   """
-  @type nif_config_t :: [
+  @type native_config_t :: [
           sources: [String.t()],
           includes: [String.t()],
+          lib_dirs: [String.t()],
           libs: [String.t()],
           pkg_configs: [String.t()],
-          deps: [{Application.app(), nif_name_t}],
-          export_only?: boolean,
+          deps: [{Application.app(), native_name_t}],
           src_base: String.t()
         ]
 
   @typedoc """
   Type describing project configuration.
+
+  It's a keyword list, where nifs, cnodes and libs can be specified. Libs are
+  native packages that are compiled as static libraries and linked to natives
+  that have them specified in `deps` field of their configuration.
   """
-  @type config_t :: [
-          nifs: [{nif_name_t, nif_config_t}]
-        ]
+  @type config_t :: KVList.t(:nifs | :cnodes | :libs, KVList.t(native_name_t, native_config_t))
 
   @doc """
   Callback returning project configuration.
@@ -52,8 +63,22 @@ defmodule Bundlex.Project do
     end
   end
 
+  @typedoc """
+  Struct representing bundlex project.
+
+  Contains the following fileds:
+  - `:config` - project configuration
+  - `:src_path` - path to the native sources
+  - `:module` - bundlex project module
+  - `:app` - application that exports project
+  """
+  @type t :: %__MODULE__{config: config_t, src_path: String.t(), module: module, app: atom}
+
+  @enforce_keys [:config, :src_path, :module, :app]
+  defstruct @enforce_keys
+
   @doc """
-  Determines if a module is a bundlex project module.
+  Determines if `module` is a bundlex project module.
   """
   @spec project_module?(module) :: boolean
   def project_module?(module) do
@@ -61,32 +86,29 @@ defmodule Bundlex.Project do
   end
 
   @doc """
-  Returns the bundlex project module of given application. If the module has not
-  been loaded yet, it is loaded from `project_dir/#{@bundlex_file_name}` file.
+  Returns the project struct of given application.
+
+  If the module has not been loaded yet, it is loaded from
+  `project_dir/#{@bundlex_file_name}` file.
   """
-  @spec get(application :: atom) :: {:ok, module} | {:error, any()}
+  @spec get(application :: atom) :: {:ok, t} | {:error, any()}
   def get(application \\ MixHelper.get_app!()) do
     Agent.start(fn -> %{} end, name: @project_store_name)
-    module = Agent.get(@project_store_name, & &1[application])
+    project = Agent.get(@project_store_name, & &1[application])
 
-    if module do
-      {:ok, module}
+    if project do
+      {:ok, project}
     else
-      with {:ok, module} <- load(application) do
-        Agent.update(@project_store_name, &(&1 |> Map.put(application, module)))
-        {:ok, module}
-      end
-    end
-  end
-
-  def parse(application \\ MixHelper.get_app!()) do
-    with {:ok, module} <- get(application) do
-      project = module.project()
-
-      if Keyword.keyword?(project) do
-        {:ok, module}
-      else
-        {:error, :invalid_project_specification}
+      with {:ok, module} <- load(application),
+           project = %__MODULE__{
+             config: module.project(),
+             src_path: module.src_path(),
+             module: module,
+             app: application
+           },
+           true <- Keyword.keyword?(project.config) or {:error, :invalid_project_specification} do
+        Agent.update(@project_store_name, &(&1 |> Map.put(application, project)))
+        {:ok, project}
       end
     end
   end

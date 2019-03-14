@@ -1,12 +1,37 @@
 defmodule Bundlex.Platform do
+  @moduledoc false
+  alias Bundlex.Output
+
   @type name_t :: atom
+  @type family_name_t :: atom
 
   @callback extra_otp_configure_options() :: [] | [String.t()]
   @callback required_env_vars() :: [] | [String.t()]
   @callback patches_to_apply() :: [] | [String.t()]
   @callback toolchain_module() :: module
 
-  alias Bundlex.Output
+  defmacro __using__(_args) do
+    quote do
+      @behaviour unquote(__MODULE__)
+
+      @impl unquote(__MODULE__)
+      def extra_otp_configure_options() do
+        []
+      end
+
+      @impl unquote(__MODULE__)
+      def required_env_vars() do
+        []
+      end
+
+      @impl unquote(__MODULE__)
+      def patches_to_apply() do
+        []
+      end
+
+      defoverridable unquote(__MODULE__)
+    end
+  end
 
   @doc """
   Converts platform passed as options into platform atom valid for further use
@@ -22,18 +47,12 @@ defmodule Bundlex.Platform do
   Otherwise raises Mix error.
   """
   @spec get_from_opts!(OptionParser.parsed()) :: name_t
-  def get_from_opts!(opts) do
+  def get_from_opts!(
+        opts \\ OptionParser.parse(System.argv(), switches: [platform: :string]) |> elem(0)
+      ) do
     cond do
-      platform = opts[:platform] ->
-        Bundlex.Output.info_substage("Selected target platform #{platform} via options.")
-        String.to_atom(platform)
-
-      true ->
-        Bundlex.Output.info_substage(
-          "Automatically detecting target platform to match current platform..."
-        )
-
-        get_current!()
+      platform = opts[:platform] -> String.to_atom(platform)
+      true -> get_current!()
     end
   end
 
@@ -77,9 +96,16 @@ defmodule Bundlex.Platform do
     end
   end
 
-  def get_module!(:windows32), do: Bundlex.Platform.Windows32
-  def get_module!(:windows64), do: Bundlex.Platform.Windows64
-  def get_module!(:macosx), do: Bundlex.Platform.MacOSX
-  def get_module!(:linux), do: Bundlex.Platform.Linux
-  def get_module!(:android_armv7), do: Bundlex.Platform.AndroidARMv7
+  @spec family(name_t) :: family_name_t
+  def family(:windows32), do: :windows
+  def family(:windows64), do: :windows
+  def family(:linux), do: :unix
+  def family(:macosx), do: :unix
+  def family(:android_armv7), do: :unix
+
+  def get_module(:windows32), do: Bundlex.Platform.Windows32
+  def get_module(:windows64), do: Bundlex.Platform.Windows64
+  def get_module(:macosx), do: Bundlex.Platform.MacOSX
+  def get_module(:linux), do: Bundlex.Platform.Linux
+  def get_module(:android_armv7), do: Bundlex.Platform.AndroidARMv7
 end

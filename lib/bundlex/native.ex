@@ -31,8 +31,8 @@ defmodule Bundlex.Native do
 
   @native_type_keys %{nif: :nifs, cnode: :cnodes, lib: :libs}
 
-  def resolve_natives(app, project, platform) do
-    case get_native_configs(project, app) do
+  def resolve_natives(project, platform) do
+    case get_native_configs(project) do
       [] ->
         Output.info_substage("No natives found")
         {:ok, []}
@@ -67,7 +67,7 @@ defmodule Bundlex.Native do
         |> Map.update!(:sources, &Enum.uniq/1)
         |> Map.update!(:deps, &Enum.uniq/1)
 
-      commands = Platform.get_module!(platform).toolchain_module.compiler_commands(native)
+      commands = Platform.get_module(platform).toolchain_module.compiler_commands(native)
 
       {:ok, commands}
     end
@@ -97,13 +97,13 @@ defmodule Bundlex.Native do
     end
   end
 
-  defp get_native_configs(project, app, types \\ [:lib, :nif, :cnode]) do
+  defp get_native_configs(project, types \\ [:lib, :nif, :cnode]) do
     types
     |> Bunch.listify()
     |> Enum.flat_map(fn type ->
-      project.project()
+      project.config
       |> Keyword.get(@native_type_keys[type], [])
-      |> Enum.map(fn {name, config} -> config ++ [name: name, type: type, app: app] end)
+      |> Enum.map(fn {name, config} -> config ++ [name: name, type: type, app: project.app] end)
     end)
   end
 
@@ -115,17 +115,17 @@ defmodule Bundlex.Native do
   end
 
   defp parse_app_libs(app, names) do
-    with {:ok, project} <- app |> Project.parse(),
-         {:ok, libs} <- find_libs(project, app, names) do
+    with {:ok, project} <- app |> Project.get(),
+         {:ok, libs} <- find_libs(project, names) do
       libs |> Bunch.Enum.try_map(&parse_native(&1, project.src_path))
     else
       {:error, reason} -> {:error, {app, reason}}
     end
   end
 
-  defp find_libs(project, app, names) do
+  defp find_libs(project, names) do
     names = names |> MapSet.new()
-    found_libs = project |> get_native_configs(app, :lib) |> Enum.filter(&(&1[:name] in names))
+    found_libs = project |> get_native_configs(:lib) |> Enum.filter(&(&1[:name] in names))
     diff = names |> MapSet.difference(found_libs |> MapSet.new(& &1[:name]))
 
     if diff |> Enum.empty?() do
