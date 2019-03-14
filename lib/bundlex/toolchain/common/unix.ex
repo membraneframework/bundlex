@@ -7,6 +7,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
   def compiler_commands(native, compile, link, options \\ []) do
     includes = native.includes |> paths("-I")
     pkg_config_cflags = native.pkg_configs |> pkg_config(:cflags)
+    compiler_flags = native.compiler_flags |> Enum.join(" ")
     output = Toolchain.output_path(native.app, native.name)
     output_obj = output <> "_obj"
 
@@ -24,7 +25,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
       |> Enum.zip(objects)
       |> Enum.map(fn {source, object} ->
         """
-        #{compile} -Wall -Wextra -c -std=c11 -O2 -g \
+        #{compile} -Wall -Wextra -c -std=c11 -O2 -g #{compiler_flags} \
         -o #{path(object)} #{includes} #{pkg_config_cflags} #{path(source)}\
         """
       end)
@@ -55,10 +56,11 @@ defmodule Bundlex.Toolchain.Common.Unix do
     lib_dirs = native.lib_dirs |> paths("-L")
     libs = native.libs |> Enum.map(fn lib -> "-l#{lib}" end)
     pkg_config_libs = native.pkg_configs |> pkg_config(:libs)
+    linker_flags = native.linker_flags |> Enum.join(" ")
 
     [
       """
-      #{link} -o #{path(output <> extension)} \
+      #{link} #{linker_flags} -o #{path(output <> extension)} \
       #{pkg_config_libs} #{lib_dirs} #{libs} #{deps} #{paths(objects)}
       """
     ]

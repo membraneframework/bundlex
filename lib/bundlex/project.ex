@@ -29,6 +29,8 @@ defmodule Bundlex.Project do
   specified in bundlex project of this dependency.
   * `src_base` - Native files should reside in `project_root/c_src/<src_base>`
   (application name by default).
+  * `compiler_flags` - Custom flags for compiler.
+  * `linker_flags` - Custom flags for linker.
   """
   @type native_config_t :: [
           sources: [String.t()],
@@ -37,7 +39,9 @@ defmodule Bundlex.Project do
           libs: [String.t()],
           pkg_configs: [String.t()],
           deps: [{Application.app(), native_name_t}],
-          src_base: String.t()
+          src_base: String.t(),
+          compiler_flags: [String.t()],
+          linker_flags: [String.t()]
         ]
 
   @typedoc """

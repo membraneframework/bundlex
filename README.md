@@ -128,6 +128,8 @@ is the application name of the dependency, and `lib_name` is the name of lib
 specified in bundlex project of this dependency.
 * `src_base` - Native files should reside in `project_root/c_src/<src_base>`
 (application name by default).
+* `compiler_flags` - Custom flags for compiler.
+* `linker_flags` - Custom flags for linker.
 
 ### Compilation options
 
