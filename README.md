@@ -133,8 +133,10 @@ specified in bundlex project of this dependency.
 
 ### Compilation options
 
-Setting env variable `BUNDLEX_STORE_BUILD_SCRIPTS=true` makes bundlex store build
-scripts (`bundlex.sh`/`bundlex.bat`) in projects root folders for analysis.
+The following command line arguments can be passed:
+- `--platform <platform>` - platform to build for, see `Bundlex.platform/0`.
+- `--bundlex-store-scripts` - if set, shell scripts are stored in the project
+root folder for further analysis.
 
 ### Loading NIFs in modules
 

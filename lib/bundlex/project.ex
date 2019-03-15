@@ -38,7 +38,7 @@ defmodule Bundlex.Project do
           lib_dirs: [String.t()],
           libs: [String.t()],
           pkg_configs: [String.t()],
-          deps: [{Application.app(), native_name_t}],
+          deps: [{Application.app(), native_name_t | [native_name_t]}],
           src_base: String.t(),
           compiler_flags: [String.t()],
           linker_flags: [String.t()]

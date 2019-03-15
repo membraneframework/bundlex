@@ -1,14 +1,13 @@
 defmodule Mix.Tasks.Bundlex.Bundle do
+  @moduledoc false
+  # Assembles a bundle that is ready to run on given platform platform.
+  #
+  # ## Command line options
+  #
+  #   * `--platform` or `-t` - specifies platform platform. It has to be one of
+  #     `windows32`, `windows64`, TODO.
+
   use Mix.Task
-
-  @moduledoc """
-  Assembles a bundle that is ready to run on given platform platform.
-
-  ## Command line options
-
-    * `--platform` or `-t` - specifies platform platform. It has to be one of
-      `windows32`, `windows64`, TODO.
-  """
 
   @shortdoc "Assembles a ready-to-ship bundle of the current applicaton"
   @switches [platform: :string]
