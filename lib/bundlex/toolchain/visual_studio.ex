@@ -13,6 +13,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
 
   use Bundlex.Toolchain
   alias Bundlex.Helper.{DirectoryHelper, GitHelper}
+  alias Bundlex.Native
   alias Bundlex.Output
 
   @directory_wildcard_x64 "c:\\Program Files (x86)\\Microsoft Visual Studio *"
@@ -27,31 +28,31 @@ defmodule Bundlex.Toolchain.VisualStudio do
     [run_vcvarsall("amd64")]
   end
 
-  def compiler_commands(nif, app_name, nif_name) do
+  def compiler_commands(%Native{type: :nif} = native, app) do
     # FIXME escape quotes properly
 
     includes_part =
-      nif.includes
+      native.includes
       |> Enum.map(fn include -> "/I \"#{DirectoryHelper.fix_slashes(include)}\"" end)
       |> Enum.join(" ")
 
     sources_part =
-      nif.sources
+      native.sources
       |> Enum.map(fn source -> "\"#{DirectoryHelper.fix_slashes(source)}\"" end)
       |> Enum.join(" ")
 
-    if not (nif.libs |> Enum.empty?()) and not GitHelper.lfs_present?() do
+    if not (native.libs |> Enum.empty?()) and not GitHelper.lfs_present?() do
       Output.raise(
         "Git LFS is not installed, being necessary for downloading windows *.lib files for dlls #{
-          inspect(nif.libs)
+          inspect(native.libs)
         }. Install from https://git-lfs.github.com/."
       )
     end
 
-    libs_part = nif.libs |> Enum.join(" ")
+    libs_part = native.libs |> Enum.join(" ")
 
     unquoted_dir_part =
-      app_name
+      app
       |> Toolchain.output_path()
       |> DirectoryHelper.fix_slashes()
 
@@ -61,7 +62,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
       "if EXIST #{dir_part} rmdir /S /Q #{dir_part}",
       "mkdir #{dir_part}",
       "cl /LD #{includes_part} #{sources_part} #{libs_part} /link /DLL /OUT:\"#{
-        Toolchain.output_path(app_name, nif_name)
+        Toolchain.output_path(app, native.name)
       }.dll\""
     ]
   end

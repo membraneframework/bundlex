@@ -9,16 +9,14 @@ defmodule Bundlex.Toolchain do
   In case of success implementations should return list of commands to be
   called upon compilation.
 
-  Default implentation do nothing.
+  Default implentation does nothing.
   """
   @callback before_all!(atom) :: [] | [String.t()]
 
   @doc """
   Builds list of compiler commands valid for certain toolchain.
-
-  It will receive includes, libs, sources, pkg_configs, nif_name.
   """
-  @callback compiler_commands(Bundlex.NIF.t(), app_name :: atom, nif_name :: atom) :: [String.t()]
+  @callback compiler_commands(Bundlex.Native.t(), app :: atom) :: [String.t()]
 
   defmacro __using__(_) do
     quote location: :keep do
@@ -27,7 +25,7 @@ defmodule Bundlex.Toolchain do
 
       # Default implementations
 
-      @doc false
+      @impl unquote(__MODULE__)
       def before_all!(_platform), do: []
 
       defoverridable before_all!: 1
@@ -35,7 +33,7 @@ defmodule Bundlex.Toolchain do
   end
 
   def output_path(app_name) do
-    # It seems that we have two methods to determine where NIFs are located:
+    # It seems that we have two methods to determine where Natives are located:
     # * `Mix.Project.build_path/0`
     # * `:code.priv_dir/1`
     #
@@ -45,25 +43,25 @@ defmodule Bundlex.Toolchain do
     #   there are race conditions and it seems that some processes from the
     #   `:mix` app are not launched yet (yes, we tried to ensure that `:mix`
     #   app is started, calling `Application.ensure_all_started(:mix)` prior
-    #   to calling `Mix.Project.build_path/0` causes deadlock; calling it 
+    #   to calling `Mix.Project.build_path/0` causes deadlock; calling it
     #   without ensuring that app is started terminates the whole app; adding
     #   `:mix` to bundlex OTP applications does not seem to help either),
     # * it seems that when using releases, `Mix.Project.build_path/0` returns
-    #   different results in compile time and run time, 
+    #   different results in compile time and run time,
     # * moreover, it seems that the paths returned by `Mix.Project.build_path/0`
-    #   when using releases and `prod` env might have a `dev` suffix unless 
+    #   when using releases and `prod` env might have a `dev` suffix unless
     #   a developer remembers to disable `:build_per_environment: setting,
     # * `:code.priv_dir/1` is not accessible in the compile time, but at least
     #   it does not crash anything.
     #
     # As a result, we try to call `:code.priv_dir/1` first, and if it fails,
-    # we are probably in the build time and need to fall back to 
-    # `Mix.Project.build_path/0`. Previously the check was reversed and it 
-    # caused crashes at least when using distillery >= 2.0 and Elixir 1.7. 
-    # 
+    # we are probably in the build time and need to fall back to
+    # `Mix.Project.build_path/0`. Previously the check was reversed and it
+    # caused crashes at least when using distillery >= 2.0 and Elixir 1.7.
+    #
     # Think twice before you're going to be another person who spent many
-    # hours on trying to figure out why such simple thing as determining 
-    # a path might be so hard. 
+    # hours on trying to figure out why such simple thing as determining
+    # a path might be so hard.
     case :code.priv_dir(app_name) do
       {:error, :bad_name} ->
         [Mix.Project.build_path(), "lib", "#{app_name}", "priv", "bundlex"] |> Path.join()
@@ -77,11 +75,11 @@ defmodule Bundlex.Toolchain do
     output_path(app_name) |> Path.join("#{nif_name}")
   end
 
-  @spec pkg_config(Bundlex.NIF.t(), [String.t()]) :: String.t()
-  def pkg_config(%Bundlex.NIF{pkg_configs: []}, _opts), do: ""
+  @spec pkg_config(packages :: [String.t()], options :: [String.t()]) :: String.t()
+  def pkg_config([], _options), do: ""
 
-  def pkg_config(%Bundlex.NIF{pkg_configs: packages}, opts) do
-    {output, 0} = System.cmd("pkg-config", opts ++ packages)
+  def pkg_config(packages, options) do
+    {output, 0} = System.cmd("pkg-config", options ++ packages)
     String.trim_trailing(output)
   end
 end

@@ -1,6 +1,6 @@
 defmodule Mix.Tasks.Compile.Bundlex do
   use Mix.Task
-  alias Bundlex.{BuildScript, NIF, Output, Platform, Project}
+  alias Bundlex.{BuildScript, Native, Output, Platform, Project}
   alias Bundlex.Helper.MixHelper
 
   @moduledoc """
@@ -21,8 +21,8 @@ defmodule Mix.Tasks.Compile.Bundlex do
     Output.info_stage("Reading project")
 
     project =
-      with {:ok, project_module} <- Project.get(app) do
-        project_module
+      with {:ok, project} <- Project.parse(app) do
+        project
       else
         {:error, reason} ->
           Output.raise("Cannot get project for app: #{inspect(app)}, reason: #{inspect(reason)}")
@@ -37,13 +37,13 @@ defmodule Mix.Tasks.Compile.Bundlex do
     Output.info_stage("Toolchain")
     commands = commands ++ Platform.get_module!(platform).toolchain_module.before_all!(platform)
 
-    Output.info_stage("Resolving NIFs")
+    Output.info_stage("Resolving Natives")
 
     commands =
       commands ++
-        case NIF.resolve_nifs(app, project, platform) do
+        case Native.resolve_natives(app, project, platform) do
           {:ok, nifs_commands} -> nifs_commands
-          {:error, reason} -> Output.raise("Error parsing NIFs, reason: #{inspect(reason)}")
+          {:error, reason} -> Output.raise("Error parsing Natives, reason: #{inspect(reason)}")
         end
 
     Output.info_stage("Building")
