@@ -48,8 +48,7 @@ defmodule Bundlex.Mixfile do
   defp deps() do
     [
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
-      {:bunch, "~> 1.0"},
-      {:secure_random, "~> 0.5"}
+      {:bunch, "~> 1.0"}
     ]
   end
 end
