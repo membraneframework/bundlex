@@ -4,6 +4,7 @@ defmodule Bundlex.Toolchain.XCode do
   use Bundlex.Toolchain
   alias Bundlex.Toolchain.Common.Unix
 
+  @impl Toolchain
   def compiler_commands(native) do
     {cflags, lflags} =
       case native.type do
