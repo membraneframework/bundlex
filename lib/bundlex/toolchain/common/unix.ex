@@ -1,9 +1,10 @@
 defmodule Bundlex.Toolchain.Common.Unix do
   @moduledoc false
 
+  use Bunch
   alias Bundlex.{Native, Toolchain}
 
-  def compiler_commands(native, compile, link) do
+  def compiler_commands(native, compile, link, options \\ []) do
     includes = native.includes |> paths("-I")
     pkg_config_cflags = native.pkg_configs |> pkg_config(:cflags)
     output = Toolchain.output_path(native.app, native.name)
@@ -29,20 +30,27 @@ defmodule Bundlex.Toolchain.Common.Unix do
       end)
 
     ["mkdir -p #{path(output_obj)}"] ++
-      compile_commands ++ link_commands(native, link, output, objects)
+      compile_commands ++ link_commands(native, link, output, objects, options)
   end
 
-  defp link_commands(%Native{type: :lib}, _link, output, objects) do
+  defp link_commands(%Native{type: :lib}, _link, output, objects, _options) do
     ["ar rcs #{path(output <> ".a")} #{paths(objects)}"]
   end
 
-  defp link_commands(native, link, output, objects) do
-    extension = [nif: ".so", cnode: ""][native.type]
+  defp link_commands(native, link, output, objects, options) do
+    extension =
+      case native.type do
+        :nif -> ".so"
+        :cnode -> ""
+      end
+
+    wrap_deps = options |> Keyword.get(:wrap_deps, & &1)
 
     deps =
       native.deps
       |> Enum.map(fn {app, name} -> Toolchain.output_path(app, name) <> ".a" end)
       |> paths()
+      |> wrap_deps.()
 
     lib_dirs = native.lib_dirs |> paths("-L")
     libs = native.libs |> Enum.map(fn lib -> "-l#{lib}" end)
@@ -50,7 +58,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
 
     [
       """
-      #{link} -o #{path(output) <> extension} \
+      #{link} -o #{path(output <> extension)} \
       #{pkg_config_libs} #{lib_dirs} #{libs} #{deps} #{paths(objects)}
       """
     ]
@@ -61,7 +69,8 @@ defmodule Bundlex.Toolchain.Common.Unix do
   end
 
   defp path(path) do
-    ~s("#{path |> String.replace(~S("), ~S(\"))}")
+    path = path |> String.replace(~S("), ~S(\"))
+    ~s("#{path}")
   end
 
   defp pkg_config([], _options), do: ""

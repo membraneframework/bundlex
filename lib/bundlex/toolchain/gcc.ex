@@ -8,10 +8,13 @@ defmodule Bundlex.Toolchain.GCC do
   def compiler_commands(native) do
     {cflags, lflags} =
       case native.type do
-        :nif -> {"-fPIC", "-rdynamic -undefined dynamic_lookup -shared"}
+        :nif -> {"-fPIC", "-rdynamic -shared"}
+        :lib -> {"-fPIC", ""}
         _ -> {"", ""}
       end
 
-    Unix.compiler_commands(native, "gcc #{cflags}", "gcc #{lflags}")
+    Unix.compiler_commands(native, "gcc #{cflags}", "gcc #{lflags}",
+      wrap_deps: &"-Wl,--whole-archive #{&1} -Wl,--no-whole-archive"
+    )
   end
 end

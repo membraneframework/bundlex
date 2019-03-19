@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.com/membraneframework/bundlex.svg?branch=master)](https://travis-ci.com/membraneframework/bundlex)
 
-Bundlex is a multi-platform tool for compiling C code along with elixir projects, for use in NIFs and cnodes. The tool provides also convenient way of accessing compiled code in elixir modules.
+Bundlex is a multi-platform tool for compiling C code along with elixir projects, for use in NIFs and CNodes. The tool provides also convenient way of accessing compiled code in elixir modules.
 
 This tool is a part of [Membrane Framework](https://membraneframework.org/)
 
@@ -58,7 +58,7 @@ defmodule MyApp.BundlexProject do
   def project() do
     [
       nifs: nifs(Bundlex.platform),
-      cnodes: cnodes(),
+      CNodes: CNodes(),
       libs: libs()
     ]
   end
@@ -85,7 +85,7 @@ defmodule MyApp.BundlexProject do
     ]
   end
 
-  defp cnodes() do
+  defp CNodes() do
     [
       my_cnode: [
         sources: ["something.c", "something_other.c"]
@@ -110,8 +110,8 @@ end
 ```
 
 As we can see, there are three types of natives:
-- NIFs - dynamically linked to the Erlang VM
-- cnodes - executed as separate OS processes, accessed through sockets
+- NIFs - dynamically linked to the Erlang VM (see [Erlang docs](http://erlang.org/doc/man/erl_nif.html))
+- CNodes - executed as separate OS processes, accessed through sockets (see [Erlang docs](http://erlang.org/doc/man/ei_connect.html))
 - libs - can be used by other natives as dependencies (see `deps` option below)
 
 The sources should reside in `project_root/c_src/my_app` directory (this can be changed with `src_base` option, see below).
@@ -121,8 +121,8 @@ Configuration of each native may contain following options:
 * `includes` - Paths to look for header files (empty list by default).
 * `libs_dirs` - Paths to look for libraries (empty list by default).
 * `libs` - Names of libraries to link (empty list by default).
-* `pkg_configs` - Names of libraries that should be linked with pkg config
-(empty list by default).
+* `pkg_configs` - Names of libraries for which the appropriate flags will be
+obtained using pkg-config (empty list by default).
 * `deps` - Dependencies in the form of `{app, lib_name}`, where `app`
 is the application name of the dependency, and `lib_name` is the name of lib
 specified in bundlex project of this dependency.

@@ -8,6 +8,7 @@ defmodule Bundlex.Toolchain.XCode do
     {cflags, lflags} =
       case native.type do
         :nif -> {"-fPIC", "-dynamiclib -undefined dynamic_lookup"}
+        :lib -> {"-fPIC", ""}
         _ -> {"", ""}
       end
 

@@ -29,6 +29,8 @@ defmodule Bundlex.Native do
             sources: [],
             deps: []
 
+  @project_keys [:includes, :libs, :lib_dirs, :pkg_configs, :sources, :deps]
+
   @native_type_keys %{nif: :nifs, cnode: :cnodes, lib: :libs}
 
   def resolve_natives(project, platform) do
@@ -74,24 +76,28 @@ defmodule Bundlex.Native do
   end
 
   defp parse_native(config, src_path) do
-    Output.info_substage("Parsing native #{inspect(config[:name])}")
+    {config, meta} = config |> Map.pop(:config)
+    Output.info_substage("Parsing native #{inspect(meta.name)}")
 
     {deps, config} = config |> Keyword.pop(:deps, [])
-    {src_base, config} = config |> Keyword.pop(:src_base)
-    native = config |> __struct__()
-    src_base = src_base || "#{native.app}"
+    {src_base, config} = config |> Keyword.pop(:src_base, "#{meta.app}")
 
-    native =
-      native
-      |> Map.update!(:includes, &[src_path | &1])
-      |> Map.update!(:sources, fn src -> src |> Enum.map(&Path.join([src_path, src_base, &1])) end)
-
-    withl no_src: false <- native.sources |> Enum.empty?(),
+    withl fields: [] <- config |> Keyword.keys() |> Enum.reject(&(&1 in @project_keys)),
+          do: native = (config ++ Enum.to_list(meta)) |> __struct__(),
+          no_src: false <- native.sources |> Enum.empty?(),
           deps: {:ok, parsed_deps} <- parse_deps(deps) do
+      native =
+        native
+        |> Map.update!(:includes, &[src_path | &1])
+        |> Map.update!(:sources, fn src ->
+          src |> Enum.map(&Path.join([src_path, src_base, &1]))
+        end)
+
       [native | parsed_deps]
       |> Enum.reduce(&add_lib/2)
       ~> {:ok, &1}
     else
+      fields: fields -> {:error, {:unknown_fields, fields}}
       no_src: true -> {:error, {:no_sources_in_native, native.name}}
       deps: error -> error
     end
@@ -103,7 +109,9 @@ defmodule Bundlex.Native do
     |> Enum.flat_map(fn type ->
       project.config
       |> Keyword.get(@native_type_keys[type], [])
-      |> Enum.map(fn {name, config} -> config ++ [name: name, type: type, app: project.app] end)
+      |> Enum.map(fn {name, config} ->
+        %{config: config, name: name, type: type, app: project.app}
+      end)
     end)
   end
 
@@ -125,8 +133,8 @@ defmodule Bundlex.Native do
 
   defp find_libs(project, names) do
     names = names |> MapSet.new()
-    found_libs = project |> get_native_configs(:lib) |> Enum.filter(&(&1[:name] in names))
-    diff = names |> MapSet.difference(found_libs |> MapSet.new(& &1[:name]))
+    found_libs = project |> get_native_configs(:lib) |> Enum.filter(&(&1.name in names))
+    diff = names |> MapSet.difference(found_libs |> MapSet.new(& &1.name))
 
     if diff |> Enum.empty?() do
       {:ok, found_libs}

@@ -34,25 +34,24 @@ defmodule Bundlex.Platform do
   end
 
   @doc """
-  Converts platform passed as options into platform atom valid for further use
-  and module that contains platform-specific callbacks.
+  Returns platform passed via `platform` option with fallback to the current
+  platform.
 
-  First argument are keyword list, as returned from `OptionParser.parse/2` or
-  `OptionParse.parse!/2`.
+  If retrieving the current platform fails, raises an error.
 
-  It expects that `platform` option was passed to options.
-
-  In case of success returns platform name
-
-  Otherwise raises Mix error.
+  The first argument is a keyword list, as returned from `OptionParser.parse/2`
+  or `OptionParser.parse!/2`.
   """
   @spec get_from_opts!(OptionParser.parsed()) :: name_t
   def get_from_opts!(
         opts \\ OptionParser.parse(System.argv(), switches: [platform: :string]) |> elem(0)
       ) do
-    cond do
-      platform = opts[:platform] -> String.to_atom(platform)
-      true -> get_current!()
+    platform = opts[:platform]
+
+    if platform do
+      String.to_atom(platform)
+    else
+      get_current!()
     end
   end
 
