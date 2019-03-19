@@ -58,7 +58,7 @@ defmodule MyApp.BundlexProject do
   def project() do
     [
       nifs: nifs(Bundlex.platform),
-      CNodes: CNodes(),
+      cnodes: cnodes(),
       libs: libs()
     ]
   end
@@ -85,7 +85,7 @@ defmodule MyApp.BundlexProject do
     ]
   end
 
-  defp CNodes() do
+  defp cnodes() do
     [
       my_cnode: [
         sources: ["something.c", "something_other.c"]

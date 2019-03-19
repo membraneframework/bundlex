@@ -12,6 +12,8 @@ defmodule Bundlex.Toolchain.XCode do
         _ -> {"", ""}
       end
 
-    Unix.compiler_commands(native, "cc #{cflags}", "cc #{lflags}")
+    Unix.compiler_commands(native, "cc #{cflags}", "cc #{lflags}",
+      wrap_deps: &"-Wl,-all_load #{&1}"
+    )
   end
 end
