@@ -1,4 +1,6 @@
 defmodule Bundlex.Output do
+  @moduledoc false
+
   def info(msg) do
     Mix.shell().info("Bundlex: " <> msg)
   end

@@ -39,7 +39,9 @@ defmodule Bundlex.Mixfile do
     [
       main: "readme",
       extras: ["README.md"],
-      source_ref: "v#{@version}"
+      source_ref: "v#{@version}",
+      nest_modules_by_prefix: [Bundlex.Helper],
+      groups_for_modules: [Helpers: ~r/^Bundlex\.Helper\.*/]
     ]
   end
 

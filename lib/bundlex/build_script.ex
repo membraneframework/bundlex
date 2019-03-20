@@ -1,7 +1,5 @@
 defmodule Bundlex.BuildScript do
-  @moduledoc """
-  Structure encapsulating build script generator.
-  """
+  @moduledoc false
 
   alias Bundlex.Platform
   use Bunch

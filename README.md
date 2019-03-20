@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.com/membraneframework/bundlex.svg?branch=master)](https://travis-ci.com/membraneframework/bundlex)
 
-Bundlex is a multi-platform tool for compiling C code along with elixir projects, for use in NIFs. The tool provides also convenient way of loading compiled NIFs in elixir modules.
+Bundlex is a multi-platform tool for compiling C code along with elixir projects, for use in NIFs and CNodes. The tool provides also convenient way of accessing compiled code in elixir modules.
 
 This tool is a part of [Membrane Framework](https://membraneframework.org/)
 
@@ -47,9 +47,9 @@ Now your project does not contain any C sources, but should compile successfully
 
 ## Usage
 
-### Adding NIFs to project
+### Adding natives to project
 
-Adding C sources can be done in `project/0` function of bundlex project module in the following way:
+Adding natives can be done in `project/0` function of bundlex project module in the following way:
 
 ```elixir
 defmodule MyApp.BundlexProject do
@@ -57,7 +57,9 @@ defmodule MyApp.BundlexProject do
 
   def project() do
     [
-      nifs: nifs(Bundlex.platform)
+      nifs: nifs(Bundlex.platform),
+      cnodes: cnodes(),
+      libs: libs()
     ]
   end
 
@@ -67,7 +69,7 @@ defmodule MyApp.BundlexProject do
         sources: ["something.c", "linux_specific.c"]
       ],
       my_other_nif: [
-        ...
+        # ...
       ]
     ]
   end
@@ -78,25 +80,54 @@ defmodule MyApp.BundlexProject do
         sources: ["something.c", "multiplatform.c"]
       ],
       my_other_nif: [
-        ...
+        # ...
+      ]
+    ]
+  end
+
+  defp cnodes() do
+    [
+      my_cnode: [
+        sources: ["something.c", "something_other.c"]
+      ],
+      my_other_cnode: [
+        # ...
+      ]
+    ]
+  end
+
+  defp libs(_platform) do
+    [
+      my_lib: [
+        sources: ["something.c", "something_other.c"]
+      ],
+      my_other_lib: [
+        # ...
       ]
     ]
   end
 end
 ```
 
-The sources should reside in `project_root/c_src/my_app` directory.
+As we can see, there are three types of natives:
+- NIFs - dynamically linked to the Erlang VM (see [Erlang docs](http://erlang.org/doc/man/erl_nif.html))
+- CNodes - executed as separate OS processes, accessed through sockets (see [Erlang docs](http://erlang.org/doc/man/ei_connect.html))
+- libs - can be used by other natives as dependencies (see `deps` option below)
 
-Configuration of each NIF can contain following options:
+The sources should reside in `project_root/c_src/my_app` directory (this can be changed with `src_base` option, see below).
+
+Configuration of each native may contain following options:
 * `sources` - C files to be compiled (at least one must be provided),
 * `includes` - Paths to look for header files (empty list by default).
+* `libs_dirs` - Paths to look for libraries (empty list by default).
 * `libs` - Names of libraries to link (empty list by default).
-* `pkg_configs` - Names of libraries that should be linked with pkg config (empty list by default).
-* `deps` - Dependencies in the form `{app_name, nif_name}`, where `app_name` is the application name of the dependency, and `nif_name` is the name of nif specified in bundlex file of this dependency. Sources, includes,
-libs and pkg_configs from those nifs will be appended. Empty list by default.
-* `export_only?` - Flag specifying whether NIF is only to be added as dependency and should not be compiled itself. `false` by default.
-* `src_base` - Native files should reside in `project_root/c_src/<src_base>`.
-Current app name by default.
+* `pkg_configs` - Names of libraries for which the appropriate flags will be
+obtained using pkg-config (empty list by default).
+* `deps` - Dependencies in the form of `{app, lib_name}`, where `app`
+is the application name of the dependency, and `lib_name` is the name of lib
+specified in bundlex project of this dependency.
+* `src_base` - Native files should reside in `project_root/c_src/<src_base>`
+(application name by default).
 
 ### Compilation options
 

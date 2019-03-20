@@ -1,5 +1,6 @@
 defmodule Bundlex.Platform.AndroidARMv7 do
-  @behaviour Bundlex.Platform
+  @moduledoc false
+  use Bundlex.Platform
 
   def extra_otp_configure_options() do
     ["--xcomp-conf=xcomp/erl-xcomp-arm-android.conf"]
@@ -11,9 +12,5 @@ defmodule Bundlex.Platform.AndroidARMv7 do
 
   def patches_to_apply() do
     ["erlang/android_shell"]
-  end
-
-  def toolchain() do
-    :android
   end
 end

@@ -21,7 +21,7 @@ defmodule Mix.Tasks.Compile.Bundlex do
     Output.info_stage("Reading project")
 
     project =
-      with {:ok, project} <- Project.parse(app) do
+      with {:ok, project} <- Project.get(app) do
         project
       else
         {:error, reason} ->
@@ -30,18 +30,18 @@ defmodule Mix.Tasks.Compile.Bundlex do
 
     # Parse options
     Output.info_stage("Target platform")
-    platform = Platform.get_current!()
+    platform = Bundlex.platform()
     Output.info_substage("Building for platform #{platform}")
 
     # Toolchain
     Output.info_stage("Toolchain")
-    commands = commands ++ Platform.get_module!(platform).toolchain_module.before_all!(platform)
+    commands = commands ++ Platform.get_module(platform).toolchain_module.before_all!(platform)
 
     Output.info_stage("Resolving Natives")
 
     commands =
       commands ++
-        case Native.resolve_natives(app, project, platform) do
+        case Native.resolve_natives(project, platform) do
           {:ok, nifs_commands} -> nifs_commands
           {:error, reason} -> Output.raise("Error parsing Natives, reason: #{inspect(reason)}")
         end
