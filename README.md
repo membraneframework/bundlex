@@ -135,7 +135,7 @@ specified in bundlex project of this dependency.
 
 The following command line arguments can be passed:
 - `--platform <platform>` - platform to build for, see `Bundlex.platform/0`.
-- `--bundlex-store-scripts` - if set, shell scripts are stored in the project
+- `--store-scripts` - if set, shell scripts are stored in the project
 root folder for further analysis.
 
 ### Loading NIFs in modules

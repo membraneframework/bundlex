@@ -1,8 +1,8 @@
-defmodule Bundlex.CNode.Supervisor do
+defmodule Bundlex.CNode.Server do
   @moduledoc false
 
   use GenServer
-  alias Bundlex.CNode.NameServer
+  alias Bundlex.CNode.NameStore
 
   @impl true
   def init(opts) do
@@ -10,11 +10,11 @@ defmodule Bundlex.CNode.Supervisor do
     if opts.link?, do: Process.monitor(opts.caller)
 
     if not Node.alive?() do
-      {:ok, _pid} = Node.start(NameServer.get_self_name(), :shortnames)
+      {:ok, _pid} = Node.start(NameStore.get_self_name(), :shortnames)
       Node.set_cookie(:bundlex_cookie)
     end
 
-    {name, creation} = NameServer.get_name()
+    {name, creation} = NameStore.get_name()
     cnode = :"#{name}@#{host_name()}"
 
     port =
@@ -31,7 +31,7 @@ defmodule Bundlex.CNode.Supervisor do
   def handle_info({port, {:data, 'ready' ++ _}}, %{port: port, state: :waiting} = state) do
     case Node.connect(state.cnode) do
       true ->
-        send(state.caller, {self(), {:ok, {self(), state.cnode}}})
+        send(state.caller, {self(), {:ok, %Bundlex.CNode{server: self(), node: state.cnode}}})
         {:noreply, %{state | state: :connected}}
 
       _ ->
@@ -74,7 +74,7 @@ defmodule Bundlex.CNode.Supervisor do
   defp disconnect(cnode) do
     case Node.disconnect(cnode) do
       true ->
-        NameServer.return_name(cnode |> node_name)
+        NameStore.return_name(cnode |> node_name)
         :ok
 
       _ ->

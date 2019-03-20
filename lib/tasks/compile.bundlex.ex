@@ -5,7 +5,7 @@ defmodule Mix.Tasks.Compile.Bundlex do
 
   Accepts the following command line arguments:
   - `--platform <platform>` - platform to build for, see `Bundlex.platform/0`.
-  - `--bundlex-store-scripts` - if set, shell scripts are stored in the project
+  - `--store-scripts` - if set, shell scripts are stored in the project
   root folder for further analysis.
 
   Add `:bundlex` to compilers in your Mix project to have this task executed
@@ -57,9 +57,9 @@ defmodule Mix.Tasks.Compile.Bundlex do
     build_script = BuildScript.new(commands)
 
     {cmdline_options, _argv, _errors} =
-      OptionParser.parse(System.argv(), switches: [bundlex_store_scripts: :boolean])
+      OptionParser.parse(System.argv(), switches: [store_scripts: :boolean])
 
-    if(cmdline_options[:bundlex_store_scripts]) do
+    if(cmdline_options[:store_scripts]) do
       Output.info_substage("Storing build script")
       {:ok, {filename, _script}} = build_script |> BuildScript.store(platform)
       Output.info_substage("Stored #{File.cwd!() |> Path.join(filename)}")
