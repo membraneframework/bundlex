@@ -14,7 +14,9 @@ defmodule Bundlex.Native do
           lib_dirs: [String.t()],
           pkg_configs: [String.t()],
           sources: [String.t()],
-          deps: [String.t()]
+          deps: [String.t()],
+          compiler_flags: [String.t()],
+          linker_flags: [String.t()]
         }
 
   @enforce_keys [:name, :type]
@@ -27,7 +29,9 @@ defmodule Bundlex.Native do
             lib_dirs: [],
             pkg_configs: [],
             sources: [],
-            deps: []
+            deps: [],
+            compiler_flags: [],
+            linker_flags: []
 
   @project_keys [:includes, :libs, :lib_dirs, :pkg_configs, :sources, :deps]
 
@@ -147,7 +151,7 @@ defmodule Bundlex.Native do
     native
     |> Map.update!(:deps, &[{lib.app, lib.name} | &1])
     |> Map.merge(
-      lib |> Map.take([:includes, :libs, :lib_dirs, :pkg_configs, :deps]),
+      lib |> Map.take([:includes, :libs, :lib_dirs, :pkg_configs, :linker_flags, :deps]),
       fn _k, v1, v2 -> v2 ++ v1 end
     )
   end

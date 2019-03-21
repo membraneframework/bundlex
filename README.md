@@ -128,15 +128,19 @@ is the application name of the dependency, and `lib_name` is the name of lib
 specified in bundlex project of this dependency.
 * `src_base` - Native files should reside in `project_root/c_src/<src_base>`
 (application name by default).
+* `compiler_flags` - Custom flags for compiler.
+* `linker_flags` - Custom flags for linker.
 
 ### Compilation options
 
-Setting env variable `BUNDLEX_STORE_BUILD_SCRIPTS=true` makes bundlex store build
-scripts (`bundlex.sh`/`bundlex.bat`) in projects root folders for analysis.
+The following command line arguments can be passed:
+- `--platform <platform>` - platform to build for, see `Bundlex.platform/0`.
+- `--store-scripts` - if set, shell scripts are stored in the project
+root folder for further analysis.
 
 ### Loading NIFs in modules
 
-Loading NIF in a module is depicted below:
+NIFs compiled with Bundlex can be loaded the same way as any other NIFs (see [`:erlang.load_nif/2`](http://erlang.org/doc/man/erlang.html#load_nif-2)), but Bundlex provides `Bundlex.Loader` module to save you some boilerplate:
 
 ```elixir
 defmodule MyApp.SomeNativeStuff do
@@ -159,6 +163,10 @@ ERL_NIF_INIT(MyApp.SomeNativeStuff.Nif, funs, load, NULL, upgrade, unload)
 ```
 
 In spite of this, any native erlang macros and functions shall be used as usual, as described at http://erlang.org/doc/man/erl_nif.html
+
+### Interacting with CNodes
+
+As in case of NIFs, CNodes compiled with Bundlex can be used like any other CNodes (see built-in `Node` module), while some useful stuff for interacting with them is provided. `Bundlex.CNode` module contains utilities that make it easier to spawn and control CNodes, and allow to treat them more like usual Elixir processes. Check out documentation for more details.
 
 ## Copyright and License
 
