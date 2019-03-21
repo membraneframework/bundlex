@@ -22,7 +22,7 @@ defmodule Bundlex.Mixfile do
   end
 
   def application do
-    [extra_applications: [], mod: {Bundlex.App, []}]
+    [extra_applications: [:logger], mod: {Bundlex.App, []}]
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]

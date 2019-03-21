@@ -61,7 +61,8 @@ defmodule Bundlex.CNode do
   After CNode startup, these parameters should be passed to
   [`ei_connect_xinit`](http://erlang.org/doc/man/ei_connect.html#ei_connect_xinit)
   function, and CNode should be published and await connection. Once the CNode is
-  published, it should print a line starting with `ready` to the standard output.
+  published, it should print a line starting with `ready` to the standard output
+  **and flush the standard output** to avoid the line being buffered.
 
   Under the hood, this function starts an associated server, which is responsible
   for monitoring the CNode and monitoring calling process to be able to do proper
@@ -69,7 +70,7 @@ defmodule Bundlex.CNode do
   1. Makes current node distributed if it is not done yet (see `Node.start/3`).
   1. Assigns CNode a unique name.
   1. Starts CNode OS process using `Port.open/2`.
-  1. Waits (at most 5 seconds) until a line starting with `ready` is printed out
+  1. Waits (at most 5 seconds) until a line `ready` is printed out
   (this line is captured and not forwarded to the stdout).
   1. Connects to the CNode.
   """

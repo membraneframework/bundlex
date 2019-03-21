@@ -2,6 +2,7 @@ defmodule Bundlex.CNode.Server do
   @moduledoc false
 
   use GenServer
+  require Logger
   alias Bundlex.CNode.NameStore
 
   @impl true
@@ -20,15 +21,28 @@ defmodule Bundlex.CNode.Server do
     port =
       Port.open(
         {:spawn_executable, Bundlex.build_path(opts.app, opts.native_name)},
-        args: [host_name(), name, cnode, Node.get_cookie(), "#{creation}"]
+        args: [host_name(), name, cnode, Node.get_cookie(), "#{creation}"],
+        line: 2048
       )
 
     Process.send_after(self(), :timeout, 5000)
-    {:ok, %{port: port, state: :waiting, caller: opts.caller, link?: opts.link?, cnode: cnode}}
+
+    {:ok,
+     %{
+       port: port,
+       state: :waiting,
+       caller: opts.caller,
+       link?: opts.link?,
+       cnode: cnode,
+       msg_part?: false
+     }}
   end
 
   @impl true
-  def handle_info({port, {:data, 'ready' ++ _}}, %{port: port, state: :waiting} = state) do
+  def handle_info(
+        {port, {:data, {:eol, 'ready'}}},
+        %{port: port, state: :waiting, msg_part?: false} = state
+      ) do
     case Node.connect(state.cnode) do
       true ->
         send(state.caller, {self(), {:ok, %Bundlex.CNode{server: self(), node: state.cnode}}})
@@ -40,9 +54,9 @@ defmodule Bundlex.CNode.Server do
     end
   end
 
-  def handle_info({port, {:data, data}}, %{port: port} = state) do
-    IO.puts(data)
-    {:ok, state}
+  def handle_info({port, {:data, {flag, data}}}, %{port: port} = state) do
+    Logger.info("cnode#{inspect(self())}: #{data}")
+    {:noreply, %{state | msg_part?: flag == :noeol}}
   end
 
   def handle_info({:EXIT, port, reason}, %{port: port} = state) do
