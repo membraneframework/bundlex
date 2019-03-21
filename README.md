@@ -1,5 +1,7 @@
 # Bundlex
 
+[![Hex.pm](https://img.shields.io/hexpm/v/bundlex.svg)](https://hex.pm/packages/bundlex)
+[![API Docs](https://img.shields.io/badge/api-docs-yellow.svg?style=flat)](https://hexdocs.pm/bundlex/)
 [![Build Status](https://travis-ci.com/membraneframework/bundlex.svg?branch=master)](https://travis-ci.com/membraneframework/bundlex)
 
 Bundlex is a multi-platform tool for compiling C code along with elixir projects, for use in NIFs and CNodes. The tool provides also convenient way of accessing compiled code in elixir modules.
@@ -18,8 +20,8 @@ defmodule MyApp.Mixfile do
     [
       app: :my_app,
       compilers: [:bundlex] ++ Mix.compilers, # add bundlex to compilers
-      ...,
-      deps: deps()
+      deps: deps(),
+      # ...
    ]
   end
 
