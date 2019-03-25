@@ -54,7 +54,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
       |> wrap_deps.()
 
     lib_dirs = native.lib_dirs |> paths("-L")
-    libs = native.libs |> Enum.map(fn lib -> "-l#{lib}" end)
+    libs = native.libs |> Enum.map_join(" ", fn lib -> "-l#{lib}" end)
     pkg_config_libs = native.pkg_configs |> pkg_config(:libs)
     linker_flags = native.linker_flags |> Enum.join(" ")
 

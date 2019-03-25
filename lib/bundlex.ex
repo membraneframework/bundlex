@@ -10,7 +10,7 @@ defmodule Bundlex do
   Returns platform name passed by `--platform` command line argument or fallbacks
   to the current platform name.
   """
-  @spec platform() :: :linux | :macosx | :windows32 | :windows64 | :android_armv7
+  @spec platform() :: :linux | :macosx | :windows32 | :windows64
   def platform() do
     Platform.get_from_opts!()
   end
