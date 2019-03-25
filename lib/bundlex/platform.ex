@@ -100,11 +100,9 @@ defmodule Bundlex.Platform do
   def family(:windows64), do: :windows
   def family(:linux), do: :unix
   def family(:macosx), do: :unix
-  def family(:android_armv7), do: :unix
 
   def get_module(:windows32), do: Bundlex.Platform.Windows32
   def get_module(:windows64), do: Bundlex.Platform.Windows64
   def get_module(:macosx), do: Bundlex.Platform.MacOSX
   def get_module(:linux), do: Bundlex.Platform.Linux
-  def get_module(:android_armv7), do: Bundlex.Platform.AndroidARMv7
 end
