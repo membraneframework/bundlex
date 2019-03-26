@@ -26,7 +26,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
       |> Enum.map(fn {source, object} ->
         """
         #{compile} -Wall -Wextra -c -std=c11 -O2 -g #{compiler_flags} \
-        -o #{path(object)} #{includes} #{pkg_config_cflags} #{path(source)}\
+        -o #{path(object)} #{includes} #{pkg_config_cflags} #{path(source)}
         """
       end)
 
@@ -53,15 +53,12 @@ defmodule Bundlex.Toolchain.Common.Unix do
       |> paths()
       |> wrap_deps.()
 
-    lib_dirs = native.lib_dirs |> paths("-L")
-    libs = native.libs |> Enum.map_join(" ", fn lib -> "-l#{lib}" end)
-    pkg_config_libs = native.pkg_configs |> pkg_config(:libs)
     linker_flags = native.linker_flags |> Enum.join(" ")
 
     [
       """
       #{link} #{linker_flags} -o #{path(output <> extension)} \
-      #{pkg_config_libs} #{lib_dirs} #{libs} #{deps} #{paths(objects)}
+      #{deps} #{paths(objects)} #{libs(native)}
       """
     ]
   end
@@ -73,6 +70,13 @@ defmodule Bundlex.Toolchain.Common.Unix do
   defp path(path) do
     path = path |> String.replace(~S("), ~S(\"))
     ~s("#{path}")
+  end
+
+  defp libs(native) do
+    lib_dirs = native.lib_dirs |> paths("-L")
+    libs = native.libs |> Enum.map_join(" ", fn lib -> "-l#{lib}" end)
+    pkg_config_libs = native.pkg_configs |> pkg_config(:libs)
+    "#{pkg_config_libs} #{lib_dirs} #{libs}"
   end
 
   defp pkg_config([], _options), do: ""
