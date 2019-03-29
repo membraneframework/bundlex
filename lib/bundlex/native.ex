@@ -92,7 +92,7 @@ defmodule Bundlex.Native do
           deps: {:ok, parsed_deps} <- parse_deps(deps) do
       native =
         native
-        |> Map.update!(:includes, &[src_path | &1])
+        |> Map.update!(:includes, &[Path.join([src_path, src_base, ".."]) | &1])
         |> Map.update!(:sources, fn src ->
           src |> Enum.map(&Path.join([src_path, src_base, &1]))
         end)

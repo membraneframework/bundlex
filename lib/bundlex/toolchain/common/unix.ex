@@ -68,7 +68,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
   end
 
   defp path(path) do
-    path = path |> String.replace(~S("), ~S(\"))
+    path = path |> String.replace(~S("), ~S(\")) |> Path.expand()
     ~s("#{path}")
   end
 
