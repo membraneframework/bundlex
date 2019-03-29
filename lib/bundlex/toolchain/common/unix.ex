@@ -35,7 +35,8 @@ defmodule Bundlex.Toolchain.Common.Unix do
   end
 
   defp link_commands(%Native{type: :lib}, _link, output, objects, _options) do
-    ["ar rcs #{path(output <> ".a")} #{paths(objects)}"]
+    a_path = path(output <> ".a")
+    ["rm -f #{a_path}", "ar rcs #{a_path} #{paths(objects)}"]
   end
 
   defp link_commands(native, link, output, objects, options) do
