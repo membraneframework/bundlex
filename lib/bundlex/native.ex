@@ -33,7 +33,16 @@ defmodule Bundlex.Native do
             compiler_flags: [],
             linker_flags: []
 
-  @project_keys [:includes, :libs, :lib_dirs, :pkg_configs, :sources, :deps]
+  @project_keys [
+    :includes,
+    :libs,
+    :lib_dirs,
+    :pkg_configs,
+    :sources,
+    :deps,
+    :compiler_flags,
+    :linker_flags
+  ]
 
   @native_type_keys %{nif: :nifs, cnode: :cnodes, lib: :libs}
 
