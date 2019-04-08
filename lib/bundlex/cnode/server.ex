@@ -11,8 +11,19 @@ defmodule Bundlex.CNode.Server do
     if opts.link?, do: Process.monitor(opts.caller)
 
     if not Node.alive?() do
-      {:ok, _pid} = Node.start(NameStore.get_self_name(), :shortnames)
-      Node.set_cookie(:bundlex_cookie)
+      :ok =
+        case Node.start(NameStore.get_self_name(), :shortnames) do
+          {:ok, _pid} ->
+            Node.set_cookie(:bundlex_cookie)
+            :ok
+
+          {:error, {:already_started, _pid}} ->
+            # In case the node has been started after the `Node.alive?` check
+            :ok
+
+          {:error, reason} ->
+            {:error, reason}
+        end
     end
 
     {name, creation} = NameStore.get_name()
