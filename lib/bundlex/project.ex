@@ -94,7 +94,12 @@ defmodule Bundlex.Project do
   If the module has not been loaded yet, it is loaded from
   `project_dir/#{@bundlex_file_name}` file.
   """
-  @spec get(application :: atom) :: {:ok, t} | {:error, any()}
+  @spec get(application :: atom) ::
+          {:ok, t}
+          | {:error,
+             :invalid_project_specification
+             | {:no_bundlex_project_in_file, path :: binary()}
+             | :unknown_application}
   def get(application \\ MixHelper.get_app!()) do
     Agent.start(fn -> %{} end, name: @project_store_name)
     project = Agent.get(@project_store_name, & &1[application])
@@ -116,7 +121,9 @@ defmodule Bundlex.Project do
     end
   end
 
-  @spec load(application :: atom) :: {:ok, module} | {:error, any()}
+  @spec load(application :: atom) ::
+          {:ok, module}
+          | {:error, {:no_bundlex_project_in_file, path :: binary()} | :unknown_application}
   defp load(application) do
     with {:ok, dir} <- MixHelper.get_project_dir(application) do
       bundlex_file_path = dir |> Path.join(@bundlex_file_name)

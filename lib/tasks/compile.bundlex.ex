@@ -12,14 +12,12 @@ defmodule Mix.Tasks.Compile.Bundlex do
   each time the project is compiled.
   """
 
-  use Mix.Task
+  use Mix.Task.Compiler
   alias Bundlex.{BuildScript, Native, Output, Platform, Project}
   alias Bundlex.Helper.MixHelper
 
   @impl true
   def run(_args) do
-    :ok = MixHelper.store_project_dir()
-
     commands = []
 
     app = MixHelper.get_app!()
@@ -79,5 +77,6 @@ defmodule Mix.Tasks.Compile.Bundlex do
     end
 
     Output.info_stage("Done")
+    :ok
   end
 end
