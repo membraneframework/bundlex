@@ -33,7 +33,16 @@ defmodule Bundlex.Native do
             compiler_flags: [],
             linker_flags: []
 
-  @project_keys [:includes, :libs, :lib_dirs, :pkg_configs, :sources, :deps]
+  @project_keys [
+    :includes,
+    :libs,
+    :lib_dirs,
+    :pkg_configs,
+    :sources,
+    :deps,
+    :compiler_flags,
+    :linker_flags
+  ]
 
   @native_type_keys %{nif: :nifs, cnode: :cnodes, lib: :libs}
 
@@ -79,9 +88,13 @@ defmodule Bundlex.Native do
     end
   end
 
-  defp parse_native(config, src_path) do
+  defp parse_native(config, src_path, context \\ :project) do
     {config, meta} = config |> Map.pop(:config)
-    Output.info_substage("Parsing native #{inspect(meta.name)}")
+
+    Output.info_substage(
+      if(context == :dep, do: "\t", else: "") <>
+        "Parsing native #{inspect(meta.name)} from #{inspect(meta.app)}"
+    )
 
     {deps, config} = config |> Keyword.pop(:deps, [])
     {src_base, config} = config |> Keyword.pop(:src_base, "#{meta.app}")
@@ -129,7 +142,7 @@ defmodule Bundlex.Native do
   defp parse_app_libs(app, names) do
     with {:ok, project} <- app |> Project.get(),
          {:ok, libs} <- find_libs(project, names) do
-      libs |> Bunch.Enum.try_map(&parse_native(&1, project.src_path))
+      libs |> Bunch.Enum.try_map(&parse_native(&1, project.src_path, :dep))
     else
       {:error, reason} -> {:error, {app, reason}}
     end
