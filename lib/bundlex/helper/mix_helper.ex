@@ -7,32 +7,36 @@ defmodule Bundlex.Helper.MixHelper do
   alias Bundlex.Output
   use Bunch
 
-  @path_store_name :bundlex_path_store
-
   @doc """
   Helper function for retreiving app name from mix.exs and failing if it was
   not found.
   """
   @spec get_app! :: atom
   def get_app!() do
-    case Mix.Project.config() |> List.keyfind(:app, 0) do
-      {:app, app} ->
-        app
-
-      _ ->
+    case Mix.Project.config()[:app] do
+      nil ->
         Output.raise(
           "Unable to determine app name, check if :app key is present in return value of project/0 in mix.exs"
         )
+
+      app ->
+        app
     end
   end
 
+  @doc """
+  Returns app for the given module. In case of failure fallbacks to `get_app!/0`.
+  """
   @spec get_app!(module) :: atom
   def get_app!(module) do
     Application.get_application(module) || get_app!()
   end
 
-  @spec get_priv_dir(atom) :: String.t()
-  def get_priv_dir(app) do
+  @doc """
+  Returns path to the `priv` dir for given application.
+  """
+  @spec get_priv_dir(application :: atom) :: String.t()
+  def get_priv_dir(application \\ get_app!()) do
     # It seems that we have two methods to determine where Natives are located:
     # * `Mix.Project.build_path/0`
     # * `:code.priv_dir/1`
@@ -62,9 +66,9 @@ defmodule Bundlex.Helper.MixHelper do
     # Think twice before you're going to be another person who spent many
     # hours on trying to figure out why such simple thing as determining
     # a path might be so hard.
-    case :code.priv_dir(app) do
+    case :code.priv_dir(application) do
       {:error, :bad_name} ->
-        [Mix.Project.build_path(), "lib", "#{app}", "priv"] |> Path.join()
+        [Mix.Project.build_path(), "lib", "#{application}", "priv"] |> Path.join()
 
       path ->
         path
@@ -72,39 +76,23 @@ defmodule Bundlex.Helper.MixHelper do
   end
 
   @doc """
-  Stores current project directory in an agent.
-  This is necessary because `Mix.Project.deps_paths/0` sometimes return invalid
-  paths when dependencies are given by path
-  (see https://github.com/elixir-lang/elixir/issues/7561). Such dependencies are always
-  recompiled, thus proper path is always stored and can be retrieved by dependent
-  projects.
-  """
-  def store_project_dir() do
-    Agent.start(fn -> %{} end, name: @path_store_name)
-
-    with {:ok, dir} <- get_project_dir() do
-      Agent.update(@path_store_name, &Map.put(&1, get_app!(), dir))
-    end
-  end
-
-  @doc """
   Returns root directory of the currently compiled project.
   """
+  @spec get_project_dir() :: {:ok, binary}
   def get_project_dir() do
-    {:ok, Mix.ProjectStack.peek().file |> Path.dirname()}
+    {:ok, File.cwd!()}
   end
 
   @doc """
   Returns root directory of the project of given application.
   """
+  @spec get_project_dir(application :: atom) :: {:ok, binary} | {:error, :unknown_application}
   def get_project_dir(application) do
     if application == get_app!() do
       get_project_dir()
     else
-      Agent.start(fn -> %{} end, name: @path_store_name)
-
-      case Agent.get(@path_store_name, & &1[application]) || Mix.Project.deps_paths()[application] do
-        nil -> {:error, {:unknown_application, application}}
+      case Mix.Project.deps_paths()[application] do
+        nil -> {:error, :unknown_application}
         path -> {:ok, path}
       end
     end
