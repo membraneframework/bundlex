@@ -7,10 +7,9 @@ defmodule Bundlex.Project do
   use Bunch
   alias Bunch.KVList
   alias Bundlex.Helper.MixHelper
+  alias __MODULE__.Store
 
   @src_dir_name "c_src"
-
-  @project_store_name :bundlex_project_store
 
   @type native_name_t :: atom
 
@@ -101,8 +100,7 @@ defmodule Bundlex.Project do
              | {:no_bundlex_project_in_file, path :: binary()}
              | :unknown_application}
   def get(application \\ MixHelper.get_app!()) do
-    Agent.start(fn -> %{} end, name: @project_store_name)
-    project = Agent.get(@project_store_name, & &1[application])
+    project = Store.get_project(application)
 
     if project do
       {:ok, project}
@@ -115,7 +113,7 @@ defmodule Bundlex.Project do
              app: application
            },
            true <- Keyword.keyword?(project.config) or {:error, :invalid_project_specification} do
-        Agent.update(@project_store_name, &(&1 |> Map.put(application, project)))
+        Store.store_project(application, project)
         {:ok, project}
       end
     end

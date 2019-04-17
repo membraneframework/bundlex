@@ -18,6 +18,7 @@ defmodule Mix.Tasks.Compile.Bundlex do
 
   @impl true
   def run(_args) do
+    {:ok, _apps} = Application.ensure_all_started(:bundlex)
     commands = []
 
     app = MixHelper.get_app!()
