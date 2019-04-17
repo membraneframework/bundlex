@@ -9,23 +9,7 @@ defmodule Bundlex.CNode.Server do
   def init(opts) do
     Process.flag(:trap_exit, true)
     if opts.link?, do: Process.monitor(opts.caller)
-
-    if not Node.alive?() do
-      :ok =
-        case Node.start(NameStore.get_self_name(), :shortnames) do
-          {:ok, _pid} ->
-            Node.set_cookie(:bundlex_cookie)
-            :ok
-
-          {:error, {:already_started, _pid}} ->
-            # In case the node has been started after the `Node.alive?` check
-            :ok
-
-          {:error, reason} ->
-            {:error, reason}
-        end
-    end
-
+    :ok = ensure_node_distributed()
     {name, creation} = NameStore.get_name()
     cnode = :"#{name}@#{host_name()}"
 
@@ -70,16 +54,6 @@ defmodule Bundlex.CNode.Server do
     {:noreply, %{state | msg_part?: flag == :noeol}}
   end
 
-  def handle_info({:EXIT, port, reason}, %{port: port} = state) do
-    if state.link?, do: Process.exit(state.caller, :shutdown)
-    {:stop, reason, state}
-  end
-
-  def handle_info({:DOWN, _ref, :process, pid, _reason}, %{caller: pid} = state) do
-    disconnect(state.cnode)
-    {:stop, :normal, state}
-  end
-
   def handle_info(:timeout, state) do
     case state.state do
       :waiting ->
@@ -91,9 +65,52 @@ defmodule Bundlex.CNode.Server do
     end
   end
 
+  def handle_info({:DOWN, _ref, :process, pid, _reason}, %{caller: pid} = state) do
+    disconnect(state.cnode)
+    {:stop, :normal, state}
+  end
+
+  def handle_info({:EXIT, port, reason}, %{port: port} = state) do
+    if state.link?, do: Process.exit(state.caller, :shutdown)
+    {:stop, reason, state}
+  end
+
+  def handle_info({:EXIT, _from, :normal}, state) do
+    {:noreply, state}
+  end
+
+  def handle_info({:EXIT, _from, reason}, state) do
+    if state.link?, do: Process.exit(state.caller, reason)
+    {:stop, reason, state}
+  end
+
   @impl true
   def handle_call(:stop, _from, state) do
     {:stop, :normal, disconnect(state.cnode), state}
+  end
+
+  defp ensure_node_distributed(empd_status \\ :unknown) do
+    if Node.alive?() do
+      :ok
+    else
+      case Node.start(NameStore.get_self_name(), :shortnames) do
+        {:ok, _pid} ->
+          Node.set_cookie(:bundlex_cookie)
+          :ok
+
+        {:error, {:already_started, _pid}} ->
+          # In case the node has been started after the `Node.alive?` check
+          :ok
+
+        {:error, _reason} when empd_status == :unknown ->
+          Logger.info("Trying to start epmd...")
+          System.cmd("epmd", ~w(-daemon))
+          ensure_node_distributed(:start_tried)
+
+        {:error, reason} ->
+          {:error, reason}
+      end
+    end
   end
 
   defp disconnect(cnode) do
