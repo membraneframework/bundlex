@@ -49,7 +49,7 @@ defmodule Bundlex.Native do
   def resolve_natives(project, platform) do
     case get_native_configs(project) do
       [] ->
-        Output.info_substage("No natives found")
+        Output.info("No natives found")
         {:ok, []}
 
       native_configs ->
@@ -58,8 +58,9 @@ defmodule Bundlex.Native do
           lib_dirs: ErlangHelper.get_lib_dirs(platform)
         }
 
-        Output.info_substage("Found Erlang includes: #{inspect(erlang.includes)}")
-        Output.info_substage("Found Erlang lib dirs: #{inspect(erlang.lib_dirs)}")
+        Output.info(
+          "Building natives: #{native_configs |> Enum.map(& &1.name) |> Enum.join(", ")}"
+        )
 
         native_configs
         |> Bunch.Enum.try_flat_map(&resolve_native(&1, erlang, project.src_path, platform))
@@ -88,14 +89,8 @@ defmodule Bundlex.Native do
     end
   end
 
-  defp parse_native(config, src_path, context \\ :project) do
+  defp parse_native(config, src_path) do
     {config, meta} = config |> Map.pop(:config)
-
-    Output.info_substage(
-      if(context == :dep, do: "\t", else: "") <>
-        "Parsing native #{inspect(meta.name)} from #{inspect(meta.app)}"
-    )
-
     {deps, config} = config |> Keyword.pop(:deps, [])
     {src_base, config} = config |> Keyword.pop(:src_base, "#{meta.app}")
 
@@ -142,7 +137,7 @@ defmodule Bundlex.Native do
   defp parse_app_libs(app, names) do
     with {:ok, project} <- app |> Project.get(),
          {:ok, libs} <- find_libs(project, names) do
-      libs |> Bunch.Enum.try_map(&parse_native(&1, project.src_path, :dep))
+      libs |> Bunch.Enum.try_map(&parse_native(&1, project.src_path))
     else
       {:error, reason} -> {:error, {app, reason}}
     end
