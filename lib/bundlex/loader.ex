@@ -123,7 +123,7 @@ defmodule Bundlex.Loader do
   """
   defmacro load_nif!(app \\ nil, nif_name) do
     quote do
-      app = unquote(app || MixHelper.get_app!(__MODULE__))
+      app = unquote(app) || MixHelper.get_app!(__MODULE__)
       nif_name = unquote(nif_name)
       path = Bundlex.build_path(app, nif_name)
 
