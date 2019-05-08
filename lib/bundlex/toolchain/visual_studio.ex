@@ -79,8 +79,6 @@ defmodule Bundlex.Toolchain.VisualStudio do
         )
 
       true ->
-        Bundlex.Output.info_substage("Adding call to \"vcvarsall.bat #{vcvarsall_arg}\"")
-
         "if not defined VCINSTALLDIR call \"#{vcvarsall_path}\" #{vcvarsall_arg}"
     end
   end
@@ -100,16 +98,10 @@ defmodule Bundlex.Toolchain.VisualStudio do
   # Determines root directory of the Visual Studio.
   # Case when we have a root path passed via an environment variable.
   defp determine_visual_studio_root(directory) do
-    Bundlex.Output.info_substage(
-      "Using #{directory} passed via #{@directory_env} environment variable as Visual Studio root."
-    )
-
     directory
   end
 
   defp determine_visual_studio_root_with_wildcard(wildcard) do
-    Bundlex.Output.info_substage("Trying to find Visual Studio in \"#{wildcard}\"...")
-
     case PathHelper.latest_wildcard(wildcard) do
       nil ->
         Output.raise(
@@ -119,8 +111,6 @@ defmodule Bundlex.Toolchain.VisualStudio do
         )
 
       directory ->
-        Bundlex.Output.info_substage("Found Visual Studio in #{directory}")
-
         directory
     end
   end
