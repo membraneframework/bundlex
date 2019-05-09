@@ -73,7 +73,7 @@ defmodule Bundlex.Native do
         case native.type do
           :cnode ->
             native
-            |> Map.update!(:libs, &["ei" | &1])
+            |> Map.update!(:libs, &["pthread", "ei" | &1])
             |> Map.update!(:lib_dirs, &(erlang.lib_dirs ++ &1))
 
           _ ->
