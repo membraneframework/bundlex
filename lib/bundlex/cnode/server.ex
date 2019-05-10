@@ -105,6 +105,8 @@ defmodule Bundlex.CNode.Server do
         {:error, _reason} when empd_status == :unknown ->
           Logger.info("Trying to start epmd...")
           System.cmd("epmd", ~w(-daemon))
+          # ensure epmd finished starting
+          System.cmd("epmd", ~w(-names))
           ensure_node_distributed(:start_tried)
 
         {:error, reason} ->
