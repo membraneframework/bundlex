@@ -4,7 +4,6 @@ defmodule Mix.Tasks.Compile.Bundlex do
   #{@shortdoc}
 
   Accepts the following command line arguments:
-  - `--platform <platform>` - platform to build for, see `Bundlex.platform/0`.
   - `--store-scripts` - if set, shell scripts are stored in the project
   root folder for further analysis.
 
