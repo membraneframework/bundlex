@@ -7,12 +7,11 @@ defmodule Bundlex do
   alias Bundlex.Helper.MixHelper
 
   @doc """
-  Returns platform name passed by `--platform` command line argument or fallbacks
-  to the current platform name.
+  Returns current platform name.
   """
   @spec platform() :: :linux | :macosx | :windows32 | :windows64
   def platform() do
-    Platform.get_from_opts!()
+    Platform.get_current!()
   end
 
   @doc """
