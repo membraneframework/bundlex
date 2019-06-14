@@ -34,28 +34,6 @@ defmodule Bundlex.Platform do
   end
 
   @doc """
-  Returns platform passed via `platform` option with fallback to the current
-  platform.
-
-  If retrieving the current platform fails, raises an error.
-
-  The first argument is a keyword list, as returned from `OptionParser.parse/2`
-  or `OptionParser.parse!/2`.
-  """
-  @spec get_from_opts!(OptionParser.parsed()) :: name_t
-  def get_from_opts!(
-        opts \\ OptionParser.parse(System.argv(), switches: [platform: :string]) |> elem(0)
-      ) do
-    platform = opts[:platform]
-
-    if platform do
-      String.to_atom(platform)
-    else
-      get_current!()
-    end
-  end
-
-  @doc """
   Detects current platform.
 
   In case of success returns platform name
