@@ -121,7 +121,7 @@ The sources should reside in `project_root/c_src/my_app` directory (this can be 
 Configuration of each native may contain following options:
 * `sources` - C files to be compiled (at least one must be provided),
 * `includes` - Paths to look for header files (empty list by default).
-* `libs_dirs` - Paths to look for libraries (empty list by default).
+* `libs_dirs` - Absolute paths to look for libraries (empty list by default).
 * `libs` - Names of libraries to link (empty list by default).
 * `pkg_configs` - Names of libraries for which the appropriate flags will be
 obtained using pkg-config (empty list by default).
