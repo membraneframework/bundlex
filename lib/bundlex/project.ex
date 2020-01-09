@@ -19,7 +19,7 @@ defmodule Bundlex.Project do
   It's a keyword list containing the following keys:
   * `sources` - C files to be compiled (at least one must be provided),
   * `includes` - Paths to look for header files (empty list by default).
-  * `libs_dirs` - Paths to look for libraries (empty list by default).
+  * `lib_dirs` - Paths to look for libraries (empty list by default).
   * `libs` - Names of libraries to link (empty list by default).
   * `pkg_configs` - Names of libraries for which the appropriate flags will be
   obtained using pkg-config (empty list by default).

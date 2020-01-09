@@ -84,6 +84,12 @@ defmodule Bundlex.CNode.Server do
     {:stop, reason, state}
   end
 
+  def handle_info({:cnode, packet}, state) do
+    # forwards packet to caller
+    send state.caller, {:cnode, packet}
+    {:noreply, state}
+  end
+
   @impl true
   def handle_call(:stop, _from, state) do
     {:stop, :normal, disconnect(state.cnode), state}
