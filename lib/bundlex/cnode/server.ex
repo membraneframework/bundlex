@@ -86,7 +86,7 @@ defmodule Bundlex.CNode.Server do
 
   def handle_info({:cnode, packet}, state) do
     # forwards packet to caller
-    send state.caller, {:cnode, packet}
+    send(state.caller, {:cnode, packet})
     {:noreply, state}
   end
 
