@@ -3,6 +3,9 @@ defmodule Bundlex.Toolchain.XCode do
 
   use Bundlex.Toolchain
   alias Bundlex.Toolchain.Common.Unix
+  alias Bundlex.Toolchain.Compilers
+
+  @compilers %Compilers{c: "cc", cpp: "g++"}
 
   @impl Toolchain
   def compiler_commands(native) do
@@ -13,7 +16,8 @@ defmodule Bundlex.Toolchain.XCode do
         _ -> {"", ""}
       end
 
-    Unix.compiler_commands(native, "cc #{cflags}", "cc #{lflags}",
+    compiler = Compilers.resolve_compiler(native.language, @compilers)
+    Unix.compiler_commands(native, "#{compiler} #{cflags}", "#{compiler} #{lflags}",
       wrap_deps: &"-Wl,-all_load #{&1}"
     )
   end

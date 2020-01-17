@@ -40,7 +40,8 @@ defmodule Bundlex.Project do
           deps: [{Application.app(), native_name_t | [native_name_t]}],
           src_base: String.t(),
           compiler_flags: [String.t()],
-          linker_flags: [String.t()]
+          linker_flags: [String.t()],
+          language: String.t()
         ]
 
   @typedoc """
