@@ -19,7 +19,7 @@ defmodule Bundlex.Toolchain.GCC do
     compiler = Compilers.resolve_compiler(lang, @compilers)
 
     Unix.compiler_commands(native, "#{compiler} #{cflags}", "#{compiler} #{lflags}", lang,
-      wrap_deps: &"-Wl,--whole-archive #{&1} -Wl,--no-whole-archive",
+      wrap_deps: &"-Wl,--whole-archive #{&1} -Wl,--no-whole-archive"
     )
   end
 end
