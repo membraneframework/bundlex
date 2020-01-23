@@ -4,7 +4,7 @@ defmodule Bundlex.Toolchain.GCC do
   use Bundlex.Toolchain
   alias Bundlex.Toolchain.Common.{Unix, Compilers}
 
-  @compilers %Compilers{c: "gcc", cpp: "g++"}
+  @compilers %Compilers{c: "gcc", cpp: "clang++"}
 
   @impl Toolchain
   def compiler_commands(native) do
