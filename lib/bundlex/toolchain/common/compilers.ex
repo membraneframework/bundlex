@@ -3,10 +3,10 @@ defmodule Bundlex.Toolchain.Common.Compilers do
 
   def resolve_lang(lang) do
     cond do
-      lang in ["cpp", "c++", "C++", "CPP", "cplusplus", "CPLUSPLUS"] ->
+      lang in ["c++"] ->
         :cpp
 
-      lang in ["c", "C"] ->
+      lang in ["c"] ->
         :c
 
       true ->
