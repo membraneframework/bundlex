@@ -50,7 +50,8 @@ defmodule Bundlex.Project do
   native packages that are compiled as static libraries and linked to natives
   that have them specified in `deps` field of their configuration.
   """
-  @type config_t :: KVList.t(:nifs | :cnodes | :libs, KVList.t(native_name_t, native_config_t))
+  @type config_t ::
+          KVList.t(:nifs | :cnodes | :libs | :ports, KVList.t(native_name_t, native_config_t))
 
   @doc """
   Callback returning project configuration.
