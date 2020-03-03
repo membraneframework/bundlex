@@ -33,7 +33,7 @@ defmodule Bundlex.Loader do
   defmacro __using__(keyword) do
     quote do
       import unquote(__MODULE__), only: [defnif: 1, defnifp: 1]
-      @after_compile unquote(__MODULE__)
+      @before_compile unquote(__MODULE__)
       @bundlex_nif_name unquote(keyword |> Keyword.fetch!(:nif))
       @bundlex_app unquote(keyword |> Keyword.get(:app))
       Module.register_attribute(__MODULE__, :bundlex_defnifs, accumulate: true)
@@ -41,7 +41,7 @@ defmodule Bundlex.Loader do
   end
 
   @doc false
-  def __after_compile__(%{module: module} = env, _code) do
+  def __before_compile__(%{module: module} = env) do
     funs = Module.delete_attribute(module, :bundlex_defnifs)
     nif_name = Module.delete_attribute(module, :bundlex_nif_name)
     app = Module.delete_attribute(module, :bundlex_app)
