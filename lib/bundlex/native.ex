@@ -71,7 +71,7 @@ defmodule Bundlex.Native do
     with {:ok, native} <- parse_native(config, src_path) do
       native =
         case native.type do
-          t when t in [:cnode, :port] ->
+          :cnode ->
             native
             |> Map.update!(:libs, &["pthread", "ei" | &1])
             |> Map.update!(:lib_dirs, &(erlang.lib_dirs ++ &1))

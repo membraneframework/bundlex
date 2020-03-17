@@ -1,6 +1,12 @@
 defmodule Bundlex.Port do
+  @moduledoc """
+  Utilities to ease interaction with Ports
+  """
   alias Bundlex.Helper.MixHelper
 
+  @doc """
+  Spawns Port `native_name` from application of calling module.
+  """
   defmacro open(native_name, args \\ []) do
     app = MixHelper.get_app!(__CALLER__.module)
 
