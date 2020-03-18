@@ -15,10 +15,13 @@ defmodule Bundlex.Toolchain.GCC do
         _ -> {"", ""}
       end
 
-    lang = Compilers.resolve_lang(native.language)
-    compiler = Compilers.resolve_compiler(lang, @compilers)
+    compiler = @compilers |> Map.get(native.language)
 
-    Unix.compiler_commands(native, "#{compiler} #{cflags}", "#{compiler} #{lflags}", lang,
+    Unix.compiler_commands(
+      native,
+      "#{compiler} #{cflags}",
+      "#{compiler} #{lflags}",
+      native.language,
       wrap_deps: &"-Wl,--whole-archive #{&1} -Wl,--no-whole-archive"
     )
   end

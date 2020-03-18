@@ -17,7 +17,7 @@ defmodule Bundlex.Native do
           deps: [String.t()],
           compiler_flags: [String.t()],
           linker_flags: [String.t()],
-          language: String.t()
+          language: :c | :cpp
         }
 
   @enforce_keys [:name, :type]
@@ -33,7 +33,7 @@ defmodule Bundlex.Native do
             deps: [],
             compiler_flags: [],
             linker_flags: [],
-            language: "c"
+            language: :c
 
   @project_keys [
     :includes,
