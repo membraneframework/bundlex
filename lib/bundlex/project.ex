@@ -30,6 +30,7 @@ defmodule Bundlex.Project do
   (application name by default).
   * `compiler_flags` - Custom flags for compiler.
   * `linker_flags` - Custom flags for linker.
+  * `language` - Language of native. :c or :cpp may be chosen (:c by default)
   """
   @type native_config_t :: [
           sources: [String.t()],
@@ -41,7 +42,7 @@ defmodule Bundlex.Project do
           src_base: String.t(),
           compiler_flags: [String.t()],
           linker_flags: [String.t()],
-          language: String.t()
+          language: :c | :cpp
         ]
 
   @typedoc """
