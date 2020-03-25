@@ -3,13 +3,15 @@ defmodule Bundlex.Toolchain.Common.Unix do
 
   use Bunch
   alias Bundlex.{Native, Toolchain}
+  alias Bundlex.Toolchain.Common.Compilers
 
-  def compiler_commands(native, compile, link, options \\ []) do
+  def compiler_commands(native, compile, link, lang, options \\ []) do
     includes = native.includes |> paths("-I")
     pkg_config_cflags = native.pkg_configs |> pkg_config(:cflags)
     compiler_flags = native.compiler_flags |> Enum.join(" ")
     output = Toolchain.output_path(native.app, native.name)
     output_obj = output <> "_obj"
+    std_flag = Compilers.get_std_flag(lang)
 
     objects =
       native.sources
@@ -25,7 +27,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
       |> Enum.zip(objects)
       |> Enum.map(fn {source, object} ->
         """
-        #{compile} -Wall -Wextra -c -std=c11 -O2 -g #{compiler_flags} \
+        #{compile} -Wall -Wextra -c #{std_flag} -O2 -g #{compiler_flags} \
         -o #{path(object)} #{includes} #{pkg_config_cflags} #{path(source)}
         """
       end)
