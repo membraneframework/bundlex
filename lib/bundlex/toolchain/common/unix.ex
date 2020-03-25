@@ -43,7 +43,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
     extension =
       case native.type do
         :nif -> ".so"
-        :cnode -> ""
+        t when t in [:cnode, :port] -> ""
       end
 
     wrap_deps = options |> Keyword.get(:wrap_deps, & &1)

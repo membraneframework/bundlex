@@ -8,7 +8,7 @@ defmodule Bundlex.Native do
   @type t :: %__MODULE__{
           name: atom,
           app: atom,
-          type: :nif | :cnode | :lib,
+          type: :nif | :cnode | :lib | :port,
           includes: [String.t()],
           libs: [String.t()],
           lib_dirs: [String.t()],
@@ -44,7 +44,7 @@ defmodule Bundlex.Native do
     :linker_flags
   ]
 
-  @native_type_keys %{nif: :nifs, cnode: :cnodes, lib: :libs}
+  @native_type_keys %{nif: :nifs, cnode: :cnodes, lib: :libs, port: :ports}
 
   def resolve_natives(project, platform) do
     case get_native_configs(project) do
@@ -115,7 +115,7 @@ defmodule Bundlex.Native do
     end
   end
 
-  defp get_native_configs(project, types \\ [:lib, :nif, :cnode]) do
+  defp get_native_configs(project, types \\ [:lib, :nif, :cnode, :port]) do
     types
     |> Bunch.listify()
     |> Enum.flat_map(fn type ->

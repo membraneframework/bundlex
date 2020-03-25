@@ -61,7 +61,8 @@ defmodule MyApp.BundlexProject do
     [
       nifs: nifs(Bundlex.platform),
       cnodes: cnodes(),
-      libs: libs()
+      libs: libs(),
+      ports: ports()
     ]
   end
 
@@ -98,7 +99,18 @@ defmodule MyApp.BundlexProject do
     ]
   end
 
-  defp libs(_platform) do
+  defp ports() do 
+    [
+      my_port: [
+        sources: ["something.c", "something_other.c"]
+      ],
+      my_other_port: [
+        # ...
+      ]
+    ]
+  end
+
+  defp libs() do
     [
       my_lib: [
         sources: ["something.c", "something_other.c"]
@@ -115,6 +127,7 @@ As we can see, there are three types of natives:
 - NIFs - dynamically linked to the Erlang VM (see [Erlang docs](http://erlang.org/doc/man/erl_nif.html))
 - CNodes - executed as separate OS processes, accessed through sockets (see [Erlang docs](http://erlang.org/doc/man/ei_connect.html))
 - libs - can be used by other natives as dependencies (see `deps` option below)
+- ports - executed as separate OS processes (see [Elixir Port docs](https://hexdocs.pm/elixir/Port.html))
 
 The sources should reside in `project_root/c_src/my_app` directory (this can be changed with `src_base` option, see below).
 
