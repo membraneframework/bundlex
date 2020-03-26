@@ -145,7 +145,7 @@ specified in bundlex project of this dependency.
 (application name by default).
 * `compiler_flags` - Custom flags for compiler.
 * `linker_flags` - Custom flags for linker.
-* `language` - Language of native. :c or :cpp may be chosen (:c by default)
+* `language` - Language of native. `:c` or `:cpp` may be chosen (`:c` by default)
 
 ### Compilation options
 
