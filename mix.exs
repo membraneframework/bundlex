@@ -1,7 +1,7 @@
 defmodule Bundlex.Mixfile do
   use Mix.Project
 
-  @version "0.2.8"
+  @version "0.3.0"
 
   @github_url "https://github.com/membraneframework/bundlex"
 
