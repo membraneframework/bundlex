@@ -17,7 +17,8 @@ defmodule Bundlex.Native do
           deps: [String.t()],
           compiler_flags: [String.t()],
           linker_flags: [String.t()],
-          language: :c | :cpp
+          language: :c | :cpp,
+          interface: :nif | :cnode
         }
 
   @enforce_keys [:name, :type]
@@ -25,6 +26,7 @@ defmodule Bundlex.Native do
   defstruct name: nil,
             app: nil,
             type: nil,
+            interface: nil,
             includes: [],
             libs: [],
             lib_dirs: [],
@@ -44,10 +46,11 @@ defmodule Bundlex.Native do
     :deps,
     :compiler_flags,
     :linker_flags,
-    :language
+    :language,
+    :interface
   ]
 
-  @native_type_keys %{nif: :nifs, cnode: :cnodes, lib: :libs, port: :ports}
+  @native_type_keys %{nif: :nifs, cnode: :cnodes, native: :natives, lib: :libs, port: :ports}
 
   def resolve_natives(project, platform) do
     case get_native_configs(project) do
@@ -118,14 +121,23 @@ defmodule Bundlex.Native do
     end
   end
 
-  defp get_native_configs(project, types \\ [:lib, :nif, :cnode, :port]) do
+  defp get_native_configs(project, types \\ [:lib, :nif, :cnode, :native, :port]) do
     types
     |> Bunch.listify()
     |> Enum.flat_map(fn type ->
       project.config
       |> Keyword.get(@native_type_keys[type], [])
       |> Enum.map(fn {name, config} ->
-        %{config: config, name: name, type: type, app: project.app}
+        case type do
+          :native ->
+            %{config: config, name: name, type: config[:interface], app: project.app}
+
+          other ->
+            if other in [:nif, :cnode],
+              do: IO.warn(":nifs and :cnodes are deprecated. Use natives instead.")
+
+            %{config: config, name: name, type: type, app: project.app}
+        end
       end)
     end)
   end

@@ -31,6 +31,7 @@ defmodule Bundlex.Project do
   * `compiler_flags` - Custom flags for compiler.
   * `linker_flags` - Custom flags for linker.
   * `language` - Language of native. :c or :cpp may be chosen (:c by default)
+  * `interface` - Interface of native. :nif or :cnode may be chosen
   """
   @type native_config_t :: [
           sources: [String.t()],
@@ -42,18 +43,22 @@ defmodule Bundlex.Project do
           src_base: String.t(),
           compiler_flags: [String.t()],
           linker_flags: [String.t()],
-          language: :c | :cpp
+          language: :c | :cpp,
+          interface: :nif | :cnode
         ]
 
   @typedoc """
   Type describing project configuration.
 
-  It's a keyword list, where nifs, cnodes and libs can be specified. Libs are
+  It's a keyword list, where natives and libs can be specified. Libs are
   native packages that are compiled as static libraries and linked to natives
   that have them specified in `deps` field of their configuration.
   """
   @type config_t ::
-          KVList.t(:nifs | :cnodes | :libs | :ports, KVList.t(native_name_t, native_config_t))
+          KVList.t(
+            :nifs | :cnodes | :natives | :libs | :ports,
+            KVList.t(native_name_t, native_config_t)
+          )
 
   @doc """
   Callback returning project configuration.
