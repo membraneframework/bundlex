@@ -2,14 +2,14 @@ defmodule Bundlex.Toolchain.Common.Unix do
   @moduledoc false
 
   use Bunch
-  alias Bundlex.{Native, Toolchain}
+  alias Bundlex.{Native, Toolchain, Project}
   alias Bundlex.Toolchain.Common.Compilers
 
-  def compiler_commands(native, compile, link, lang, options \\ []) do
+  def compiler_commands(native, compile, link, lang, native_interface \\ nil, options \\ []) do
     includes = native.includes |> paths("-I")
     pkg_config_cflags = native.pkg_configs |> pkg_config(:cflags)
     compiler_flags = native.compiler_flags |> Enum.join(" ")
-    output = Toolchain.output_path(native.app, native.name)
+    output = Toolchain.output_path(native.app, native.name, native_interface)
     output_obj = output <> "_obj"
     std_flag = Compilers.get_std_flag(lang)
 
@@ -33,17 +33,17 @@ defmodule Bundlex.Toolchain.Common.Unix do
       end)
 
     ["mkdir -p #{path(output_obj)}"] ++
-      compile_commands ++ link_commands(native, link, output, objects, options)
+      compile_commands ++ link_commands(native, link, output, objects, options, native_interface)
   end
 
-  defp link_commands(%Native{type: :lib}, _link, output, objects, _options) do
+  defp link_commands(%Native{type: :lib}, _link, output, objects, _options, _native_interface) do
     a_path = path(output <> ".a")
     ["rm -f #{a_path}", "ar rcs #{a_path} #{paths(objects)}"]
   end
 
-  defp link_commands(native, link, output, objects, options) do
+  defp link_commands(native, link, output, objects, options, native_interface) do
     extension =
-      case native.type do
+      case native_interface do
         :nif -> ".so"
         t when t in [:cnode, :port] -> ""
       end
@@ -52,7 +52,17 @@ defmodule Bundlex.Toolchain.Common.Unix do
 
     deps =
       native.deps
-      |> Enum.map(fn {app, name} -> Toolchain.output_path(app, name) <> ".a" end)
+      |> Enum.map(fn {app, name} ->
+        lib_interfaces = get_lib_interfaces(app, name)
+
+        cond do
+          native_interface in lib_interfaces ->
+            Toolchain.output_path(app, name, native_interface) <> ".a"
+
+          lib_interfaces == [] ->
+            Toolchain.output_path(app, name, nil) <> ".a"
+        end
+      end)
       |> paths()
       |> wrap_deps.()
 
@@ -64,6 +74,12 @@ defmodule Bundlex.Toolchain.Common.Unix do
       #{deps} #{paths(objects)} #{libs(native)}
       """
     ]
+  end
+
+  defp get_lib_interfaces(app, name) do
+    {:ok, project} = Project.get(app)
+    libs = Keyword.get_values(project.config[:libs], name)
+    libs |> Enum.flat_map(&Keyword.get(&1, :interfaces, []))
   end
 
   defp paths(paths, flag \\ "") do

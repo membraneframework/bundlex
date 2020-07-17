@@ -25,8 +25,8 @@ defmodule Bundlex do
   @doc """
   Returns path where compiled native is stored.
   """
-  @spec build_path(application :: atom) :: String.t()
-  def build_path(application \\ MixHelper.get_app!(), native) do
-    Bundlex.Toolchain.output_path(application, native)
+  @spec build_path(application :: atom, native :: atom, native_interface :: atom) :: String.t()
+  def build_path(application \\ MixHelper.get_app!(), native, native_interface) do
+    Bundlex.Toolchain.output_path(application, native, native_interface)
   end
 end
