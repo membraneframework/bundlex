@@ -50,7 +50,7 @@ defmodule Bundlex.Native do
     :interfaces
   ]
 
-  @native_type_keys %{nif: :nifs, cnode: :cnodes, native: :natives, lib: :libs, port: :ports}
+  @native_type_keys %{native: :natives, lib: :libs, port: :ports}
 
   def resolve_natives(project, platform) do
     case get_native_configs(project) do
@@ -74,51 +74,27 @@ defmodule Bundlex.Native do
   end
 
   defp resolve_native(config, erlang, src_path, platform) do
-    native_interfaces = get_native_interfaces(config)
+    native_interfaces = Keyword.get(config.config, :interfaces, [])
 
-    cmd =
-      native_interfaces
-      |> Enum.flat_map(fn native_interface ->
-        {:ok, commands} = resolve_native(config, erlang, src_path, platform, native_interface)
-        commands
-      end)
+    case native_interfaces do
+      [] ->
+        resolve_native(config, erlang, src_path, platform, nil)
 
-    {:ok, cmd}
-  end
-
-  defp get_native_interfaces(config) do
-    config = config.config
-    interfaces = Keyword.get(config, :interfaces, [])
-
-    case interfaces do
-      # this is for backward compatibility when the native does not set an interface
-      [] -> [nil]
-      _ -> interfaces
+      _ ->
+        native_interfaces
+        |> Bunch.Enum.try_flat_map(&resolve_native(config, erlang, src_path, platform, &1))
     end
   end
 
   defp resolve_native(config, erlang, src_path, platform, native_interface) do
     with {:ok, native} <- parse_native(config, src_path, native_interface) do
       native =
-        case native.type do
-          :cnode ->
-            native
-            |> Map.update!(:libs, &["pthread", "ei" | &1])
-            |> Map.update!(:lib_dirs, &(erlang.lib_dirs ++ &1))
-
-          :native ->
-            case native_interface do
-              :cnode ->
-                native
-                |> Map.update!(:libs, &["pthread", "ei" | &1])
-                |> Map.update!(:lib_dirs, &(erlang.lib_dirs ++ &1))
-
-              _ ->
-                native
-            end
-
-          _ ->
-            native
+        if native.type == :native && native_interface == :cnode do
+          native
+          |> Map.update!(:libs, &["pthread", "ei" | &1])
+          |> Map.update!(:lib_dirs, &(erlang.lib_dirs ++ &1))
+        else
+          native
         end
         |> Map.update!(:includes, &(erlang.includes ++ &1))
         |> Map.update!(:sources, &Enum.uniq/1)
@@ -157,27 +133,14 @@ defmodule Bundlex.Native do
     end
   end
 
-  defp get_native_configs(project, types \\ [:lib, :nif, :cnode, :native, :port]) do
+  defp get_native_configs(project, types \\ [:lib, :native, :port]) do
     types
     |> Bunch.listify()
     |> Enum.flat_map(fn type ->
       project.config
       |> Keyword.get(@native_type_keys[type], [])
       |> Enum.map(fn {name, config} ->
-        case type do
-          :cnode ->
-            IO.warn(":cnodes are deprecated. Use natives instead.")
-            config = Keyword.put(config, :interfaces, [:cnode])
-            %{config: config, name: name, type: type, app: project.app}
-
-          :nif ->
-            IO.warn(":nifs are deprecated. Use natives instead.")
-            config = Keyword.put(config, :interfaces, [:nif])
-            %{config: config, name: name, type: type, app: project.app}
-
-          _ ->
-            %{config: config, name: name, type: type, app: project.app}
-        end
+        %{config: config, name: name, type: type, app: project.app}
       end)
     end)
   end

@@ -9,22 +9,10 @@ defmodule Bundlex.Toolchain.GCC do
   @impl Toolchain
   def compiler_commands(native, native_interface \\ nil) do
     {cflags, lflags} =
-      case native.type do
-        :native ->
-          if :nif in native.interfaces do
-            {"-fPIC", "-rdynamic -shared"}
-          else
-            {"", ""}
-          end
-
-        :nif ->
-          {"-fPIC", "-rdynamic -shared"}
-
-        :lib ->
-          {"-fPIC", ""}
-
-        _ ->
-          {"", ""}
+      cond do
+        native.type == :native && native_interface == :nif -> {"-fPIC", "-rdynamic -shared"}
+        native.type == :lib -> {"-fPIC", ""}
+        true -> {"", ""}
       end
 
     compiler = @compilers |> Map.get(native.language)

@@ -48,22 +48,32 @@ defmodule Bundlex.Project do
         ]
 
   @typedoc """
-  Type describing project configuration.
+  Type describing input project configuration.
 
-  It's a keyword list, where natives and libs can be specified. Libs are
+  It's a keyword list, where natives and libs can be specified. CNodes and
+  NIFs are deprecated. Instead use Natives with proper interfaces. Libs are
   native packages that are compiled as static libraries and linked to natives
   that have them specified in `deps` field of their configuration.
   """
-  @type config_t ::
+  @type input_config_t ::
           KVList.t(
             :nifs | :cnodes | :natives | :libs | :ports,
             KVList.t(native_name_t, native_config_t)
           )
 
+  @typedoc """
+  Type describing internal project configuration.
+
+  It is used to represent project configuration after converting
+  CNodes and NIFs from `input_config_t` into Natives with proper interfaces.
+  """
+  @type internal_config_t ::
+          KVList.t(:natives | :libs | :ports, KVList.t(native_name_t, native_config_t))
+
   @doc """
   Callback returning project configuration.
   """
-  @callback project() :: config_t
+  @callback project() :: input_config_t
 
   defmacro __using__(_args) do
     quote do
@@ -82,7 +92,12 @@ defmodule Bundlex.Project do
   - `:module` - bundlex project module
   - `:app` - application that exports project
   """
-  @type t :: %__MODULE__{config: config_t, src_path: String.t(), module: module, app: atom}
+  @type t :: %__MODULE__{
+          config: internal_config_t,
+          src_path: String.t(),
+          module: module,
+          app: atom
+        }
 
   @enforce_keys [:config, :src_path, :module, :app]
   defstruct @enforce_keys
@@ -115,7 +130,7 @@ defmodule Bundlex.Project do
     else
       with {:ok, module} <- load(application),
            project = %__MODULE__{
-             config: module.project(),
+             config: convert_input_config(module.project()),
              src_path: module.src_path(),
              module: module,
              app: application
@@ -139,5 +154,33 @@ defmodule Bundlex.Project do
       |> Enum.find(&project_module?/1)
       |> Bunch.error_if_nil({:no_bundlex_project_in_file, bundlex_file_path})
     end
+  end
+
+  @spec convert_input_config(input_config_t) :: internal_config_t
+  defp convert_input_config(input_config) do
+    nifs = Keyword.get(input_config, :nifs, [])
+    cnodes = Keyword.get(input_config, :cnodes, [])
+
+    nif_natives =
+      nifs
+      |> Enum.map(&convert_nif_to_native(&1))
+
+    cnode_natives =
+      cnodes
+      |> Enum.map(&convert_cnode_to_native(&1))
+
+    natives = nif_natives ++ cnode_natives
+    if natives != [], do: IO.warn(":nifs and :cnodes are deprecated. Use :natives instead")
+    Keyword.update(input_config, :natives, natives, &(&1 ++ natives))
+  end
+
+  defp convert_nif_to_native({name, config}) do
+    config = Keyword.put(config, :interfaces, [:nif])
+    {name, config}
+  end
+
+  defp convert_cnode_to_native({name, config}) do
+    config = Keyword.put(config, :interfaces, [:cnode])
+    {name, config}
   end
 end
