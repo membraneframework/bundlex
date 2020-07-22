@@ -31,7 +31,7 @@ defmodule Bundlex.Project do
   * `compiler_flags` - Custom flags for compiler.
   * `linker_flags` - Custom flags for linker.
   * `language` - Language of native. :c or :cpp may be chosen (:c by default)
-  * `interfaces` - Interfaces of native. :nif, :cnode or both may be chosen
+  * `interface` - Interface of native. It can be single atom e.g. :nif or list of atoms.
   """
   @type native_config_t :: [
           sources: [String.t()],
@@ -44,7 +44,7 @@ defmodule Bundlex.Project do
           compiler_flags: [String.t()],
           linker_flags: [String.t()],
           language: :c | :cpp,
-          interfaces: [:nif | :cnode]
+          interface: [:nif | :cnode] | :nif | :cnode
         ]
 
   @typedoc """
@@ -175,12 +175,12 @@ defmodule Bundlex.Project do
   end
 
   defp convert_nif_to_native({name, config}) do
-    config = Keyword.put(config, :interfaces, [:nif])
+    config = Keyword.put(config, :interface, :nif)
     {name, config}
   end
 
   defp convert_cnode_to_native({name, config}) do
-    config = Keyword.put(config, :interfaces, [:cnode])
+    config = Keyword.put(config, :interface, :cnode)
     {name, config}
   end
 end

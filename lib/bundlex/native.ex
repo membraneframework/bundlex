@@ -18,7 +18,7 @@ defmodule Bundlex.Native do
           compiler_flags: [String.t()],
           linker_flags: [String.t()],
           language: :c | :cpp,
-          interfaces: [:nif | :cnode]
+          interface: [:nif | :cnode] | :nif | :cnode
         }
 
   @enforce_keys [:name, :type]
@@ -35,7 +35,7 @@ defmodule Bundlex.Native do
             compiler_flags: [],
             linker_flags: [],
             language: :c,
-            interfaces: []
+            interface: []
 
   @project_keys [
     :includes,
@@ -47,7 +47,7 @@ defmodule Bundlex.Native do
     :compiler_flags,
     :linker_flags,
     :language,
-    :interfaces
+    :interface
   ]
 
   @native_type_keys %{native: :natives, lib: :libs, port: :ports}
@@ -74,7 +74,7 @@ defmodule Bundlex.Native do
   end
 
   defp resolve_native(config, erlang, src_path, platform) do
-    native_interfaces = Keyword.get(config.config, :interfaces, [])
+    native_interfaces = Keyword.get(config.config, :interface, []) |> Bunch.listify()
 
     case native_interfaces do
       [] ->
@@ -178,7 +178,7 @@ defmodule Bundlex.Native do
   defp filter_libs(libs, interface) do
     libs
     |> Enum.filter(fn lib ->
-      interfaces = Keyword.get(lib.config, :interfaces, [])
+      interfaces = Keyword.get(lib.config, :interface, []) |> Bunch.listify()
 
       cond do
         interfaces == [] -> true

@@ -15,13 +15,13 @@ defmodule Example.BundlexProject do
         deps: [example_lib: :example_lib],
         src_base: "example",
         sources: ["foo_nif.c"],
-        interfaces: [:nif]
+        interface: :nif
       ],
       example: [
         deps: [example_lib: :example_lib],
         src_base: "example",
         sources: ["example_cnode.c"],
-        interfaces: [:cnode]
+        interface: [:cnode]
       ]
     ]
   end

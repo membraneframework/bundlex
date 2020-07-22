@@ -7,6 +7,7 @@ defmodule ExampleTest do
 
       defnif(foo(a, b))
     end
+
     assert 10 = Foo.foo(5, 5)
   end
 
@@ -16,13 +17,13 @@ defmodule ExampleTest do
 
       defnif(bar(a, b))
     end
+
     assert 0 = Bar.bar(5, 5)
   end
 
   test "native with interface CNode" do
     test_cnode(:example)
   end
-
 
   test "cnode without interface" do
     test_cnode(:example_cnode)
