@@ -5,10 +5,12 @@ defmodule Bundlex.Native do
   alias Helper.ErlangHelper
   use Bunch
 
+  @type interface_t :: :nif | :cnode | :port
+
   @type t :: %__MODULE__{
           name: atom,
           app: atom,
-          type: :nif | :cnode | :lib | :port,
+          type: :native | :lib,
           includes: [String.t()],
           libs: [String.t()],
           lib_dirs: [String.t()],
@@ -18,7 +20,7 @@ defmodule Bundlex.Native do
           compiler_flags: [String.t()],
           linker_flags: [String.t()],
           language: :c | :cpp,
-          interface: [:nif | :cnode] | :nif | :cnode
+          interface: [interface_t] | interface_t
         }
 
   @enforce_keys [:name, :type]
@@ -50,7 +52,7 @@ defmodule Bundlex.Native do
     :interface
   ]
 
-  @native_type_keys %{native: :natives, lib: :libs, port: :ports}
+  @native_type_keys %{native: :natives, lib: :libs}
 
   def resolve_natives(project, platform) do
     case get_native_configs(project) do
@@ -74,7 +76,7 @@ defmodule Bundlex.Native do
   end
 
   defp resolve_native(config, erlang, src_path, platform) do
-    native_interfaces = Keyword.get(config.config, :interface, []) |> Bunch.listify()
+    native_interfaces = Keyword.get(config.config, :interface, [])
 
     case native_interfaces do
       [] ->
@@ -133,7 +135,7 @@ defmodule Bundlex.Native do
     end
   end
 
-  defp get_native_configs(project, types \\ [:lib, :native, :port]) do
+  defp get_native_configs(project, types \\ [:lib, :native]) do
     types
     |> Bunch.listify()
     |> Enum.flat_map(fn type ->
@@ -178,7 +180,7 @@ defmodule Bundlex.Native do
   defp filter_libs(libs, interface) do
     libs
     |> Enum.filter(fn lib ->
-      interfaces = Keyword.get(lib.config, :interface, []) |> Bunch.listify()
+      interfaces = Keyword.get(lib.config, :interface, [])
 
       cond do
         interfaces == [] -> true

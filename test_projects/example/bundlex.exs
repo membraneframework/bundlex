@@ -5,7 +5,8 @@ defmodule Example.BundlexProject do
     [
       natives: natives(),
       nifs: nifs(),
-      cnodes: cnodes()
+      cnodes: cnodes(),
+      ports: ports()
     ]
   end
 
@@ -15,13 +16,18 @@ defmodule Example.BundlexProject do
         deps: [example_lib: :example_lib],
         src_base: "example",
         sources: ["foo_nif.c"],
-        interface: :nif
+        interface: [:nif]
       ],
       example: [
         deps: [example_lib: :example_lib],
         src_base: "example",
         sources: ["example_cnode.c"],
         interface: [:cnode]
+      ],
+      example: [
+        src_base: "example",
+        sources: ["example_port.c"],
+        interface: :port
       ]
     ]
   end
@@ -42,6 +48,15 @@ defmodule Example.BundlexProject do
         deps: [example_lib: :example_lib],
         src_base: "example",
         sources: ["example_cnode.c"],
+      ]
+    ]
+  end
+
+  defp ports do
+    [
+      example_port: [
+        src_base: "example",
+        sources: ["example_port.c"],
       ]
     ]
   end

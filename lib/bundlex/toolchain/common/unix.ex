@@ -79,7 +79,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
   defp get_lib_interfaces(app, name) do
     {:ok, project} = Project.get(app)
     libs = Keyword.get_values(project.config[:libs], name)
-    libs |> Enum.flat_map(&(Keyword.get(&1, :interface, []) |> Bunch.listify()))
+    libs |> Enum.flat_map(&Keyword.get(&1, :interface, []))
   end
 
   defp paths(paths, flag \\ "") do

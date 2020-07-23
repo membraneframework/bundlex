@@ -29,9 +29,28 @@ defmodule ExampleTest do
     test_cnode(:example_cnode)
   end
 
+  test "native with interface port" do
+    test_port(:example)
+  end
+
+  test "port without interface" do
+    test_port(:example_port)
+  end
+
   defp test_cnode(name) do
     require Bundlex.CNode
     assert {:ok, cnode} = Bundlex.CNode.start_link(name)
     assert 10.0 = Bundlex.CNode.call(cnode, {:foo, 5.0, 5.0})
+  end
+
+  defp test_port(name) do
+    require Bundlex.Port
+    _port = Bundlex.Port.open(name)
+
+    receive do
+      {_port, {:data, msg}} -> assert msg == 'bundlex_port_test'
+    after
+      2_000 -> raise "timeout"
+    end
   end
 end
