@@ -27,7 +27,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
     [run_vcvarsall("amd64")]
   end
 
-  def compiler_commands(%Native{type: :nif} = native) do
+  def compiler_commands(%Native{type: :nif} = native, interface) do
     # FIXME escape quotes properly
 
     includes_part =
@@ -52,7 +52,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
 
     unquoted_dir_part =
       native.app
-      |> Toolchain.output_path()
+      |> Toolchain.output_path(interface)
       |> PathHelper.fix_slashes()
 
     dir_part = "\"#{unquoted_dir_part}\""
@@ -61,7 +61,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
       "if EXIST #{dir_part} rmdir /S /Q #{dir_part}",
       "mkdir #{dir_part}",
       "cl /LD #{includes_part} #{sources_part} #{libs_part} /link /DLL /OUT:\"#{
-        Toolchain.output_path(native.app, native.name)
+        Toolchain.output_path(native.app, native.name, interface)
       }.dll\""
     ]
   end

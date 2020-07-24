@@ -125,7 +125,7 @@ defmodule Bundlex.Loader do
     quote do
       app = unquote(app) || MixHelper.get_app!(__MODULE__)
       nif_name = unquote(nif_name)
-      path = Bundlex.build_path(app, nif_name)
+      path = Bundlex.build_path(app, nif_name, :nif)
 
       with :ok <- :erlang.load_nif(path |> PathHelper.fix_slashes() |> to_charlist(), 0) do
         :ok

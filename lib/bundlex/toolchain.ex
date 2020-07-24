@@ -20,7 +20,7 @@ defmodule Bundlex.Toolchain do
   @doc """
   Builds list of compiler commands valid for certain toolchain.
   """
-  @callback compiler_commands(Bundlex.Native.t()) :: [String.t()]
+  @callback compiler_commands(Bundlex.Native.t(), Bundlex.Native.interface_t()) :: [String.t()]
 
   defmacro __using__(_) do
     quote location: :keep do
@@ -36,11 +36,17 @@ defmodule Bundlex.Toolchain do
     end
   end
 
-  def output_path(app) do
-    MixHelper.get_priv_dir(app) |> Path.join("bundlex")
+  def output_path(app, native_interface) do
+    interface_str =
+      case native_interface do
+        nil -> ""
+        _ -> "#{native_interface}"
+      end
+
+    MixHelper.get_priv_dir(app) |> Path.join("bundlex") |> Path.join(interface_str)
   end
 
-  def output_path(app, native_name) do
-    output_path(app) |> Path.join("#{native_name}")
+  def output_path(app, native_name, native_interface) do
+    output_path(app, native_interface) |> Path.join("#{native_name}")
   end
 end

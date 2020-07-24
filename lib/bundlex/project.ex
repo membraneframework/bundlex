@@ -11,6 +11,8 @@ defmodule Bundlex.Project do
 
   @src_dir_name "c_src"
 
+  @deprecated_key_interfaces %{nifs: :nif, cnodes: :cnode, ports: :port}
+
   @type native_name_t :: atom
 
   @typedoc """
@@ -31,6 +33,7 @@ defmodule Bundlex.Project do
   * `compiler_flags` - Custom flags for compiler.
   * `linker_flags` - Custom flags for linker.
   * `language` - Language of native. :c or :cpp may be chosen (:c by default)
+  * `interface` - Interface of native. It can be single atom e.g. :nif or list of atoms.
   """
   @type native_config_t :: [
           sources: [String.t()],
@@ -42,18 +45,19 @@ defmodule Bundlex.Project do
           src_base: String.t(),
           compiler_flags: [String.t()],
           linker_flags: [String.t()],
-          language: :c | :cpp
+          language: :c | :cpp,
+          interface: [Bundlex.Native.interface_t()] | Bundlex.Native.interface_t()
         ]
 
   @typedoc """
-  Type describing project configuration.
+  Type describing input project configuration.
 
-  It's a keyword list, where nifs, cnodes and libs can be specified. Libs are
+  It's a keyword list, where natives and libs can be specified. `:nifs`, `:cnodes`
+  and `:ports` keys are deprecated. Instead, use `:natives` with proper `:interface`s. Libs are
   native packages that are compiled as static libraries and linked to natives
   that have them specified in `deps` field of their configuration.
   """
-  @type config_t ::
-          KVList.t(:nifs | :cnodes | :libs | :ports, KVList.t(native_name_t, native_config_t))
+  @type config_t :: KVList.t(:natives | :libs, KVList.t(native_name_t, native_config_t))
 
   @doc """
   Callback returning project configuration.
@@ -77,7 +81,12 @@ defmodule Bundlex.Project do
   - `:module` - bundlex project module
   - `:app` - application that exports project
   """
-  @type t :: %__MODULE__{config: config_t, src_path: String.t(), module: module, app: atom}
+  @type t :: %__MODULE__{
+          config: config_t,
+          src_path: String.t(),
+          module: module,
+          app: atom
+        }
 
   @enforce_keys [:config, :src_path, :module, :app]
   defstruct @enforce_keys
@@ -110,7 +119,7 @@ defmodule Bundlex.Project do
     else
       with {:ok, module} <- load(application),
            project = %__MODULE__{
-             config: module.project(),
+             config: convert_input_config(module.project()),
              src_path: module.src_path(),
              module: module,
              app: application
@@ -134,5 +143,42 @@ defmodule Bundlex.Project do
       |> Enum.find(&project_module?/1)
       |> Bunch.error_if_nil({:no_bundlex_project_in_file, bundlex_file_path})
     end
+  end
+
+  defp convert_input_config(input_config) do
+    natives =
+      Map.keys(@deprecated_key_interfaces)
+      |> Enum.flat_map(fn key ->
+        deprecated_keys = Keyword.get(input_config, key, [])
+
+        deprecated_keys
+        |> Enum.map(&convert_to_native(&1, @deprecated_key_interfaces[key]))
+      end)
+
+    if natives != [],
+      do: IO.warn(":nifs, :cnodes and :ports keys are deprecated. Use :natives instead")
+
+    input_config
+    |> Keyword.update(:natives, natives, &(&1 ++ natives))
+    |> listify_interfaces(:libs)
+    |> listify_interfaces(:natives)
+  end
+
+  defp convert_to_native({name, config}, interface) do
+    config = Keyword.put(config, :interface, Bunch.listify(interface))
+    {name, config}
+  end
+
+  defp listify_interfaces(input_config, native_type) do
+    natives = Keyword.get(input_config, native_type, [])
+
+    natives =
+      natives
+      |> Enum.map(fn {name, config} ->
+        config = Keyword.update(config, :interface, [], &Bunch.listify(&1))
+        {name, config}
+      end)
+
+    Keyword.put(input_config, native_type, natives)
   end
 end

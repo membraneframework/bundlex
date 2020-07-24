@@ -18,7 +18,7 @@ defmodule Bundlex.Port do
 
   def open(app, native_name, args) do
     Port.open(
-      {:spawn_executable, Bundlex.build_path(app, native_name)},
+      {:spawn_executable, Bundlex.build_path(app, native_name, :port)},
       args: args
     )
   end

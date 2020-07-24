@@ -15,7 +15,7 @@ defmodule Bundlex.CNode.Server do
 
     port =
       Port.open(
-        {:spawn_executable, Bundlex.build_path(opts.app, opts.native_name)},
+        {:spawn_executable, Bundlex.build_path(opts.app, opts.native_name, :cnode)},
         args: [host_name(), name, cnode, Node.get_cookie(), "#{creation}"],
         line: 2048
       )

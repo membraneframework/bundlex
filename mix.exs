@@ -54,7 +54,8 @@ defmodule Bundlex.Mixfile do
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:bunch, "~> 1.0"},
       {:qex, "~> 0.5"},
-      {:secure_random, "~> 0.5"}
+      {:secure_random, "~> 0.5"},
+      {:dialyxir, "~> 1.0.0", only: [:dev], runtime: false}
     ]
   end
 end

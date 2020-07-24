@@ -7,7 +7,7 @@ defmodule Bundlex.Toolchain.XCode do
   @compilers %Compilers{c: "cc", cpp: "clang++"}
 
   @impl Toolchain
-  def compiler_commands(native) do
+  def compiler_commands(native, native_interface) do
     {cflags, lflags} =
       case native.type do
         :nif -> {"-fPIC", "-dynamiclib -undefined dynamic_lookup"}
@@ -22,6 +22,7 @@ defmodule Bundlex.Toolchain.XCode do
       "#{compiler} #{cflags}",
       "#{compiler} #{lflags}",
       native.language,
+      native_interface,
       wrap_deps: &"-Wl,-all_load #{&1}"
     )
   end
