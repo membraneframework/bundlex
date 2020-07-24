@@ -181,12 +181,7 @@ defmodule Bundlex.Native do
     libs
     |> Enum.filter(fn lib ->
       interfaces = Keyword.get(lib.config, :interface, [])
-
-      cond do
-        interfaces == [] -> true
-        interface in interfaces -> true
-        true -> false
-      end
+      interfaces == [] or interface in interfaces
     end)
   end
 

@@ -11,7 +11,7 @@ defmodule Bundlex.Project do
 
   @src_dir_name "c_src"
 
-  @dep_format_interfaces %{nifs: :nif, cnodes: :cnode, ports: :port}
+  @deprecated_key_interfaces %{nifs: :nif, cnodes: :cnode, ports: :port}
 
   @type native_name_t :: atom
 
@@ -147,20 +147,21 @@ defmodule Bundlex.Project do
 
   defp convert_input_config(input_config) do
     natives =
-      Map.keys(@dep_format_interfaces)
-      |> Enum.flat_map(fn type ->
-        dep_formats = Keyword.get(input_config, type, [])
+      Map.keys(@deprecated_key_interfaces)
+      |> Enum.flat_map(fn key ->
+        deprecated_keys = Keyword.get(input_config, key, [])
 
-        dep_formats
-        |> Enum.map(&convert_to_native(&1, @dep_format_interfaces[type]))
+        deprecated_keys
+        |> Enum.map(&convert_to_native(&1, @deprecated_key_interfaces[key]))
       end)
 
     if natives != [],
       do: IO.warn(":nifs, :cnodes and :ports keys are deprecated. Use :natives instead")
 
-    input_config = Keyword.update(input_config, :natives, natives, &(&1 ++ natives))
-    input_config = listify_interfaces(input_config, :libs)
-    listify_interfaces(input_config, :natives)
+    input_config
+    |> Keyword.update(:natives, natives, &(&1 ++ natives))
+    |> listify_interfaces(:libs)
+    |> listify_interfaces(:natives)
   end
 
   defp convert_to_native({name, config}, interface) do
