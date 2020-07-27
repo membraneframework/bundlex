@@ -12,7 +12,7 @@ defmodule Example.Lib.BundlexProject do
       example_lib: [
         src_base: "example_lib",
         sources: ["example_lib_nif.c"],
-        interface: [:nif, :port]
+        interface: :nif
       ],
       example_lib: [
         src_base: "example_lib",
