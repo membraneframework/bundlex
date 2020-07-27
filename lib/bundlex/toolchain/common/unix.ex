@@ -42,14 +42,12 @@ defmodule Bundlex.Toolchain.Common.Unix do
     |> Enum.join(" ")
   end
 
-  defp add_interface_macro_flag(compiler_flags, native_interface) do
-    macro_flag =
-      cond do
-        native_interface == :nif -> "-DNIF"
-        native_interface == :cnode -> "-DCNODE"
-        native_interface == :port -> "-DPORT"
-      end
+  defp add_interface_macro_flag(compiler_flags, nil) do
+    compiler_flags
+  end
 
+  defp add_interface_macro_flag(compiler_flags, native_interface) do
+    macro_flag = "-DBUNDLEX_#{native_interface |> Atom.to_string() |> String.upcase()}"
     [macro_flag] ++ compiler_flags
   end
 
