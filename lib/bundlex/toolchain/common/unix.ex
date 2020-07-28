@@ -8,7 +8,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
   def compiler_commands(native, compile, link, lang, native_interface \\ nil, options \\ []) do
     includes = native.includes |> paths("-I")
     pkg_config_cflags = native.pkg_configs |> pkg_config(:cflags)
-    compiler_flags = native.compiler_flags |> Enum.join(" ")
+    compiler_flags = resolve_compiler_flags(native.compiler_flags, native_interface)
     output = Toolchain.output_path(native.app, native.name, native_interface)
     output_obj = output <> "_obj"
     std_flag = Compilers.get_std_flag(lang)
@@ -34,6 +34,21 @@ defmodule Bundlex.Toolchain.Common.Unix do
 
     ["mkdir -p #{path(output_obj)}"] ++
       compile_commands ++ link_commands(native, link, output, objects, options, native_interface)
+  end
+
+  defp resolve_compiler_flags(compiler_flags, native_interface) do
+    compiler_flags
+    |> add_interface_macro_flag(native_interface)
+    |> Enum.join(" ")
+  end
+
+  defp add_interface_macro_flag(compiler_flags, nil) do
+    compiler_flags
+  end
+
+  defp add_interface_macro_flag(compiler_flags, native_interface) do
+    macro_flag = "-DBUNDLEX_#{native_interface |> Atom.to_string() |> String.upcase()}"
+    [macro_flag] ++ compiler_flags
   end
 
   defp link_commands(%Native{type: :lib}, _link, output, objects, _options, _native_interface) do
