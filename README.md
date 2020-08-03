@@ -4,7 +4,7 @@
 [![API Docs](https://img.shields.io/badge/api-docs-yellow.svg?style=flat)](https://hexdocs.pm/bundlex/)
 [![CircleCI](https://circleci.com/gh/membraneframework/bundlex.svg?style=svg)](https://circleci.com/gh/membraneframework/bundlex)
 
-Bundlex is a multi-platform tool for compiling C code along with elixir projects, for use in NIFs and CNodes. The tool provides also convenient way of accessing compiled code in elixir modules.
+Bundlex is a multi-platform tool for compiling C code along with elixir projects, for use in NIFs, CNodes and Ports. The tool provides also convenient way of accessing compiled code in elixir modules.
 
 This tool is a part of [Membrane Framework](https://membraneframework.org/)
 
@@ -33,7 +33,7 @@ defmodule MyApp.Mixfile do
 end
 ```
 
-and create `bundlex.exs` file in the project root folder, containing bundlex project module:
+and create `bundlex.exs` file in the project root folder, containing Bundlex project module:
 
 ```elixir
 defmodule Membrane.Element.Mad.BundlexProject do
@@ -45,13 +45,13 @@ defmodule Membrane.Element.Mad.BundlexProject do
 end
 ```
 
-Now your project does not contain any C sources, but should compile successfully, and some bundlex messages should be printed while compilation proceeds.
+Now your project does not contain any C sources, but should compile successfully, and some Bundlex messages should be printed while compilation proceeds.
 
 ## Usage
 
 ### Adding natives to project
 
-Adding natives can be done in `project/0` function of bundlex project module in the following way:
+Adding natives can be done in `project/0` function of Bundlex project module in the following way:
 
 ```elixir
 defmodule MyApp.BundlexProject do
@@ -59,53 +59,41 @@ defmodule MyApp.BundlexProject do
 
   def project() do
     [
-      nifs: nifs(Bundlex.platform),
-      cnodes: cnodes(),
-      libs: libs(),
-      ports: ports()
+      natives: natives(Bundlex.platform),
+      libs: libs()
     ]
   end
 
-  defp nifs(:linux) do
+  defp natives(:linux) do
     [
-      my_nif: [
-        sources: ["something.c", "linux_specific.c"]
+      my_native: [
+        sources: ["something.c", "linux_specific.c"],
+        interface: :nif
       ],
-      my_other_nif: [
-        # ...
+      my_other_native: [
+        sources: ["something_other.c", "linux_specific.c"],
+        interface: :cnode
+      ],
+      my_other_native: [
+        sources: ["something_more_other.c", "linux_specific.c"],
+        interface: :port
       ]
     ]
   end
 
-  defp nifs(_platform) do
+  defp natives(_platform) do
     [
-      my_nif: [
-        sources: ["something.c", "multiplatform.c"]
+      my_native: [
+        sources: ["something.c", "multiplatform.c"],
+        interface: :nif
       ],
-      my_other_nif: [
-        # ...
-      ]
-    ]
-  end
-
-  defp cnodes() do
-    [
-      my_cnode: [
-        sources: ["something.c", "something_other.c"]
+      my_other_native: [
+        sources: ["something_other.c", "multiplatform.c"],
+        interface: :cnode
       ],
-      my_other_cnode: [
-        # ...
-      ]
-    ]
-  end
-
-  defp ports() do 
-    [
-      my_port: [
-        sources: ["something.c", "something_other.c"]
-      ],
-      my_other_port: [
-        # ...
+      my_other_native: [
+        sources: ["something_more_other.c", "multiplatform.c"],
+        interface: :port
       ]
     ]
   end
@@ -113,21 +101,21 @@ defmodule MyApp.BundlexProject do
   defp libs() do
     [
       my_lib: [
-        sources: ["something.c", "something_other.c"]
+        sources: ["something.c"],
+        interface: :nif
       ],
-      my_other_lib: [
-        # ...
+      my_lib: [
+        sources: ["something_other.c"],
+        interface: :cnode
       ]
     ]
   end
 end
 ```
 
-As we can see, there are three types of natives:
-- NIFs - dynamically linked to the Erlang VM (see [Erlang docs](http://erlang.org/doc/man/erl_nif.html))
-- CNodes - executed as separate OS processes, accessed through sockets (see [Erlang docs](http://erlang.org/doc/man/ei_connect.html))
-- libs - can be used by other natives as dependencies (see `deps` option below)
-- ports - executed as separate OS processes (see [Elixir Port docs](https://hexdocs.pm/elixir/Port.html))
+As we can see, we can specify two types of resources:
+- natives - code implemented in C that will be used within Elixir code
+- libs - can be used by other resources as dependencies (see `deps` option below)
 
 The sources should reside in `project_root/c_src/my_app` directory (this can be changed with `src_base` option, see below).
 
@@ -140,13 +128,20 @@ Configuration of each native may contain following options:
 obtained using pkg-config (empty list by default).
 * `deps` - Dependencies in the form of `{app, lib_name}`, where `app`
 is the application name of the dependency, and `lib_name` is the name of lib
-specified in bundlex project of this dependency.
+specified in Bundlex project of this dependency.
 * `src_base` - Native files should reside in `project_root/c_src/<src_base>`
 (application name by default).
 * `compiler_flags` - Custom flags for compiler.
 * `linker_flags` - Custom flags for linker.
 * `language` - Language of native. `:c` or `:cpp` may be chosen (`:c` by default)
+* `interface` - Interface used to integrate with Elixir code. There are three interfaces available:
+    * :nif - dynamically linked to the Erlang VM (see [Erlang docs](http://erlang.org/doc/man/erl_nif.html))
+    * :cnode - executed as separate OS processes, accessed through sockets (see [Erlang docs](http://erlang.org/doc/man/ei_connect.html))
+    * :port - executed as separate OS processes (see [Elixir Port docs](https://hexdocs.pm/elixir/Port.html))
 
+Note that we can specify multiple resources with the same name and different interfaces.
+It is especially useful when we want to have library that can work both with CNodes and NIFs. 
+When we include such library in `deps` Bundlex will automatically import proper version of it.
 ### Compilation options
 
 The following command line arguments can be passed:
@@ -182,6 +177,16 @@ In spite of this, any native erlang macros and functions shall be used as usual,
 ### Interacting with CNodes
 
 As in case of NIFs, CNodes compiled with Bundlex can be used like any other CNodes (see built-in `Node` module), while some useful stuff for interacting with them is provided. `Bundlex.CNode` module contains utilities that make it easier to spawn and control CNodes, and allow to treat them more like usual Elixir processes. Check out documentation for more details.
+
+### Interacting with Ports
+
+Similarly to CNodes Bundlex provides `Bundlex.Port` module for a little easier interacting with Ports.
+Please refer to module's documentation to see how to use it.
+
+## More examples
+
+More advanced examples can be found in our [test_projects](https://github.com/membraneframework/bundlex/tree/master/test_projects)
+or in our [repositories](https://github.com/membraneframework) where we use Bundlex e.g. in [Unifex](https://github.com/membraneframework/unifex).
 
 ## Copyright and License
 
