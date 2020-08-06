@@ -3,6 +3,7 @@
 
 static ERL_NIF_TERM export_bar(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
+    (void)argc;
     int a, b;
     enif_get_int(env, argv[0], &a);
     enif_get_int(env, argv[0], &b);
