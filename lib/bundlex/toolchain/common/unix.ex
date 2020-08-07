@@ -5,7 +5,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
   alias Bundlex.{Native, Toolchain, Project}
   alias Bundlex.Toolchain.Common.Compilers
 
-  def compiler_commands(native, compile, link, lang, native_interface \\ nil, options \\ []) do
+  def compiler_commands(native, compile, link, lang, native_interface, options \\ []) do
     includes = native.includes |> paths("-I")
     pkg_config_cflags = native.pkg_configs |> pkg_config(:cflags)
     compiler_flags = resolve_compiler_flags(native.compiler_flags, native_interface)

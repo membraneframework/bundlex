@@ -9,9 +9,9 @@ defmodule Bundlex.Toolchain.XCode do
   @impl Toolchain
   def compiler_commands(native, native_interface) do
     {cflags, lflags} =
-      case native.type do
-        :nif -> {"-fPIC", "-dynamiclib -undefined dynamic_lookup"}
-        :lib -> {"-fPIC", ""}
+      case {native, native_interface} do
+        {%{type: :native}, :nif} -> {"-fPIC", "-dynamiclib -undefined dynamic_lookup"}
+        {_native, :lib} -> {"-fPIC", ""}
         _ -> {"", ""}
       end
 
