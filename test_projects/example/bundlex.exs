@@ -47,7 +47,7 @@ defmodule Example.BundlexProject do
       example_cnode: [
         deps: [example_lib: :example_lib],
         src_base: "example",
-        sources: ["example_cnode.c"],
+        sources: ["example_cnode.c"]
       ]
     ]
   end
@@ -56,7 +56,7 @@ defmodule Example.BundlexProject do
     [
       example_port: [
         src_base: "example",
-        sources: ["example_port.c"],
+        sources: ["example_port.c"]
       ]
     ]
   end

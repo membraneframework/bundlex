@@ -7,7 +7,7 @@ defmodule Bundlex.Toolchain.GCC do
   @compilers %Compilers{c: "gcc", cpp: "g++"}
 
   @impl Toolchain
-  def compiler_commands(native, native_interface \\ nil) do
+  def compiler_commands(native, native_interface) do
     {cflags, lflags} =
       cond do
         native.type == :native && native_interface == :nif -> {"-fPIC", "-rdynamic -shared"}
