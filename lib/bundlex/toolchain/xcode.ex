@@ -5,7 +5,7 @@ defmodule Bundlex.Toolchain.XCode do
   alias Bundlex.Native
   alias Bundlex.Toolchain.Common.{Unix, Compilers}
 
-  @compilers %Compilers{c: "cc", cpp: "clang++"}
+  def compilers, do: %Compilers{c: "cc", cpp: "clang++"}
 
   @impl Toolchain
   def compiler_commands(native) do
@@ -21,7 +21,7 @@ defmodule Bundlex.Toolchain.XCode do
           {"", ""}
       end
 
-    compiler = @compilers |> Map.get(native.language)
+    compiler = compilers() |> Map.get(native.language)
 
     Unix.compiler_commands(
       native,
