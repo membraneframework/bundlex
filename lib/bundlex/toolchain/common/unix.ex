@@ -60,7 +60,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
     extension =
       case native.interface do
         :nif -> ".so"
-        t when t in [:cnode, :port] -> ""
+        interface when interface in [:cnode, :port] -> ""
       end
 
     wrap_deps = options |> Keyword.get(:wrap_deps, & &1)

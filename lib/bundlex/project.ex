@@ -7,7 +7,7 @@ defmodule Bundlex.Project do
   use Bunch
   alias Bunch.KVList
   alias Bundlex.Helper.MixHelper
-  alias __MODULE__.Store
+  alias __MODULE__.{Precompiler, Store}
 
   @src_dir_name "c_src"
 
@@ -46,7 +46,8 @@ defmodule Bundlex.Project do
           compiler_flags: [String.t()],
           linker_flags: [String.t()],
           language: :c | :cpp,
-          interface: [Bundlex.Native.interface_t()] | Bundlex.Native.interface_t()
+          interface: [Bundlex.Native.interface_t()] | Bundlex.Native.interface_t() | nil,
+          precompiler: [Precompiler.t()] | Precompiler.t()
         ]
 
   @typedoc """
@@ -165,7 +166,7 @@ defmodule Bundlex.Project do
   end
 
   defp convert_to_native({name, config}, interface) do
-    config = Keyword.put(config, :interface, Bunch.listify(interface))
+    config = Keyword.put(config, :interface, interface)
     {name, config}
   end
 

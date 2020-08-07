@@ -1,8 +1,9 @@
 defmodule Bundlex.Native do
   @moduledoc false
 
-  alias Bundlex.{Helper, Output, Platform, Project}
-  alias Helper.ErlangHelper
+  alias __MODULE__.Precompiler
+  alias Bundlex.Helper.ErlangHelper
+  alias Bundlex.{Output, Platform, Project}
   use Bunch
 
   @type interface_t :: :nif | :cnode | :port
@@ -16,11 +17,12 @@ defmodule Bundlex.Native do
           lib_dirs: [String.t()],
           pkg_configs: [String.t()],
           sources: [String.t()],
-          deps: [%{name: atom, app: atom, interface: interface_t}],
+          deps: [t],
           compiler_flags: [String.t()],
           linker_flags: [String.t()],
           language: :c | :cpp,
-          interface: interface_t
+          interface: interface_t | nil,
+          precompilers: Precompiler.t() | [Precompiler.t()]
         }
 
   @enforce_keys [:name, :type]
@@ -37,7 +39,8 @@ defmodule Bundlex.Native do
             compiler_flags: [],
             linker_flags: [],
             language: :c,
-            interface: []
+            interface: [],
+            precompilers: []
 
   @project_keys [
     :includes,
@@ -49,7 +52,8 @@ defmodule Bundlex.Native do
     :compiler_flags,
     :linker_flags,
     :language,
-    :interface
+    :interface,
+    :precompiler
   ]
 
   @native_type_keys %{native: :natives, lib: :libs}
@@ -76,33 +80,40 @@ defmodule Bundlex.Native do
   end
 
   defp resolve_native(config, erlang, src_path, platform) do
-    with {:ok, native} <- parse_root_native(config, src_path) do
+    with {:ok, native} <- parse_native(config, src_path, nil) do
+      %__MODULE__{} =
+        native = Enum.reduce(native.precompilers, native, & &1.precompile_native(&2))
+
       native =
-        if native.type == :native && native.interface == :cnode do
-          native
-          |> Map.update!(:libs, &["pthread", "ei" | &1])
-          |> Map.update!(:lib_dirs, &(erlang.lib_dirs ++ &1))
-        else
-          native
+        case native do
+          %__MODULE__{type: :native, interface: :cnode} = native ->
+            native
+            |> Map.update!(:libs, &["pthread", "ei" | &1])
+            |> Map.update!(:lib_dirs, &(erlang.lib_dirs ++ &1))
+
+          %__MODULE__{} = native ->
+            native
         end
         |> Map.update!(:includes, &(erlang.includes ++ &1))
+        |> merge_deps()
         |> Map.update!(:sources, &Enum.uniq/1)
-        |> Map.update!(:deps, &Enum.uniq/1)
+        |> Map.update!(:deps, fn deps -> Enum.uniq_by(deps, &{&1.app, &1.name}) end)
 
       commands = Platform.get_module(platform).toolchain_module.compiler_commands(native)
       {:ok, commands}
     end
   end
 
-  defp parse_root_native(config, src_path) do
-    interface = config |> Map.get(:config) |> Keyword.get(:interface)
-    parse_native(config, src_path, interface)
-  end
-
   defp parse_native(config, src_path, root_interface) do
     {config, meta} = config |> Map.pop(:config)
-    {deps, config} = config |> Keyword.pop(:deps, [])
+    {precompilers, config} = config |> Keyword.pop(:precompiler, [])
+    precompilers = precompilers |> Bunch.listify()
 
+    config =
+      Enum.reduce(precompilers, config, & &1.precompile_native_config(meta.name, meta.app, &2))
+
+    {deps, config} = config |> Keyword.pop(:deps, [])
+    root_interface = root_interface || config |> Keyword.get(:interface)
     {src_base, config} = config |> Keyword.pop(:src_base, "#{meta.app}")
 
     withl fields: [] <- config |> Keyword.keys() |> Enum.reject(&(&1 in @project_keys)),
@@ -110,15 +121,13 @@ defmodule Bundlex.Native do
           no_src: false <- native.sources |> Enum.empty?(),
           deps: {:ok, parsed_deps} <- parse_deps(deps, root_interface) do
       native =
-        native
+        %__MODULE__{native | deps: parsed_deps, precompilers: precompilers}
         |> Map.update!(:includes, &[Path.join([src_path, src_base, ".."]) | &1])
         |> Map.update!(:sources, fn src ->
           src |> Enum.map(&Path.join([src_path, src_base, &1]))
         end)
 
-      [native | parsed_deps]
-      |> Enum.reduce(&add_lib/2)
-      ~> {:ok, &1}
+      {:ok, native}
     else
       fields: fields -> {:error, {:unknown_fields, fields}}
       no_src: true -> {:error, {:no_sources_in_native, native.name}}
@@ -171,11 +180,15 @@ defmodule Bundlex.Native do
     end
   end
 
-  defp add_lib(%__MODULE__{type: :lib} = lib, %__MODULE__{} = native) do
+  defp merge_deps(native) do
+    native.deps |> Enum.map(&merge_deps/1) |> Enum.reduce(native, &merge_dep/2)
+  end
+
+  defp merge_dep(%__MODULE__{type: :lib} = dependency, %__MODULE__{} = native) do
     native
-    |> Map.update!(:deps, &[Map.take(lib, [:name, :app, :interface]) | &1])
+    |> Map.update!(:deps, &[dependency | &1])
     |> Map.merge(
-      lib |> Map.take([:includes, :libs, :lib_dirs, :pkg_configs, :linker_flags, :deps]),
+      Map.take(dependency, [:includes, :libs, :lib_dirs, :pkg_configs, :linker_flags, :deps]),
       fn _k, v1, v2 -> v2 ++ v1 end
     )
   end
