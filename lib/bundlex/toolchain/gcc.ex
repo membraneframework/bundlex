@@ -11,7 +11,7 @@ defmodule Bundlex.Toolchain.GCC do
     {cflags, lflags} =
       cond do
         native.type == :native && native_interface == :nif -> {"-fPIC", "-rdynamic -shared"}
-        native_interface == :lib -> {"-fPIC", ""}
+        native.type == :lib -> {"-fPIC", ""}
         true -> {"", ""}
       end
 

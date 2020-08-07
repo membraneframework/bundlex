@@ -11,7 +11,7 @@ defmodule Bundlex.Toolchain.XCode do
     {cflags, lflags} =
       case {native, native_interface} do
         {%{type: :native}, :nif} -> {"-fPIC", "-dynamiclib -undefined dynamic_lookup"}
-        {_native, :lib} -> {"-fPIC", ""}
+        {%{type: :lib}, _interface} -> {"-fPIC", ""}
         _ -> {"", ""}
       end
 
