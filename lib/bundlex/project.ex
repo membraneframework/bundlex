@@ -160,8 +160,8 @@ defmodule Bundlex.Project do
 
     input_config
     |> Keyword.update(:natives, natives, &(&1 ++ natives))
-    |> listify_interfaces(:libs)
-    |> listify_interfaces(:natives)
+    |> delistify_interfaces(:libs)
+    |> delistify_interfaces(:natives)
   end
 
   defp convert_to_native({name, config}, interface) do
@@ -169,14 +169,16 @@ defmodule Bundlex.Project do
     {name, config}
   end
 
-  defp listify_interfaces(input_config, native_type) do
+  defp delistify_interfaces(input_config, native_type) do
     natives = Keyword.get(input_config, native_type, [])
 
     natives =
       natives
-      |> Enum.map(fn {name, config} ->
-        config = Keyword.update(config, :interface, [], &Bunch.listify(&1))
-        {name, config}
+      |> Enum.flat_map(fn {name, config} ->
+        config
+        |> Keyword.get(:interface, nil)
+        |> Bunch.listify()
+        |> Enum.map(&{name, Keyword.put(config, :interface, &1)})
       end)
 
     Keyword.put(input_config, native_type, natives)

@@ -2,17 +2,18 @@ defmodule Bundlex.Toolchain.GCC do
   @moduledoc false
 
   use Bundlex.Toolchain
+  alias Bundlex.Native
   alias Bundlex.Toolchain.Common.{Unix, Compilers}
 
   @compilers %Compilers{c: "gcc", cpp: "g++"}
 
   @impl Toolchain
-  def compiler_commands(native, native_interface) do
+  def compiler_commands(native) do
     {cflags, lflags} =
-      cond do
-        native.type == :native && native_interface == :nif -> {"-fPIC", "-rdynamic -shared"}
-        native.type == :lib -> {"-fPIC", ""}
-        true -> {"", ""}
+      case native do
+        %Native{type: :native, interface: :nif} -> {"-fPIC", "-rdynamic -shared"}
+        %Native{type: :lib} -> {"-fPIC", ""}
+        %Native{} -> {"", ""}
       end
 
     compiler = @compilers |> Map.get(native.language)
@@ -22,7 +23,6 @@ defmodule Bundlex.Toolchain.GCC do
       "#{compiler} #{cflags}",
       "#{compiler} #{lflags}",
       native.language,
-      native_interface,
       wrap_deps: &"-Wl,--whole-archive #{&1} -Wl,--no-whole-archive"
     )
   end

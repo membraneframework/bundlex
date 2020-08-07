@@ -16,11 +16,11 @@ defmodule Bundlex.Native do
           lib_dirs: [String.t()],
           pkg_configs: [String.t()],
           sources: [String.t()],
-          deps: [String.t()],
+          deps: [%{name: atom, app: atom, interface: interface_t}],
           compiler_flags: [String.t()],
           linker_flags: [String.t()],
           language: :c | :cpp,
-          interface: [interface_t] | interface_t
+          interface: interface_t
         }
 
   @enforce_keys [:name, :type]
@@ -76,22 +76,9 @@ defmodule Bundlex.Native do
   end
 
   defp resolve_native(config, erlang, src_path, platform) do
-    native_interfaces = Keyword.get(config.config, :interface, [])
-
-    case native_interfaces do
-      [] ->
-        resolve_native(config, erlang, src_path, platform, nil)
-
-      _ ->
-        native_interfaces
-        |> Bunch.Enum.try_flat_map(&resolve_native(config, erlang, src_path, platform, &1))
-    end
-  end
-
-  defp resolve_native(config, erlang, src_path, platform, native_interface) do
-    with {:ok, native} <- parse_native(config, src_path, native_interface) do
+    with {:ok, native} <- parse_root_native(config, src_path) do
       native =
-        if native.type == :native && native_interface == :cnode do
+        if native.type == :native && native.interface == :cnode do
           native
           |> Map.update!(:libs, &["pthread", "ei" | &1])
           |> Map.update!(:lib_dirs, &(erlang.lib_dirs ++ &1))
@@ -102,22 +89,26 @@ defmodule Bundlex.Native do
         |> Map.update!(:sources, &Enum.uniq/1)
         |> Map.update!(:deps, &Enum.uniq/1)
 
-      commands =
-        Platform.get_module(platform).toolchain_module.compiler_commands(native, native_interface)
-
+      commands = Platform.get_module(platform).toolchain_module.compiler_commands(native)
       {:ok, commands}
     end
   end
 
-  defp parse_native(config, src_path, native_interface) do
+  defp parse_root_native(config, src_path) do
+    interface = config |> Map.get(:config) |> Keyword.get(:interface)
+    parse_native(config, src_path, interface)
+  end
+
+  defp parse_native(config, src_path, root_interface) do
     {config, meta} = config |> Map.pop(:config)
     {deps, config} = config |> Keyword.pop(:deps, [])
+
     {src_base, config} = config |> Keyword.pop(:src_base, "#{meta.app}")
 
     withl fields: [] <- config |> Keyword.keys() |> Enum.reject(&(&1 in @project_keys)),
           do: native = (config ++ Enum.to_list(meta)) |> __struct__(),
           no_src: false <- native.sources |> Enum.empty?(),
-          deps: {:ok, parsed_deps} <- parse_deps(deps, native_interface) do
+          deps: {:ok, parsed_deps} <- parse_deps(deps, root_interface) do
       native =
         native
         |> Map.update!(:includes, &[Path.join([src_path, src_base, ".."]) | &1])
@@ -147,47 +138,42 @@ defmodule Bundlex.Native do
     end)
   end
 
-  defp parse_deps(deps, interface) do
+  defp parse_deps(deps, root_interface) do
     deps
     |> Bunch.Enum.try_flat_map(fn {app, natives} ->
-      parse_app_libs(app, natives |> Bunch.listify(), interface)
+      parse_app_libs(app, natives |> Bunch.listify() |> MapSet.new(), root_interface)
     end)
   end
 
-  defp parse_app_libs(app, names, interface) do
+  defp parse_app_libs(app, names, root_interface) do
     with {:ok, project} <- app |> Project.get(),
-         {:ok, libs} <- find_libs(project, names, interface) do
-      libs |> Bunch.Enum.try_map(&parse_native(&1, project.src_path, interface))
+         libs = find_libs(project, names),
+         {:ok, libs} <-
+           Bunch.Enum.try_map(libs, &parse_native(&1, project.src_path, root_interface)) do
+      filter_libs(libs, names, root_interface)
     else
       {:error, reason} -> {:error, {app, reason}}
     end
   end
 
-  defp find_libs(project, names, interface) do
-    names = names |> MapSet.new()
-    found_libs = project |> get_native_configs(:lib) |> Enum.filter(&(&1.name in names))
-    found_libs = filter_libs(found_libs, interface)
+  defp find_libs(project, names) do
+    project |> get_native_configs(:lib) |> Enum.filter(&(&1.name in names))
+  end
 
-    diff = names |> MapSet.difference(found_libs |> MapSet.new(& &1.name))
+  defp filter_libs(libs, names, interface) do
+    libs = Enum.filter(libs, &(&1.interface in [nil, interface]))
+    diff = MapSet.difference(names, MapSet.new(libs, & &1.name))
 
     if diff |> Enum.empty?() do
-      {:ok, found_libs}
+      {:ok, libs}
     else
       {:error, {:libs_not_found, diff |> Enum.to_list()}}
     end
   end
 
-  defp filter_libs(libs, interface) do
-    libs
-    |> Enum.filter(fn lib ->
-      interfaces = Keyword.get(lib.config, :interface, [])
-      interfaces == [] or interface in interfaces
-    end)
-  end
-
   defp add_lib(%__MODULE__{type: :lib} = lib, %__MODULE__{} = native) do
     native
-    |> Map.update!(:deps, &[{lib.app, lib.name} | &1])
+    |> Map.update!(:deps, &[Map.take(lib, [:name, :app, :interface]) | &1])
     |> Map.merge(
       lib |> Map.take([:includes, :libs, :lib_dirs, :pkg_configs, :linker_flags, :deps]),
       fn _k, v1, v2 -> v2 ++ v1 end

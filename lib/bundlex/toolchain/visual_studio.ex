@@ -28,7 +28,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
   end
 
   @impl true
-  def compiler_commands(%Native{} = native, :nif) do
+  def compiler_commands(%Native{interface: :nif} = native) do
     # FIXME escape quotes properly
 
     includes_part =

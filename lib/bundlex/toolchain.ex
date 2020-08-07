@@ -20,7 +20,7 @@ defmodule Bundlex.Toolchain do
   @doc """
   Builds list of compiler commands valid for certain toolchain.
   """
-  @callback compiler_commands(Bundlex.Native.t(), Bundlex.Native.interface_t()) :: [String.t()]
+  @callback compiler_commands(Bundlex.Native.t()) :: [String.t()]
 
   defmacro __using__(_) do
     quote location: :keep do
