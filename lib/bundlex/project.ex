@@ -34,6 +34,7 @@ defmodule Bundlex.Project do
   * `linker_flags` - Custom flags for linker.
   * `language` - Language of native. :c or :cpp may be chosen (:c by default)
   * `interface` - Interface of native. It can be single atom e.g. :nif or list of atoms.
+  * `precompilers` - Modules implementing `Bundlex.Project.Precompiler` behaviour
   """
   @type native_config_t :: [
           sources: [String.t()],

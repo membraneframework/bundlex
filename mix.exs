@@ -17,6 +17,7 @@ defmodule Bundlex.Mixfile do
       source_url: @github_url,
       docs: docs(),
       preferred_cli_env: [espec: :test],
+      dialyzer: [plt_add_apps: [:mix]],
       deps: deps()
     ]
   end

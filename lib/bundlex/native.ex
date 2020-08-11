@@ -1,9 +1,11 @@
 defmodule Bundlex.Native do
-  @moduledoc false
+  @moduledoc """
+  Module responsible for parsing and processing natives' configurations.
+  """
 
-  alias __MODULE__.Precompiler
   alias Bundlex.Helper.ErlangHelper
   alias Bundlex.{Output, Platform, Project}
+  alias Bundlex.Project.Precompiler
   use Bunch
 
   @type interface_t :: :nif | :cnode | :port
@@ -58,6 +60,18 @@ defmodule Bundlex.Native do
 
   @native_type_keys %{native: :natives, lib: :libs}
 
+  @doc """
+  Parses natives and generates compiler commands.
+  """
+  @spec resolve_natives(Project.t(), Bundlex.platform_t()) ::
+          {:ok, compiler_commands :: [String.t()]}
+          | {:error,
+             {application :: atom,
+              {:unknown_fields, [field :: atom]}
+              | {:no_sources_in_native, native_name :: atom}
+              | :invalid_project_specification
+              | {:no_bundlex_project_in_file, path :: binary()}
+              | :unknown_application}}
   def resolve_natives(project, platform) do
     case get_native_configs(project) do
       [] ->
@@ -129,8 +143,8 @@ defmodule Bundlex.Native do
 
       {:ok, native}
     else
-      fields: fields -> {:error, {:unknown_fields, fields}}
-      no_src: true -> {:error, {:no_sources_in_native, native.name}}
+      fields: fields -> {:error, {meta.app, {:unknown_fields, fields}}}
+      no_src: true -> {:error, {meta.app, {:no_sources_in_native, native.name}}}
       deps: error -> error
     end
   end
@@ -155,13 +169,15 @@ defmodule Bundlex.Native do
   end
 
   defp parse_app_libs(app, names, root_interface) do
-    with {:ok, project} <- app |> Project.get(),
-         libs = find_libs(project, names),
-         {:ok, libs} <-
-           Bunch.Enum.try_map(libs, &parse_native(&1, project.src_path, root_interface)) do
+    withl project: {:ok, project} <- app |> Project.get(),
+          do: libs = find_libs(project, names),
+          libs:
+            {:ok, libs} <-
+              Bunch.Enum.try_map(libs, &parse_native(&1, project.src_path, root_interface)) do
       filter_libs(libs, names, root_interface)
     else
-      {:error, reason} -> {:error, {app, reason}}
+      project: {:error, reason} -> {:error, {app, reason}}
+      libs: error -> error
     end
   end
 
