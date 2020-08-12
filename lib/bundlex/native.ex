@@ -41,7 +41,7 @@ defmodule Bundlex.Native do
             compiler_flags: [],
             linker_flags: [],
             language: :c,
-            interface: [],
+            interface: nil,
             precompilers: []
 
   @project_keys [
@@ -94,7 +94,7 @@ defmodule Bundlex.Native do
   end
 
   defp resolve_native(config, erlang, src_path, platform) do
-    with {:ok, native} <- parse_native(config, src_path, nil) do
+    with {:ok, native} <- parse_native(config, src_path, :root) do
       %__MODULE__{} =
         native = Enum.reduce(native.precompilers, native, & &1.precompile_native(&2))
 
@@ -118,7 +118,7 @@ defmodule Bundlex.Native do
     end
   end
 
-  defp parse_native(config, src_path, root_interface) do
+  defp parse_native(config, src_path, mode) do
     {config, meta} = config |> Map.pop(:config)
     {precompilers, config} = config |> Keyword.pop(:precompiler, [])
     precompilers = precompilers |> Bunch.listify()
@@ -127,7 +127,13 @@ defmodule Bundlex.Native do
       Enum.reduce(precompilers, config, & &1.precompile_native_config(meta.name, meta.app, &2))
 
     {deps, config} = config |> Keyword.pop(:deps, [])
-    root_interface = root_interface || config |> Keyword.get(:interface)
+
+    root_interface =
+      case mode do
+        :root -> config |> Keyword.get(:interface)
+        {:dependency, root_interface} -> root_interface
+      end
+
     {src_base, config} = config |> Keyword.pop(:src_base, "#{meta.app}")
 
     withl fields: [] <- config |> Keyword.keys() |> Enum.reject(&(&1 in @project_keys)),
@@ -171,9 +177,7 @@ defmodule Bundlex.Native do
   defp parse_app_libs(app, names, root_interface) do
     withl project: {:ok, project} <- app |> Project.get(),
           do: libs = find_libs(project, names),
-          libs:
-            {:ok, libs} <-
-              Bunch.Enum.try_map(libs, &parse_native(&1, project.src_path, root_interface)) do
+          libs: {:ok, libs} <- parse_libs(libs, project.src_path, root_interface) do
       filter_libs(libs, names, root_interface)
     else
       project: {:error, reason} -> {:error, {app, reason}}
@@ -185,8 +189,8 @@ defmodule Bundlex.Native do
     project |> get_native_configs(:lib) |> Enum.filter(&(&1.name in names))
   end
 
-  defp filter_libs(libs, names, interface) do
-    libs = Enum.filter(libs, &(&1.interface in [nil, interface]))
+  defp filter_libs(libs, names, root_interface) do
+    libs = Enum.filter(libs, &(&1.interface in [nil, root_interface]))
     diff = MapSet.difference(names, MapSet.new(libs, & &1.name))
 
     if diff |> Enum.empty?() do
@@ -196,14 +200,17 @@ defmodule Bundlex.Native do
     end
   end
 
+  defp parse_libs(libs, src_path, root_interface) do
+    Bunch.Enum.try_map(libs, &parse_native(&1, src_path, {:dependency, root_interface}))
+  end
+
   defp merge_deps(native) do
     native.deps |> Enum.map(&merge_deps/1) |> Enum.reduce(native, &merge_dep/2)
   end
 
   defp merge_dep(%__MODULE__{type: :lib} = dependency, %__MODULE__{} = native) do
-    native
-    |> Map.update!(:deps, &[dependency | &1])
-    |> Map.merge(
+    Map.merge(
+      native,
       Map.take(dependency, [:includes, :libs, :lib_dirs, :pkg_configs, :linker_flags, :deps]),
       fn _k, v1, v2 -> v2 ++ v1 end
     )
