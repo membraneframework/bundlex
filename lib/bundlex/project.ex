@@ -51,6 +51,22 @@ defmodule Bundlex.Project do
           precompiler: [Precompiler.t()] | Precompiler.t()
         ]
 
+  @spec native_config_keys :: [atom]
+  def native_config_keys,
+    do: [
+      :includes,
+      :libs,
+      :lib_dirs,
+      :pkg_configs,
+      :sources,
+      :deps,
+      :compiler_flags,
+      :linker_flags,
+      :language,
+      :interface,
+      :precompiler
+    ]
+
   @typedoc """
   Type describing input project configuration.
 

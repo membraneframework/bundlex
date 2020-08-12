@@ -24,7 +24,7 @@ defmodule Bundlex.Native do
           linker_flags: [String.t()],
           language: :c | :cpp,
           interface: interface_t | nil,
-          precompilers: Precompiler.t() | [Precompiler.t()]
+          precompilers: [Precompiler.t()]
         }
 
   @enforce_keys [:name, :type]
@@ -44,19 +44,7 @@ defmodule Bundlex.Native do
             interface: nil,
             precompilers: []
 
-  @project_keys [
-    :includes,
-    :libs,
-    :lib_dirs,
-    :pkg_configs,
-    :sources,
-    :deps,
-    :compiler_flags,
-    :linker_flags,
-    :language,
-    :interface,
-    :precompiler
-  ]
+  @project_keys Project.native_config_keys()
 
   @native_type_keys %{native: :natives, lib: :libs}
 
