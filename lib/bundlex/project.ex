@@ -7,7 +7,7 @@ defmodule Bundlex.Project do
   use Bunch
   alias Bunch.KVList
   alias Bundlex.Helper.MixHelper
-  alias __MODULE__.{Precompiler, Store}
+  alias __MODULE__.{Preprocessor, Store}
 
   @src_dir_name "c_src"
 
@@ -34,7 +34,7 @@ defmodule Bundlex.Project do
   * `linker_flags` - Custom flags for linker.
   * `language` - Language of native. :c or :cpp may be chosen (:c by default)
   * `interface` - Interface of native. It can be single atom e.g. :nif or list of atoms.
-  * `precompilers` - Modules implementing `Bundlex.Project.Precompiler` behaviour
+  * `preprocessors` - Modules implementing `Bundlex.Project.Preprocessor` behaviour
   """
   @type native_config_t :: [
           sources: [String.t()],
@@ -48,7 +48,7 @@ defmodule Bundlex.Project do
           linker_flags: [String.t()],
           language: :c | :cpp,
           interface: [Bundlex.Native.interface_t()] | Bundlex.Native.interface_t() | nil,
-          precompiler: [Precompiler.t()] | Precompiler.t()
+          preprocessor: [Preprocessor.t()] | Preprocessor.t()
         ]
 
   @spec native_config_keys :: [atom]
@@ -64,7 +64,7 @@ defmodule Bundlex.Project do
       :linker_flags,
       :language,
       :interface,
-      :precompiler
+      :preprocessor
     ]
 
   @typedoc """

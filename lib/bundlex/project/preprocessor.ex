@@ -1,20 +1,20 @@
-defmodule Bundlex.Project.Precompiler do
+defmodule Bundlex.Project.Preprocessor do
   @moduledoc """
-  Behaviour for precompiling Bundlex projects.
+  Behaviour for preprocessing Bundlex projects.
 
   Precompiling may involve either generating additional resources or altering the project itself.
-  Currently, precompiling native configuration (`c:precompile_native_config/3`)
-  and parsed natives (`c:precompile_native/1`) is supported.
+  Currently, preprocessing native configuration (`c:preprocess_native_config/3`)
+  and parsed natives (`c:preprocess_native/1`) is supported.
   """
   alias Bundlex.{Native, Project}
 
   @type t :: module
 
-  @callback precompile_native_config(
+  @callback preprocess_native_config(
               name :: atom,
               app :: atom,
               config :: Project.native_config_t()
             ) ::
               Project.native_config_t()
-  @callback precompile_native(native :: Native.t()) :: Native.t()
+  @callback preprocess_native(native :: Native.t()) :: Native.t()
 end

@@ -5,7 +5,7 @@ defmodule Bundlex.Native do
 
   alias Bundlex.Helper.ErlangHelper
   alias Bundlex.{Output, Platform, Project}
-  alias Bundlex.Project.Precompiler
+  alias Bundlex.Project.Preprocessor
   use Bunch
 
   @type interface_t :: :nif | :cnode | :port
@@ -24,7 +24,7 @@ defmodule Bundlex.Native do
           linker_flags: [String.t()],
           language: :c | :cpp,
           interface: interface_t | nil,
-          precompilers: [Precompiler.t()]
+          preprocessors: [Preprocessor.t()]
         }
 
   @enforce_keys [:name, :type]
@@ -42,7 +42,7 @@ defmodule Bundlex.Native do
             linker_flags: [],
             language: :c,
             interface: nil,
-            precompilers: []
+            preprocessors: []
 
   @project_keys Project.native_config_keys()
 
@@ -86,7 +86,7 @@ defmodule Bundlex.Native do
   defp resolve_native(config, erlang, src_path, platform) do
     with {:ok, native} <- parse_native(config, src_path, :root) do
       %__MODULE__{} =
-        native = Enum.reduce(native.precompilers, native, & &1.precompile_native(&2))
+        native = Enum.reduce(native.preprocessors, native, & &1.preprocess_native(&2))
 
       native =
         case native do
@@ -110,11 +110,11 @@ defmodule Bundlex.Native do
 
   defp parse_native(config, src_path, mode) do
     {config, meta} = config |> Map.pop(:config)
-    {precompilers, config} = config |> Keyword.pop(:precompiler, [])
-    precompilers = precompilers |> Bunch.listify()
+    {preprocessors, config} = config |> Keyword.pop(:preprocessor, [])
+    preprocessors = preprocessors |> Bunch.listify()
 
     config =
-      Enum.reduce(precompilers, config, & &1.precompile_native_config(meta.name, meta.app, &2))
+      Enum.reduce(preprocessors, config, & &1.preprocess_native_config(meta.name, meta.app, &2))
 
     {deps, config} = config |> Keyword.pop(:deps, [])
 
@@ -131,7 +131,7 @@ defmodule Bundlex.Native do
           no_src: false <- native.sources |> Enum.empty?(),
           deps: {:ok, parsed_deps} <- parse_deps(deps, root_interface) do
       native =
-        %__MODULE__{native | deps: parsed_deps, precompilers: precompilers}
+        %__MODULE__{native | deps: parsed_deps, preprocessors: preprocessors}
         |> Map.update!(:includes, &[Path.join([src_path, src_base, ".."]) | &1])
         |> Map.update!(:sources, fn src ->
           src |> Enum.map(&Path.join([src_path, src_base, &1]))
