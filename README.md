@@ -138,10 +138,12 @@ specified in Bundlex project of this dependency.
     * :nif - dynamically linked to the Erlang VM (see [Erlang docs](http://erlang.org/doc/man/erl_nif.html))
     * :cnode - executed as separate OS processes, accessed through sockets (see [Erlang docs](http://erlang.org/doc/man/ei_connect.html))
     * :port - executed as separate OS processes (see [Elixir Port docs](https://hexdocs.pm/elixir/Port.html))
+* `preprocessors` - Modules that will preprocess the native, see `Bundlex.Project.Preprocessor`.
 
 Note that we can specify multiple resources with the same name and different interfaces.
 It is especially useful when we want to have library that can work both with CNodes and NIFs. 
 When we include such library in `deps` Bundlex will automatically import proper version of it.
+
 ### Compilation options
 
 The following command line arguments can be passed:

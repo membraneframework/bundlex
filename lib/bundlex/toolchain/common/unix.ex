@@ -2,14 +2,14 @@ defmodule Bundlex.Toolchain.Common.Unix do
   @moduledoc false
 
   use Bunch
-  alias Bundlex.{Native, Toolchain, Project}
+  alias Bundlex.{Native, Toolchain}
   alias Bundlex.Toolchain.Common.Compilers
 
-  def compiler_commands(native, compile, link, lang, native_interface, options \\ []) do
+  def compiler_commands(native, compile, link, lang, options \\ []) do
     includes = native.includes |> paths("-I")
     pkg_config_cflags = native.pkg_configs |> pkg_config(:cflags)
-    compiler_flags = resolve_compiler_flags(native.compiler_flags, native_interface)
-    output = Toolchain.output_path(native.app, native.name, native_interface)
+    compiler_flags = resolve_compiler_flags(native.compiler_flags, native.interface)
+    output = Toolchain.output_path(native.app, native.name, native.interface)
     output_obj = output <> "_obj"
     std_flag = Compilers.get_std_flag(lang)
 
@@ -33,12 +33,12 @@ defmodule Bundlex.Toolchain.Common.Unix do
       end)
 
     ["mkdir -p #{path(output_obj)}"] ++
-      compile_commands ++ link_commands(native, link, output, objects, options, native_interface)
+      compile_commands ++ link_commands(native, link, output, objects, options)
   end
 
-  defp resolve_compiler_flags(compiler_flags, native_interface) do
+  defp resolve_compiler_flags(compiler_flags, interface) do
     compiler_flags
-    |> add_interface_macro_flag(native_interface)
+    |> add_interface_macro_flag(interface)
     |> Enum.join(" ")
   end
 
@@ -46,38 +46,28 @@ defmodule Bundlex.Toolchain.Common.Unix do
     compiler_flags
   end
 
-  defp add_interface_macro_flag(compiler_flags, native_interface) do
-    macro_flag = "-DBUNDLEX_#{native_interface |> Atom.to_string() |> String.upcase()}"
+  defp add_interface_macro_flag(compiler_flags, interface) do
+    macro_flag = "-DBUNDLEX_#{interface |> Atom.to_string() |> String.upcase()}"
     [macro_flag] ++ compiler_flags
   end
 
-  defp link_commands(%Native{type: :lib}, _link, output, objects, _options, _native_interface) do
+  defp link_commands(%Native{type: :lib}, _link, output, objects, _options) do
     a_path = path(output <> ".a")
     ["rm -f #{a_path}", "ar rcs #{a_path} #{paths(objects)}"]
   end
 
-  defp link_commands(native, link, output, objects, options, native_interface) do
+  defp link_commands(native, link, output, objects, options) do
     extension =
-      case native_interface do
+      case native.interface do
         :nif -> ".so"
-        t when t in [:cnode, :port] -> ""
+        interface when interface in [:cnode, :port] -> ""
       end
 
     wrap_deps = options |> Keyword.get(:wrap_deps, & &1)
 
     deps =
       native.deps
-      |> Enum.map(fn {app, name} ->
-        lib_interfaces = get_lib_interfaces(app, name)
-
-        cond do
-          native_interface in lib_interfaces ->
-            Toolchain.output_path(app, name, native_interface) <> ".a"
-
-          lib_interfaces == [] ->
-            Toolchain.output_path(app, name, nil) <> ".a"
-        end
-      end)
+      |> Enum.map(&(Toolchain.output_path(&1.app, &1.name, &1.interface) <> ".a"))
       |> paths()
       |> wrap_deps.()
 
@@ -89,12 +79,6 @@ defmodule Bundlex.Toolchain.Common.Unix do
       #{deps} #{paths(objects)} #{libs(native)}
       """
     ]
-  end
-
-  defp get_lib_interfaces(app, name) do
-    {:ok, project} = Project.get(app)
-    libs = Keyword.get_values(project.config[:libs], name)
-    libs |> Enum.flat_map(&Keyword.get(&1, :interface, []))
   end
 
   defp paths(paths, flag \\ "") do

@@ -6,10 +6,12 @@ defmodule Bundlex do
   alias Bundlex.Platform
   alias Bundlex.Helper.MixHelper
 
+  @type platform_t :: :linux | :macosx | :windows32 | :windows64
+
   @doc """
   Returns current platform name.
   """
-  @spec platform() :: :linux | :macosx | :windows32 | :windows64
+  @spec platform() :: platform_t()
   def platform() do
     Platform.get_current!()
   end

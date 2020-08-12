@@ -36,8 +36,13 @@ defmodule Mix.Tasks.Compile.Bundlex do
     commands =
       commands ++
         case Native.resolve_natives(project, platform) do
-          {:ok, nifs_commands} -> nifs_commands
-          {:error, reason} -> Output.raise("Error parsing Natives, reason: #{inspect(reason)}")
+          {:ok, nifs_commands} ->
+            nifs_commands
+
+          {:error, {app, reason}} ->
+            Output.raise(
+              "Error resolving natives for app #{inspect(app)}, reason: #{inspect(reason)}"
+            )
         end
 
     build_script = BuildScript.new(commands)

@@ -7,7 +7,7 @@ defmodule Bundlex.Project do
   use Bunch
   alias Bunch.KVList
   alias Bundlex.Helper.MixHelper
-  alias __MODULE__.Store
+  alias __MODULE__.{Preprocessor, Store}
 
   @src_dir_name "c_src"
 
@@ -34,6 +34,7 @@ defmodule Bundlex.Project do
   * `linker_flags` - Custom flags for linker.
   * `language` - Language of native. :c or :cpp may be chosen (:c by default)
   * `interface` - Interface of native. It can be single atom e.g. :nif or list of atoms.
+  * `preprocessors` - Modules implementing `Bundlex.Project.Preprocessor` behaviour
   """
   @type native_config_t :: [
           sources: [String.t()],
@@ -46,8 +47,25 @@ defmodule Bundlex.Project do
           compiler_flags: [String.t()],
           linker_flags: [String.t()],
           language: :c | :cpp,
-          interface: [Bundlex.Native.interface_t()] | Bundlex.Native.interface_t()
+          interface: [Bundlex.Native.interface_t()] | Bundlex.Native.interface_t() | nil,
+          preprocessor: [Preprocessor.t()] | Preprocessor.t()
         ]
+
+  @spec native_config_keys :: [atom]
+  def native_config_keys,
+    do: [
+      :includes,
+      :libs,
+      :lib_dirs,
+      :pkg_configs,
+      :sources,
+      :deps,
+      :compiler_flags,
+      :linker_flags,
+      :language,
+      :interface,
+      :preprocessor
+    ]
 
   @typedoc """
   Type describing input project configuration.
@@ -160,23 +178,25 @@ defmodule Bundlex.Project do
 
     input_config
     |> Keyword.update(:natives, natives, &(&1 ++ natives))
-    |> listify_interfaces(:libs)
-    |> listify_interfaces(:natives)
+    |> delistify_interfaces(:libs)
+    |> delistify_interfaces(:natives)
   end
 
   defp convert_to_native({name, config}, interface) do
-    config = Keyword.put(config, :interface, Bunch.listify(interface))
+    config = Keyword.put(config, :interface, interface)
     {name, config}
   end
 
-  defp listify_interfaces(input_config, native_type) do
+  defp delistify_interfaces(input_config, native_type) do
     natives = Keyword.get(input_config, native_type, [])
 
     natives =
       natives
-      |> Enum.map(fn {name, config} ->
-        config = Keyword.update(config, :interface, [], &Bunch.listify(&1))
-        {name, config}
+      |> Enum.flat_map(fn {name, config} ->
+        config
+        |> Keyword.get(:interface, nil)
+        |> Bunch.listify()
+        |> Enum.map(&{name, Keyword.put(config, :interface, &1)})
       end)
 
     Keyword.put(input_config, native_type, natives)
