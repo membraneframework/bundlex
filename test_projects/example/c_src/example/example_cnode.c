@@ -60,13 +60,12 @@ int handle_message(int ei_fd, char *node_name, erlang_msg emsg,
     assert(ei_decode_double(in_buf->buff, &decode_idx, &a) == 0);
     assert(ei_decode_double(in_buf->buff, &decode_idx, &b) == 0);
     res = foo(a, b);
+
+    assert(ei_x_encode_tuple_header(&out_buf, 2) == 0);
+    assert(ei_x_encode_atom(&out_buf, node_name) == 0);
+    assert(ei_x_encode_double(&out_buf, res) == 0);
+    ei_send(ei_fd, &emsg.from, out_buf.buff, out_buf.index);
   }
-
-  assert(ei_x_encode_tuple_header(&out_buf, 2) == 0);
-  assert(ei_x_encode_atom(&out_buf, node_name) == 0);
-  assert(ei_x_encode_double(&out_buf, res) == 0);
-
-  ei_send(ei_fd, &emsg.from, out_buf.buff, out_buf.index);
 
   ei_x_free(&out_buf);
   return 0;
