@@ -37,6 +37,15 @@ defmodule ExampleTest do
     test_port(:example_port)
   end
 
+  test "timeout mechanism" do
+    require Bundlex.CNode
+    assert {:ok, cnode} = Bundlex.CNode.start_link(:example)
+
+    assert_raise RuntimeError, ~r/Timeout upon call to the CNode*/, fn ->
+      Bundlex.CNode.call(cnode, :non_existing_func, 1000)
+    end
+  end
+
   defp test_cnode(name) do
     require Bundlex.CNode
     assert {:ok, cnode} = Bundlex.CNode.start_link(name)

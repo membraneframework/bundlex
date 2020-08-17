@@ -70,6 +70,10 @@ defmodule Bundlex.CNode.Server do
     {:stop, :normal, state}
   end
 
+  def handle_info({:EXIT, port, :normal}, %{port: port} = state) do
+    {:stop, :normal, state}
+  end
+
   def handle_info({:EXIT, port, reason}, %{port: port} = state) do
     if state.link?, do: Process.exit(state.caller, :shutdown)
     {:stop, reason, state}

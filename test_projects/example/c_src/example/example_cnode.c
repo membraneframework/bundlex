@@ -1,4 +1,3 @@
-#include <example_lib/example_lib_cnode.h>
 #include <assert.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -7,6 +6,11 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#ifndef _REENTRANT
+#define _REENTRANT // For some reason __erl_errno is undefined unless _REENTRANT
+                   // is defined
+#endif
+#include <example_lib/example_lib_cnode.h>
 #include <ei.h>
 #include <ei_connect.h>
 
@@ -56,13 +60,12 @@ int handle_message(int ei_fd, char *node_name, erlang_msg emsg,
     assert(ei_decode_double(in_buf->buff, &decode_idx, &a) == 0);
     assert(ei_decode_double(in_buf->buff, &decode_idx, &b) == 0);
     res = foo(a, b);
+
+    assert(ei_x_encode_tuple_header(&out_buf, 2) == 0);
+    assert(ei_x_encode_atom(&out_buf, node_name) == 0);
+    assert(ei_x_encode_double(&out_buf, res) == 0);
+    ei_send(ei_fd, &emsg.from, out_buf.buff, out_buf.index);
   }
-
-  assert(ei_x_encode_tuple_header(&out_buf, 2) == 0);
-  assert(ei_x_encode_atom(&out_buf, node_name) == 0);
-  assert(ei_x_encode_double(&out_buf, res) == 0);
-
-  ei_send(ei_fd, &emsg.from, out_buf.buff, out_buf.index);
 
   ei_x_free(&out_buf);
   return 0;
@@ -73,11 +76,14 @@ int receive(int ei_fd, char *node_name) {
   ei_x_new(&in_buf);
   erlang_msg emsg;
   int res = 0;
-  switch (ei_xreceive_msg_tmo(ei_fd, &emsg, &in_buf, 100)) {
+  switch (ei_xreceive_msg_tmo(ei_fd, &emsg, &in_buf, 5000)) {
   case ERL_TICK:
     break;
   case ERL_ERROR:
-//    res = erl_errno != ETIMEDOUT;
+    if (erl_errno == ETIMEDOUT) {
+      fprintf(stderr, "Timeout. Message not received.");
+    }
+    res = erl_errno;
     break;
   default:
     if (emsg.msgtype == ERL_REG_SEND &&
