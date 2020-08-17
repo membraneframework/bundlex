@@ -1,4 +1,3 @@
-#include <example_lib/example_lib_cnode.h>
 #include <assert.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -7,6 +6,11 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#ifndef _REENTRANT
+#define _REENTRANT // For some reason __erl_errno is undefined unless _REENTRANT
+                   // is defined
+#endif
+#include <example_lib/example_lib_cnode.h>
 #include <ei.h>
 #include <ei_connect.h>
 
@@ -73,11 +77,14 @@ int receive(int ei_fd, char *node_name) {
   ei_x_new(&in_buf);
   erlang_msg emsg;
   int res = 0;
-  switch (ei_xreceive_msg_tmo(ei_fd, &emsg, &in_buf, 100)) {
+  switch (ei_xreceive_msg_tmo(ei_fd, &emsg, &in_buf, 5000)) {
   case ERL_TICK:
     break;
   case ERL_ERROR:
-//    res = erl_errno != ETIMEDOUT;
+    if (erl_errno == ETIMEDOUT) {
+      fprintf(stderr, "Timeout. Message not received.");
+    }
+    res = erl_errno;
     break;
   default:
     if (emsg.msgtype == ERL_REG_SEND &&
@@ -130,7 +137,13 @@ int main(int argc, char **argv) {
   int ei_fd = ei_accept_tmo(&ec, listen_fd, &conn, 5000);
   assert(ei_fd != ERL_ERROR);
 
-  int res = receive(ei_fd, node_name);
+  int res;
+  while(1) {
+    res = receive(ei_fd, node_name);
+    if(res != 0) {
+      break;
+    }
+  }
 
   close(listen_fd);
   close(ei_fd);
