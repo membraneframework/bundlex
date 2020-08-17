@@ -137,13 +137,7 @@ int main(int argc, char **argv) {
   int ei_fd = ei_accept_tmo(&ec, listen_fd, &conn, 5000);
   assert(ei_fd != ERL_ERROR);
 
-  int res;
-  while(1) {
-    res = receive(ei_fd, node_name);
-    if(res != 0) {
-      break;
-    }
-  }
+  int res = receive(ei_fd, node_name);
 
   close(listen_fd);
   close(ei_fd);
