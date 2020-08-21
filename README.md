@@ -128,25 +128,31 @@ Configuration of each native may contain following options:
 obtained using pkg-config (empty list by default).
 * `deps` - Dependencies in the form of `{app, lib_name}`, where `app`
 is the application name of the dependency, and `lib_name` is the name of lib
-specified in Bundlex project of this dependency.
+specified in Bundlex project of this dependency. Empty list by default. See _Dependencies_ section below
+for details.
 * `src_base` - Native files should reside in `project_root/c_src/<src_base>`
 (application name by default).
 * `compiler_flags` - Custom flags for compiler.
 * `linker_flags` - Custom flags for linker.
 * `language` - Language of native. `:c` or `:cpp` may be chosen (`:c` by default)
-* `interface` - Interface used to integrate with Elixir code. There are three interfaces available:
+* `interface` - Interface used to integrate with Elixir code. The following interfaces are available:
     * :nif - dynamically linked to the Erlang VM (see [Erlang docs](http://erlang.org/doc/man/erl_nif.html))
     * :cnode - executed as separate OS processes, accessed through sockets (see [Erlang docs](http://erlang.org/doc/man/ei_connect.html))
     * :port - executed as separate OS processes (see [Elixir Port docs](https://hexdocs.pm/elixir/Port.html))
+  Specifying no interface is valid only for libs.
 * `preprocessors` - Modules that will preprocess the native, see `Bundlex.Project.Preprocessor`.
 
-Note that we can specify multiple resources with the same name and different interfaces.
-It is especially useful when we want to have library that can work both with CNodes and NIFs. 
-When we include such library in `deps` Bundlex will automatically import proper version of it.
+### Dependencies
+
+Each native can have dependencies - libs that are statically linked to it and can be included in its native code like `#include lib_name/some_header.h`. The following rules apply:
+- To add dependencies from a separate project, it must be available via Mix. 
+- Only libs can be added as dependencies.
+- Each dependency of a native must specify the same or no interface. If there exist multiple versions of dependency with different interfaces, the proper version is selected automatically.
+- A lib that specifies no interface can depend on libs with no interfaces only.
 
 ### Compilation options
 
-The following command line arguments can be passed:
+The following command-line arguments can be passed:
 - `--store-scripts` - if set, shell scripts are stored in the project
 root folder for further analysis.
 
@@ -169,21 +175,21 @@ defmodule MyApp.SomeNativeStuff do
 end
 ```
 
-Note that unlike when using `:erlang.load_nif/2`, here `def`s and `defp`s can be used to create usual functions, native ones are declared with `defnif` and `defnifp`. This is achieved by creating a new module under the hood, and that is why module passed to C macro `ERL_NIF_INIT` has to be succeeded by `.Nif`, i.e.
+Note that unlike when using `:erlang.load_nif/2`, here `def`s and `defp`s can be used to create usual functions, native ones are declared with `defnif` and `defnifp`. This is achieved by creating a new module under the hood, and that is why the module passed to C macro `ERL_NIF_INIT` has to be succeeded by `.Nif`, i.e.
 ```C
 ERL_NIF_INIT(MyApp.SomeNativeStuff.Nif, funs, load, NULL, upgrade, unload)
 ```
 
-In spite of this, any native erlang macros and functions shall be used as usual, as described at http://erlang.org/doc/man/erl_nif.html
+Despite this, any native erlang macros and functions shall be used as usual, as described at http://erlang.org/doc/man/erl_nif.html
 
 ### Interacting with CNodes
 
-As in case of NIFs, CNodes compiled with Bundlex can be used like any other CNodes (see built-in `Node` module), while some useful stuff for interacting with them is provided. `Bundlex.CNode` module contains utilities that make it easier to spawn and control CNodes, and allow to treat them more like usual Elixir processes. Check out documentation for more details.
+As in the case of NIFs, CNodes compiled with Bundlex can be used like any other CNodes (see built-in `Node` module), while some useful stuff for interacting with them is provided. `Bundlex.CNode` module contains utilities that make it easier to spawn and control CNodes, and allow them to treat them more like usual Elixir processes. Check out the documentation for more details.
 
 ### Interacting with Ports
 
 Similarly to CNodes Bundlex provides `Bundlex.Port` module for a little easier interacting with Ports.
-Please refer to module's documentation to see how to use it.
+Please refer to the module's documentation to see how to use it.
 
 ## More examples
 
