@@ -27,7 +27,8 @@ defmodule Bundlex.Project do
   obtained using pkg-config (empty list by default).
   * `deps` - Dependencies in the form of `{app, lib_name}`, where `app`
   is the application name of the dependency, and `lib_name` is the name of lib
-  specified in bundlex project of this dependency.
+  specified in bundlex project of this dependency. See _Dependencies_ section in
+  readme for details.
   * `src_base` - Native files should reside in `project_root/c_src/<src_base>`
   (application name by default).
   * `compiler_flags` - Custom flags for compiler.
