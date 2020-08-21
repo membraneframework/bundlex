@@ -145,14 +145,14 @@ for details.
 ### Dependencies
 
 Each native can have dependencies - libs that are statically linked to it and can be included in its native code like `#include lib_name/some_header.h`. The following rules apply:
-- To add dependencies from a separate project, it must be avaliable via Mix. 
+- To add dependencies from a separate project, it must be available via Mix. 
 - Only libs can be added as dependencies.
-- Each dependency of a native must specify the same or no interface. If there exist multiple versions of a dependency with different interfaces, proper version is selected automatically.
+- Each dependency of a native must specify the same or no interface. If there exist multiple versions of dependency with different interfaces, the proper version is selected automatically.
 - A lib that specifies no interface can depend on libs with no interfaces only.
 
 ### Compilation options
 
-The following command line arguments can be passed:
+The following command-line arguments can be passed:
 - `--store-scripts` - if set, shell scripts are stored in the project
 root folder for further analysis.
 
@@ -175,21 +175,21 @@ defmodule MyApp.SomeNativeStuff do
 end
 ```
 
-Note that unlike when using `:erlang.load_nif/2`, here `def`s and `defp`s can be used to create usual functions, native ones are declared with `defnif` and `defnifp`. This is achieved by creating a new module under the hood, and that is why module passed to C macro `ERL_NIF_INIT` has to be succeeded by `.Nif`, i.e.
+Note that unlike when using `:erlang.load_nif/2`, here `def`s and `defp`s can be used to create usual functions, native ones are declared with `defnif` and `defnifp`. This is achieved by creating a new module under the hood, and that is why the module passed to C macro `ERL_NIF_INIT` has to be succeeded by `.Nif`, i.e.
 ```C
 ERL_NIF_INIT(MyApp.SomeNativeStuff.Nif, funs, load, NULL, upgrade, unload)
 ```
 
-In spite of this, any native erlang macros and functions shall be used as usual, as described at http://erlang.org/doc/man/erl_nif.html
+Despite this, any native erlang macros and functions shall be used as usual, as described at http://erlang.org/doc/man/erl_nif.html
 
 ### Interacting with CNodes
 
-As in case of NIFs, CNodes compiled with Bundlex can be used like any other CNodes (see built-in `Node` module), while some useful stuff for interacting with them is provided. `Bundlex.CNode` module contains utilities that make it easier to spawn and control CNodes, and allow to treat them more like usual Elixir processes. Check out documentation for more details.
+As in the case of NIFs, CNodes compiled with Bundlex can be used like any other CNodes (see built-in `Node` module), while some useful stuff for interacting with them is provided. `Bundlex.CNode` module contains utilities that make it easier to spawn and control CNodes, and allow them to treat them more like usual Elixir processes. Check out the documentation for more details.
 
 ### Interacting with Ports
 
 Similarly to CNodes Bundlex provides `Bundlex.Port` module for a little easier interacting with Ports.
-Please refer to module's documentation to see how to use it.
+Please refer to the module's documentation to see how to use it.
 
 ## More examples
 
