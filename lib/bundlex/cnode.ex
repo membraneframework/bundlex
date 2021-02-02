@@ -55,7 +55,7 @@ defmodule Bundlex.CNode do
   - host name,
   - alive name,
   - node name,
-  - cookie,
+  - cookie or empty (if cookie is passed in ERLANG_COOKIE environment variable),
   - creation number.
 
   After CNode startup, these parameters should be passed to
@@ -73,6 +73,13 @@ defmodule Bundlex.CNode do
   1. Waits (at most 5 seconds) until a line `ready` is printed out
   (this line is captured and not forwarded to the stdout).
   1. Connects to the CNode.
+
+  the config options can be used to pass the erlang cookie using an environment variable
+  ```
+  config :bundlex :cookie_env false # set a global default, pass by arguments
+  config :your_app :cookie_env true # override in your_app
+  config :your_app :cookie_env %{native_name: true} # override in your_app for a specific cnode binary
+  ```
   """
   @spec start_link(app :: atom, native_name :: atom) :: on_start_t
   def start_link(app, native_name) do
@@ -88,12 +95,22 @@ defmodule Bundlex.CNode do
     do_start(app, native_name, false)
   end
 
+  defp cookie_env?(app,native_name) do 
+    cookie_env = Application.get_env(app, :cookie_env)
+    cond do 
+      is_boolean(cookie_env) -> cookie_env
+      is_map(cookie_env) && is_boolean(cookie_env[native_name]) -> cookie_env[native_name]   
+      is_nil(cookie_env) && app == :bundlex -> false
+      app != :bundlex -> cookie_env?(:bundlex,native_name)
+      true -> false
+    end
+  end
+
   defp do_start(app, native_name, link?) do
-    env? = Application.get_env(app, :cookie_env, false)
     {:ok, pid} =
       GenServer.start(
         __MODULE__.Server,
-        %{app: app, native_name: native_name, caller: self(), link?: link?, env?: env?}
+        %{app: app, native_name: native_name, caller: self(), link?: link?, env?: cookie_env?(app,native_name)}
       )
 
     receive do
