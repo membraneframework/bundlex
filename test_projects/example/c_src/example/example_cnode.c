@@ -116,7 +116,10 @@ int main(int argc, char **argv) {
   char node_name[256];
   strcpy(node_name, argv[3]);
   char cookie[256];
-  strcpy(cookie, argv[4]);
+  if(*argv[4] != '\0') 
+    strcpy(cookie, argv[4]);
+  else
+    strcpy(cookie, getenv("ERLANG_COOKIE"));
   short creation = (short)atoi(argv[5]);
 
   int listen_fd;

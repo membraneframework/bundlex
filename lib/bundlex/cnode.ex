@@ -89,10 +89,11 @@ defmodule Bundlex.CNode do
   end
 
   defp do_start(app, native_name, link?) do
+    env? = Application.get_env(app, :cookie_env, false)
     {:ok, pid} =
       GenServer.start(
         __MODULE__.Server,
-        %{app: app, native_name: native_name, caller: self(), link?: link?}
+        %{app: app, native_name: native_name, caller: self(), link?: link?, env?: env?}
       )
 
     receive do
