@@ -55,7 +55,7 @@ defmodule Bundlex.CNode do
   - host name,
   - alive name,
   - node name,
-  - cookie or empty (if cookie is passed in ERLANG_COOKIE environment variable),
+  - cookie or empty (if cookie is passed in BUNDLEX_ERLANG_COOKIE environment variable),
   - creation number.
 
   After CNode startup, these parameters should be passed to
@@ -95,13 +95,14 @@ defmodule Bundlex.CNode do
     do_start(app, native_name, false)
   end
 
-  defp cookie_env?(app,native_name) do 
+  defp cookie_env?(app, native_name) do
     cookie_env = Application.get_env(app, :cookie_env)
-    cond do 
+
+    cond do
       is_boolean(cookie_env) -> cookie_env
-      is_map(cookie_env) && is_boolean(cookie_env[native_name]) -> cookie_env[native_name]   
+      is_map(cookie_env) && is_boolean(cookie_env[native_name]) -> cookie_env[native_name]
       is_nil(cookie_env) && app == :bundlex -> false
-      app != :bundlex -> cookie_env?(:bundlex,native_name)
+      app != :bundlex -> cookie_env?(:bundlex, native_name)
       true -> false
     end
   end
@@ -110,7 +111,13 @@ defmodule Bundlex.CNode do
     {:ok, pid} =
       GenServer.start(
         __MODULE__.Server,
-        %{app: app, native_name: native_name, caller: self(), link?: link?, env?: cookie_env?(app,native_name)}
+        %{
+          app: app,
+          native_name: native_name,
+          caller: self(),
+          link?: link?,
+          cookie_env?: cookie_env?(app, native_name)
+        }
       )
 
     receive do

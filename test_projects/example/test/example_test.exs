@@ -28,12 +28,8 @@ defmodule ExampleTest do
     test_cnode(:example_cnode)
   end
 
-  test "native with interface CNode with ERLANG_COOKIE environment" do
+  test ":cookie_env mechanism" do
     test_cnode(:example,true)
-  end
-
-  test "cnode without interface with ERLANG_COOKIE environment" do
-    test_cnode(:example_cnode,true)
   end
 
   test "native with interface port" do

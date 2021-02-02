@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
   if(*argv[4] != '\0') 
     strcpy(cookie, argv[4]);
   else
-    strcpy(cookie, getenv("ERLANG_COOKIE"));
+    strcpy(cookie, getenv("BUNDLEX_ERLANG_COOKIE"));
   short creation = (short)atoi(argv[5]);
 
   int listen_fd;

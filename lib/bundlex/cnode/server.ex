@@ -12,15 +12,17 @@ defmodule Bundlex.CNode.Server do
     :ok = ensure_node_distributed()
     {name, creation} = NameStore.get_name()
     cnode = :"#{name}@#{host_name()}"
-    cookie_argument = unless opts.env?, do: Node.get_cookie(), else: ""
-    environment= if opts.env?, do: [{'ERLANG_COOKIE', Atom.to_charlist(Node.get_cookie)} ],else: []
+    cookie = unless opts.env?, do: Node.get_cookie(), else: ""
+
+    env =
+      if opts.env?, do: [{'BUNDLEX_ERLANG_COOKIE', Atom.to_charlist(Node.get_cookie())}], else: []
 
     port =
       Port.open(
         {:spawn_executable, Bundlex.build_path(opts.app, opts.native_name, :cnode)},
-        args: [host_name(), name, cnode, cookie_argument, "#{creation}"],
+        args: [host_name(), name, cnode, cookie, "#{creation}"],
         line: 2048,
-        env: environment
+        env: env
       )
 
     Process.send_after(self(), :timeout, 5000)
