@@ -2,7 +2,7 @@ defmodule Bundlex.IntegrationTest do
   use ExUnit.Case
 
   test "Example test project" do
-    assert {_output, 0} = System.cmd("bash", ["-c", "mix test 1>&2"], cd: "test_projects/example")
+    assert {_output, 0} = System.cmd("sh", ["-c", "mix test 1>&2"], cd: "test_projects/example")
 
     base_path = "test_projects/example/_build/test/lib/example/priv/bundlex/"
 
