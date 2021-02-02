@@ -12,10 +12,10 @@ defmodule Bundlex.CNode.Server do
     :ok = ensure_node_distributed()
     {name, creation} = NameStore.get_name()
     cnode = :"#{name}@#{host_name()}"
-    cookie = unless opts.env?, do: Node.get_cookie(), else: ""
+    cookie = unless opts.cookie_env?, do: Node.get_cookie(), else: ""
 
     env =
-      if opts.env?, do: [{'BUNDLEX_ERLANG_COOKIE', Atom.to_charlist(Node.get_cookie())}], else: []
+      if opts.cookie_env?, do: [{'BUNDLEX_ERLANG_COOKIE', Atom.to_charlist(Node.get_cookie())}], else: []
 
     port =
       Port.open(
