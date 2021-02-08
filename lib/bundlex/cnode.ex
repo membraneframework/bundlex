@@ -55,7 +55,6 @@ defmodule Bundlex.CNode do
   - host name,
   - alive name,
   - node name,
-  - cookie,
   - creation number.
 
   After CNode startup, these parameters should be passed to
@@ -73,6 +72,8 @@ defmodule Bundlex.CNode do
   1. Waits (at most 5 seconds) until a line `ready` is printed out
   (this line is captured and not forwarded to the stdout).
   1. Connects to the CNode.
+
+  The erlang cookie is passed using the BUNDLEX_ERLANG_COOKIE an environment variable.
   """
   @spec start_link(app :: atom, native_name :: atom) :: on_start_t
   def start_link(app, native_name) do
