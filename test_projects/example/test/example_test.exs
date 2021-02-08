@@ -17,6 +17,7 @@ defmodule ExampleTest do
 
       defnif(bar(a, b))
     end
+
     assert 0 = Bar.bar(5, 5)
   end
 
@@ -26,10 +27,6 @@ defmodule ExampleTest do
 
   test "cnode without interface" do
     test_cnode(:example_cnode)
-  end
-
-  test ":cookie_env mechanism" do
-    test_cnode(:example,true)
   end
 
   test "native with interface port" do
@@ -49,12 +46,10 @@ defmodule ExampleTest do
     end
   end
 
-  defp test_cnode(name,cookie_env? \\ false) do
+  defp test_cnode(name) do
     require Bundlex.CNode
-    Application.put_env(:example,:cookie_env,Map.put(%{},name,cookie_env?))
     assert {:ok, cnode} = Bundlex.CNode.start_link(name)
     assert 10.0 = Bundlex.CNode.call(cnode, {:foo, 5.0, 5.0})
-    Application.delete_env(:example,:cookie_env)
   end
 
   defp test_port(name) do

@@ -89,29 +89,11 @@ defmodule Bundlex.CNode do
     do_start(app, native_name, false)
   end
 
-  defp cookie_env?(app, native_name) do
-    cookie_env = Application.get_env(app, :cookie_env)
-
-    cond do
-      is_boolean(cookie_env) -> cookie_env
-      is_map(cookie_env) && is_boolean(cookie_env[native_name]) -> cookie_env[native_name]
-      is_nil(cookie_env) && app == :bundlex -> false
-      app != :bundlex -> cookie_env?(:bundlex, native_name)
-      true -> false
-    end
-  end
-
   defp do_start(app, native_name, link?) do
     {:ok, pid} =
       GenServer.start(
         __MODULE__.Server,
-        %{
-          app: app,
-          native_name: native_name,
-          caller: self(),
-          link?: link?,
-          cookie_env?: cookie_env?(app, native_name)
-        }
+        %{app: app, native_name: native_name, caller: self(), link?: link?}
       )
 
     receive do

@@ -116,7 +116,6 @@ int main(int argc, char **argv) {
   char node_name[256];
   strcpy(node_name, argv[3]);
   short creation = (short)atoi(argv[4]);
-  
   char *cookie = getenv("BUNDLEX_ERLANG_COOKIE");
 
   int listen_fd;
