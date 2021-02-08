@@ -98,7 +98,7 @@ int receive(int ei_fd, char *node_name) {
 }
 
 int validate_args(int argc, char **argv) {
-  assert(argc == 6);
+  assert(argc == 5);
   for (int i = 1; i < argc; i++) {
     assert(strlen(argv[i]) < 255);
   }
@@ -115,12 +115,9 @@ int main(int argc, char **argv) {
   strcpy(alive_name, argv[2]);
   char node_name[256];
   strcpy(node_name, argv[3]);
-  char cookie[256];
-  if(*argv[4] != '\0') 
-    strcpy(cookie, argv[4]);
-  else
-    strcpy(cookie, getenv("BUNDLEX_ERLANG_COOKIE"));
-  short creation = (short)atoi(argv[5]);
+  short creation = (short)atoi(argv[4]);
+  
+  char *cookie = getenv("BUNDLEX_ERLANG_COOKIE");
 
   int listen_fd;
   int port;

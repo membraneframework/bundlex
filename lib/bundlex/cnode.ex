@@ -55,7 +55,6 @@ defmodule Bundlex.CNode do
   - host name,
   - alive name,
   - node name,
-  - cookie or empty (if cookie is passed in BUNDLEX_ERLANG_COOKIE environment variable),
   - creation number.
 
   After CNode startup, these parameters should be passed to
@@ -74,12 +73,7 @@ defmodule Bundlex.CNode do
   (this line is captured and not forwarded to the stdout).
   1. Connects to the CNode.
 
-  the config options can be used to pass the erlang cookie using an environment variable
-  ```
-  config :bundlex :cookie_env false # set a global default, pass by arguments
-  config :your_app :cookie_env true # override in your_app
-  config :your_app :cookie_env %{native_name: true} # override in your_app for a specific cnode binary
-  ```
+  The erlang cookie is passed using the BUNDLEX_ERLANG_COOKIE an environment variable.
   """
   @spec start_link(app :: atom, native_name :: atom) :: on_start_t
   def start_link(app, native_name) do
