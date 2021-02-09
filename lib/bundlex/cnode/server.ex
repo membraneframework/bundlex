@@ -33,6 +33,8 @@ defmodule Bundlex.CNode.Server do
        cnode: cnode,
        msg_part?: false
      }}
+  catch
+    err, reason -> {:stop, {err, reason}}
   end
 
   @impl true

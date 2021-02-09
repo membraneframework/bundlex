@@ -66,6 +66,6 @@ defmodule Mix.Tasks.Compile.Bundlex do
         Output.raise("Error running build script, reason #{inspect(reason)}")
     end
 
-    :ok
+    {:ok, []}
   end
 end
