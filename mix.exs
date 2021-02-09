@@ -1,7 +1,7 @@
 defmodule Bundlex.Mixfile do
   use Mix.Project
 
-  @version "0.4.1"
+  @version "0.5.0"
 
   @github_url "https://github.com/membraneframework/bundlex"
 
@@ -43,7 +43,7 @@ defmodule Bundlex.Mixfile do
   defp docs do
     [
       main: "readme",
-      extras: ["README.md"],
+      extras: ["README.md", "LICENSE"],
       source_ref: "v#{@version}",
       nest_modules_by_prefix: [Bundlex.Helper],
       groups_for_modules: [Helpers: ~r/^Bundlex\.Helper\.*/]
