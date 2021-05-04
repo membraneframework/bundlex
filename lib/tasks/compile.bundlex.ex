@@ -10,6 +10,7 @@ defmodule Mix.Tasks.Compile.Bundlex do
   Add `:bundlex` to compilers in your Mix project to have this task executed
   each time the project is compiled.
   """
+  @recursive true
 
   use Mix.Task.Compiler
   alias Bundlex.{BuildScript, Native, Output, Platform, Project}
