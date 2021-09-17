@@ -3,6 +3,6 @@ defmodule Bundlex.Platform.Freebsd do
   use Bundlex.Platform
 
   def toolchain_module() do
-    Bundlex.Toolchain.GCC
+    Bundlex.Toolchain.Clang
   end
 end
