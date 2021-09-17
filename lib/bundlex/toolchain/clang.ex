@@ -11,18 +11,12 @@ defmodule Bundlex.Toolchain.Clang do
   def compiler_commands(native) do
     {cflags, lflags} =
       case native do
-        %Native{type: :native, interface: :nif} ->
-          {"-fPIC", "-rdynamic -shared"}
-
-        %Native{type: :lib} ->
-          {"-fPIC", ""}
-
-        %Native{} ->
-          {"", ""}
+        %Native{type: :native, interface: :nif} -> {"-fPIC", "-rdynamic -shared"}
+        %Native{type: :lib} -> {"-fPIC", ""}
+        %Native{} -> {"", ""}
       end
 
-    compiler = @compilers
-               |> Map.get(native.language)
+    compiler = @compilers |> Map.get(native.language)
 
     Unix.compiler_commands(
       native,
