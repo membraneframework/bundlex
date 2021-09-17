@@ -43,9 +43,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
 
     if not (native.libs |> Enum.empty?()) and not GitHelper.lfs_present?() do
       Output.raise(
-        "Git LFS is not installed, being necessary for downloading windows *.lib files for dlls #{
-          inspect(native.libs)
-        }. Install from https://git-lfs.github.com/."
+        "Git LFS is not installed, being necessary for downloading windows *.lib files for dlls #{inspect(native.libs)}. Install from https://git-lfs.github.com/."
       )
     end
 
@@ -61,9 +59,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
     [
       "if EXIST #{dir_part} rmdir /S /Q #{dir_part}",
       "mkdir #{dir_part}",
-      "cl /LD #{includes_part} #{sources_part} #{libs_part} /link /DLL /OUT:\"#{
-        Toolchain.output_path(native.app, native.name, :nif)
-      }.dll\""
+      "cl /LD #{includes_part} #{sources_part} #{libs_part} /link /DLL /OUT:\"#{Toolchain.output_path(native.app, native.name, :nif)}.dll\""
     ]
   end
 
@@ -106,9 +102,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
     case PathHelper.latest_wildcard(wildcard) do
       nil ->
         Output.raise(
-          "Unable to find Visual Studio root directory. Please ensure that it is either located in \"#{
-            wildcard
-          }\" or #{@directory_env} environment variable pointing to its root is set."
+          "Unable to find Visual Studio root directory. Please ensure that it is either located in \"#{wildcard}\" or #{@directory_env} environment variable pointing to its root is set."
         )
 
       directory ->

@@ -73,9 +73,7 @@ defmodule Bundlex.Native do
         }
 
         Output.info(
-          "Building natives: #{
-            native_configs |> Enum.map(& &1.name) |> Enum.uniq() |> Enum.join(", ")
-          }"
+          "Building natives: #{native_configs |> Enum.map(& &1.name) |> Enum.uniq() |> Enum.join(", ")}"
         )
 
         native_configs
