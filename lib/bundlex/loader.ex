@@ -60,7 +60,7 @@ defmodule Bundlex.Loader do
 
         quote do
           def unquote(fun) do
-            raise "Nif fail: #{unquote(module)}.#{unquote(name)}/#{length(unquote(args))}"
+            :erlang.nif_error "Nif fail: #{unquote(module)}.#{unquote(name)}/#{length(unquote(args))}"
           end
         end
       end)
