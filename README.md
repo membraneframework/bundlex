@@ -27,7 +27,7 @@ defmodule MyApp.Mixfile do
 
   defp deps() do
     [
-      {:bundlex, "~> 0.5.0"} # add bundlex to deps
+      {:bundlex, "~> 0.5.1"} # add bundlex to deps
     ]
   end
 end
