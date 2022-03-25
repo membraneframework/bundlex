@@ -94,7 +94,7 @@ defmodule Bundlex.Project do
   @typedoc """
   Struct representing bundlex project.
 
-  Contains the following fileds:
+  Contains the following fields:
   - `:config` - project configuration
   - `:src_path` - path to the native sources
   - `:module` - bundlex project module

@@ -1,6 +1,6 @@
 defmodule Bundlex.Helper.MixHelper do
   @moduledoc """
-  Module containing helper functions that ease retreiving certain values from
+  Module containing helper functions that ease retrieving certain values from
   Mix configuration files.
   """
 
@@ -8,7 +8,7 @@ defmodule Bundlex.Helper.MixHelper do
   use Bunch
 
   @doc """
-  Helper function for retreiving app name from mix.exs and failing if it was
+  Helper function for retrieving app name from mix.exs and failing if it was
   not found.
   """
   @spec get_app! :: atom

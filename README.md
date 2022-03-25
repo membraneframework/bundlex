@@ -8,7 +8,7 @@ Bundlex is a multi-platform tool for compiling C code along with elixir projects
 
 This tool is a part of [Membrane Framework](https://membraneframework.org/)
 
-## Instalation
+## Installation
 
 To install, you need to configure Mix project as follows:
 
