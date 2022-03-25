@@ -13,7 +13,7 @@ defmodule Bundlex.Toolchain do
   In case of success implementations should return list of commands to be
   called upon compilation.
 
-  Default implentation does nothing.
+  Default implementation does nothing.
   """
   @callback before_all!(atom) :: [] | [String.t()]
 
