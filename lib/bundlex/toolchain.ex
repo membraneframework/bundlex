@@ -2,6 +2,7 @@ defmodule Bundlex.Toolchain do
   @moduledoc false
 
   alias Bundlex.Helper.MixHelper
+  alias Bundlex.Native
 
   @doc """
   Invokes commands that should be called before whole compilation process
@@ -36,16 +37,18 @@ defmodule Bundlex.Toolchain do
     end
   end
 
+  @spec output_path(Application.app(), Native.interface_t()) :: Path.t()
   def output_path(app, native_interface) do
     interface_str =
       case native_interface do
         nil -> ""
-        _ -> "#{native_interface}"
+        interface -> "#{interface}"
       end
 
     MixHelper.get_priv_dir(app) |> Path.join("bundlex") |> Path.join(interface_str)
   end
 
+  @spec output_path(Application.app(), Native.name_t(), Native.interface_t()) :: Path.t()
   def output_path(app, native_name, native_interface) do
     output_path(app, native_interface) |> Path.join("#{native_name}")
   end

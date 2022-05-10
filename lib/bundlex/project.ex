@@ -1,8 +1,7 @@
 defmodule Bundlex.Project do
-  @bundlex_file_name "bundlex.exs"
   @moduledoc """
   Behaviour that should be implemented by each project using Bundlex in the
-  `#{@bundlex_file_name}` file.
+  `bundlex.exs` file.
   """
   use Bunch
   alias Bunch.KVList
@@ -10,6 +9,7 @@ defmodule Bundlex.Project do
   alias __MODULE__.{Preprocessor, Store}
 
   @src_dir_name "c_src"
+  @bundlex_file_name "bundlex.exs"
 
   @type native_name_t :: atom
 
@@ -83,7 +83,12 @@ defmodule Bundlex.Project do
   defmacro __using__(_args) do
     quote do
       @behaviour unquote(__MODULE__)
+      @doc false
+      @spec bundlex_project?() :: true
       def bundlex_project?, do: true
+
+      @doc false
+      @spec src_path() :: Path.t()
       def src_path, do: __DIR__ |> Path.join(unquote(@src_dir_name))
     end
   end

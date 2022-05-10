@@ -10,11 +10,12 @@ defmodule Mix.Tasks.Compile.Bundlex do
   Add `:bundlex` to compilers in your Mix project to have this task executed
   each time the project is compiled.
   """
-  @recursive true
-
   use Mix.Task.Compiler
+
   alias Bundlex.{BuildScript, Native, Output, Platform, Project}
   alias Bundlex.Helper.MixHelper
+
+  @recursive true
 
   @impl true
   def run(_args) do
@@ -51,7 +52,7 @@ defmodule Mix.Tasks.Compile.Bundlex do
     {cmdline_options, _argv, _errors} =
       OptionParser.parse(System.argv(), switches: [store_scripts: :boolean])
 
-    if(cmdline_options[:store_scripts]) do
+    if cmdline_options[:store_scripts] do
       {:ok, {filename, _script}} = build_script |> BuildScript.store(platform)
       Output.info("Stored build script at #{File.cwd!() |> Path.join(filename)}")
     end

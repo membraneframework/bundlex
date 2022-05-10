@@ -1,8 +1,8 @@
 defmodule Bundlex.BuildScript do
   @moduledoc false
 
-  alias Bundlex.Platform
   use Bunch
+  alias Bundlex.Platform
 
   @script_ext unix: ".sh", windows: ".bat"
   @script_prefix unix: "#!/bin/sh\n", windows: "@echo off\r\n"
@@ -49,16 +49,11 @@ defmodule Bundlex.BuildScript do
   end
 
   defp join_commands(commands, :unix) do
-    commands
-    |> Enum.map(&"(#{&1})")
-    |> Enum.join(" && \\\n")
-    ~> (&1 <> "\n")
+    Enum.map_join(commands, " && \\\n", &"(#{&1})") <> "\n"
   end
 
   defp join_commands(commands, :windows) do
-    commands
-    |> Enum.join("\r\n")
-    ~> (&1 <> "\r\n")
+    Enum.join(commands, "\r\n") <> "\r\n"
   end
 
   defp family!(:windows32), do: :windows

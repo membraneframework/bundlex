@@ -3,8 +3,8 @@ defmodule Bundlex do
   Some common utility functions.
   """
 
-  alias Bundlex.Platform
   alias Bundlex.Helper.MixHelper
+  alias Bundlex.Platform
 
   @type platform_t :: :linux | :macosx | :windows32 | :windows64
 

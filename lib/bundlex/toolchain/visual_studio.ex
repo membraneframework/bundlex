@@ -11,7 +11,8 @@ defmodule Bundlex.Toolchain.VisualStudio do
   # environment variable.
 
   use Bundlex.Toolchain
-  alias Bundlex.Helper.{PathHelper, GitHelper}
+
+  alias Bundlex.Helper.{GitHelper, PathHelper}
   alias Bundlex.Native
   alias Bundlex.Output
 
@@ -19,27 +20,27 @@ defmodule Bundlex.Toolchain.VisualStudio do
   @directory_wildcard_x86 "c:\\Program Files\\Microsoft Visual Studio *"
   @directory_env "VISUAL_STUDIO_ROOT"
 
+  @impl true
   def before_all!(:windows32) do
     [run_vcvarsall("x86")]
   end
 
+  @impl true
   def before_all!(:windows64) do
     [run_vcvarsall("amd64")]
   end
 
   @impl true
   def compiler_commands(%Native{interface: :nif} = native) do
-    # FIXME escape quotes properly
+    # TODO escape quotes properly
 
     includes_part =
-      native.includes
-      |> Enum.map(fn include -> "/I \"#{PathHelper.fix_slashes(include)}\"" end)
-      |> Enum.join(" ")
+      Enum.map_join(native.includes, " ", fn include ->
+        "/I \"#{PathHelper.fix_slashes(include)}\""
+      end)
 
     sources_part =
-      native.sources
-      |> Enum.map(fn source -> "\"#{PathHelper.fix_slashes(source)}\"" end)
-      |> Enum.join(" ")
+      Enum.map_join(native.sources, " ", fn source -> "\"#{PathHelper.fix_slashes(source)}\"" end)
 
     if not (native.libs |> Enum.empty?()) and not GitHelper.lfs_present?() do
       Output.raise(
@@ -47,7 +48,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
       )
     end
 
-    libs_part = native.libs |> Enum.join(" ")
+    libs_part = Enum.join(native.libs, " ")
 
     unquoted_dir_part =
       native.app
@@ -119,7 +120,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
   defp visual_studio_path() do
     case :erlang.system_info(:wordsize) do
       4 -> @directory_wildcard_x86
-      _ -> @directory_wildcard_x64
+      _word_size -> @directory_wildcard_x64
     end
   end
 end

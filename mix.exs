@@ -52,11 +52,12 @@ defmodule Bundlex.Mixfile do
 
   defp deps() do
     [
-      {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:bunch, "~> 1.0"},
       {:qex, "~> 0.5"},
       {:secure_random, "~> 0.5"},
-      {:dialyxir, "~> 1.0.0", only: [:dev], runtime: false}
+      {:ex_doc, "~> 0.21", only: :dev, runtime: false},
+      {:dialyxir, "~> 1.0.0", only: :dev, runtime: false},
+      {:credo, ">= 0.0.0", only: :dev, runtime: false}
     ]
   end
 end

@@ -1,7 +1,6 @@
 defmodule Bundlex.Helper.PathHelper do
-  @moduledoc """
-  Module containing helper functions that ease traversing directories.
-  """
+  @moduledoc false
+  # Module containing helper functions that ease traversing directories.
 
   @doc """
   Tries to find a path that matches given pattern that has the biggest
@@ -25,7 +24,7 @@ defmodule Bundlex.Helper.PathHelper do
   def fix_slashes(path) do
     case Bundlex.family() do
       :windows -> path |> String.replace("/", "\\")
-      _ -> path
+      _family -> path
     end
   end
 end

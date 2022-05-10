@@ -83,6 +83,7 @@ defmodule Bundlex.Platform do
   def family(:macosx), do: :unix
   def family(:freebsd), do: :unix
 
+  @spec get_module(family_name_t) :: module
   def get_module(:windows32), do: Bundlex.Platform.Windows32
   def get_module(:windows64), do: Bundlex.Platform.Windows64
   def get_module(:macosx), do: Bundlex.Platform.MacOSX

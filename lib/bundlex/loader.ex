@@ -41,6 +41,7 @@ defmodule Bundlex.Loader do
   end
 
   @doc false
+  @spec __before_compile__(Macro.Env.t()) :: :ok
   def __before_compile__(%{module: module} = env) do
     funs = Module.delete_attribute(module, :bundlex_defnifs)
     nif_name = Module.delete_attribute(module, :bundlex_nif_name)
@@ -59,6 +60,7 @@ defmodule Bundlex.Loader do
           end)
 
         quote do
+          # credo:disable-for-next-line Credo.Check.Readability.Specs
           def unquote(fun) do
             :erlang.nif_error(
               "Nif fail: #{unquote(module)}.#{unquote(name)}/#{length(unquote(args))}"
@@ -72,6 +74,7 @@ defmodule Bundlex.Loader do
         @moduledoc false
         require unquote(__MODULE__)
         @on_load :load_nif
+        @spec load_nif() :: :ok | no_return()
         def load_nif() do
           unquote(__MODULE__).load_nif!(unquote(app), unquote(nif_name))
         end
@@ -80,6 +83,7 @@ defmodule Bundlex.Loader do
       end
 
     Module.create(module |> Module.concat(Nif), nif_module_content, env)
+    :ok
   end
 
   @doc """
