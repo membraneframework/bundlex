@@ -1,7 +1,6 @@
 defmodule Bundlex.Helper.GitHelper do
-  @moduledoc """
-  Module simplifying interaction with Git.
-  """
+  @moduledoc false
+  # Module simplifying interaction with Git.
 
   @doc """
   Determines whether the [Git Large File Storage](https://git-lfs.github.com/) is

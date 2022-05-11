@@ -1,6 +1,7 @@
 defmodule Bundlex.Port do
-  @moduledoc false
-  # Utilities to ease interaction with Ports.
+  @moduledoc """
+  Utilities to ease interaction with Ports.
+  """
 
   alias Bundlex.Helper.MixHelper
   alias Bundlex.Native

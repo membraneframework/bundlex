@@ -27,7 +27,7 @@ defmodule Bundlex.Mixfile do
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
-  defp elixirc_paths(_), do: ["lib"]
+  defp elixirc_paths(_env), do: ["lib"]
 
   defp package do
     [
@@ -44,9 +44,7 @@ defmodule Bundlex.Mixfile do
     [
       main: "readme",
       extras: ["README.md", "LICENSE"],
-      source_ref: "v#{@version}",
-      nest_modules_by_prefix: [Bundlex.Helper],
-      groups_for_modules: [Helpers: ~r/^Bundlex\.Helper\.*/]
+      source_ref: "v#{@version}"
     ]
   end
 
