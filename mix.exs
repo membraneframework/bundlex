@@ -9,16 +9,21 @@ defmodule Bundlex.Mixfile do
     [
       app: :bundlex,
       version: @version,
-      elixir: "~> 1.7",
+      elixir: "~> 1.12",
       elixirc_paths: elixirc_paths(Mix.env()),
-      description: "Bundlex Multi-Platform build system for Elixir",
+      start_permanent: Mix.env() == :prod,
+      deps: deps(),
+      dialyzer: dialyzer(),
+
+      # hex
+      description: "Multi-Platform build system for Elixir",
       package: package(),
+
+      # docs
       name: "Bundlex",
       source_url: @github_url,
-      docs: docs(),
-      preferred_cli_env: [espec: :test],
-      dialyzer: [plt_add_apps: [:mix]],
-      deps: deps()
+      homepage_url: "https://membraneframework.org",
+      docs: docs()
     ]
   end
 
@@ -44,8 +49,23 @@ defmodule Bundlex.Mixfile do
     [
       main: "readme",
       extras: ["README.md", "LICENSE"],
+      formatters: ["html"],
       source_ref: "v#{@version}"
     ]
+  end
+
+  defp dialyzer() do
+    opts = [
+      flags: [:error_handling],
+      plt_add_apps: [:mix]
+    ]
+
+    if System.get_env("CI") == "true" do
+      # Store PLTs in cacheable directory for CI
+      [plt_local_path: "priv/plts", plt_core_path: "priv/plts"] ++ opts
+    else
+      opts
+    end
   end
 
   defp deps() do
@@ -54,8 +74,8 @@ defmodule Bundlex.Mixfile do
       {:qex, "~> 0.5"},
       {:secure_random, "~> 0.5"},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
-      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
-      {:credo, "~> 1.6", only: [:dev, :test], runtime: false}
+      {:dialyxir, "~> 1.0", only: :dev, runtime: false},
+      {:credo, "~> 1.6", only: :dev, runtime: false}
     ]
   end
 end
