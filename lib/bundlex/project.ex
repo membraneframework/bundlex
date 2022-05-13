@@ -84,12 +84,12 @@ defmodule Bundlex.Project do
     quote do
       @behaviour unquote(__MODULE__)
       @doc false
-      @spec bundlex_project?() :: true
-      def bundlex_project?, do: true
+      @spec __bundlex_project__() :: true
+      def __bundlex_project__, do: true
 
       @doc false
-      @spec src_path() :: Path.t()
-      def src_path, do: __DIR__ |> Path.join(unquote(@src_dir_name))
+      @spec __src_path__() :: Path.t()
+      def __src_path__, do: Path.join(__DIR__, unquote(@src_dir_name))
     end
   end
 
@@ -117,7 +117,7 @@ defmodule Bundlex.Project do
   """
   @spec project_module?(module) :: boolean
   def project_module?(module) do
-    function_exported?(module, :bundlex_project?, 0) and module.bundlex_project?()
+    function_exported?(module, :__bundlex_project__, 0) and module.__bundlex_project__()
   end
 
   @doc """
@@ -142,7 +142,7 @@ defmodule Bundlex.Project do
            {:ok, config} <- parse_project_config(module.project()) do
         project = %__MODULE__{
           config: config,
-          src_path: module.src_path(),
+          src_path: module.__src_path__(),
           module: module,
           app: application
         }
