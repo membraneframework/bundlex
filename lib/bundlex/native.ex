@@ -3,16 +3,19 @@ defmodule Bundlex.Native do
   Module responsible for parsing and processing natives' configurations.
   """
 
+  use Bunch
+
   alias Bundlex.Helper.ErlangHelper
   alias Bundlex.{Output, Platform, Project}
   alias Bundlex.Project.Preprocessor
-  use Bunch
 
+  @type name_t :: atom()
   @type interface_t :: :nif | :cnode | :port
+  @type language_t :: :c | :cpp
 
   @type t :: %__MODULE__{
           name: atom,
-          app: atom,
+          app: Application.app(),
           type: :native | :lib,
           includes: [String.t()],
           libs: [String.t()],
@@ -22,7 +25,7 @@ defmodule Bundlex.Native do
           deps: [t],
           compiler_flags: [String.t()],
           linker_flags: [String.t()],
-          language: :c | :cpp,
+          language: language_t,
           interface: interface_t | nil,
           preprocessors: [Preprocessor.t()]
         }

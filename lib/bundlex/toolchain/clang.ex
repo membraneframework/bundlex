@@ -3,7 +3,7 @@ defmodule Bundlex.Toolchain.Clang do
 
   use Bundlex.Toolchain
   alias Bundlex.Native
-  alias Bundlex.Toolchain.Common.{Unix, Compilers}
+  alias Bundlex.Toolchain.Common.{Compilers, Unix}
 
   @compilers %Compilers{c: "clang", cpp: "clang++"}
 

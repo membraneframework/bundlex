@@ -1,11 +1,10 @@
 defmodule Bundlex.Helper.MixHelper do
-  @moduledoc """
-  Module containing helper functions that ease retrieving certain values from
-  Mix configuration files.
-  """
+  @moduledoc false
+  # Module containing helper functions that ease retrieving certain values from
+  # Mix configuration files.
 
-  alias Bundlex.Output
   use Bunch
+  alias Bundlex.Output
 
   @doc """
   Helper function for retrieving app name from mix.exs and failing if it was

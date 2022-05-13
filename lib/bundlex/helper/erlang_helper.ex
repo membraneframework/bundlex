@@ -1,8 +1,7 @@
 defmodule Bundlex.Helper.ErlangHelper do
-  @moduledoc """
-  Module containing helper functions that ease determining path to locally-
-  installed Erlang.
-  """
+  @moduledoc false
+  # Module containing helper functions that ease determining path to locally-
+  # installed Erlang.
 
   @doc """
   Tries to determine paths to includes directory of locally installed Erlang.

@@ -11,30 +11,12 @@ defmodule ExampleTest do
     assert 10 = Foo.foo(5, 5)
   end
 
-  test "nif without interface" do
-    defmodule Bar do
-      use Bundlex.Loader, nif: :example_nif
-
-      defnif(bar(a, b))
-    end
-
-    assert 0 = Bar.bar(5, 5)
-  end
-
   test "native with interface CNode" do
     test_cnode(:example)
   end
 
-  test "cnode without interface" do
-    test_cnode(:example_cnode)
-  end
-
   test "native with interface port" do
     test_port(:example)
-  end
-
-  test "port without interface" do
-    test_port(:example_port)
   end
 
   test "timeout mechanism" do

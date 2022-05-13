@@ -5,6 +5,13 @@ defmodule Bundlex.Toolchain.Common.Unix do
   alias Bundlex.{Native, Toolchain}
   alias Bundlex.Toolchain.Common.Compilers
 
+  @spec compiler_commands(
+          Native.t(),
+          compile :: String.t(),
+          link :: String.t(),
+          lang :: Native.language_t(),
+          options :: Keyword.t()
+        ) :: [String.t()]
   def compiler_commands(native, compile, link, lang, options \\ []) do
     includes = native.includes |> paths("-I")
     pkg_config_cflags = native.pkg_configs |> pkg_config(:cflags)
@@ -82,7 +89,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
   end
 
   defp paths(paths, flag \\ "") do
-    paths |> Enum.map(fn p -> "#{flag}#{path(p)}" end) |> Enum.join(" ")
+    Enum.map_join(paths, " ", fn p -> "#{flag}#{path(p)}" end)
   end
 
   defp path(path) do

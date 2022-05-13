@@ -1,8 +1,7 @@
 defmodule Bundlex.Project do
-  @bundlex_file_name "bundlex.exs"
   @moduledoc """
   Behaviour that should be implemented by each project using Bundlex in the
-  `#{@bundlex_file_name}` file.
+  `bundlex.exs` file.
   """
   use Bunch
   alias Bunch.KVList
@@ -10,8 +9,7 @@ defmodule Bundlex.Project do
   alias __MODULE__.{Preprocessor, Store}
 
   @src_dir_name "c_src"
-
-  @deprecated_key_interfaces %{nifs: :nif, cnodes: :cnode, ports: :port}
+  @bundlex_file_name "bundlex.exs"
 
   @type native_name_t :: atom
 
@@ -71,8 +69,7 @@ defmodule Bundlex.Project do
   @typedoc """
   Type describing input project configuration.
 
-  It's a keyword list, where natives and libs can be specified. `:nifs`, `:cnodes`
-  and `:ports` keys are deprecated. Instead, use `:natives` with proper `:interface`s. Libs are
+  It's a keyword list, where natives and libs can be specified. Libs are
   native packages that are compiled as static libraries and linked to natives
   that have them specified in `deps` field of their configuration.
   """
@@ -86,8 +83,13 @@ defmodule Bundlex.Project do
   defmacro __using__(_args) do
     quote do
       @behaviour unquote(__MODULE__)
-      def bundlex_project?, do: true
-      def src_path, do: __DIR__ |> Path.join(unquote(@src_dir_name))
+      @doc false
+      @spec __bundlex_project__() :: true
+      def __bundlex_project__, do: true
+
+      @doc false
+      @spec __src_path__() :: Path.t()
+      def __src_path__, do: Path.join(__DIR__, unquote(@src_dir_name))
     end
   end
 
@@ -115,7 +117,7 @@ defmodule Bundlex.Project do
   """
   @spec project_module?(module) :: boolean
   def project_module?(module) do
-    function_exported?(module, :bundlex_project?, 0) and module.bundlex_project?()
+    function_exported?(module, :__bundlex_project__, 0) and module.__bundlex_project__()
   end
 
   @doc """
@@ -137,13 +139,14 @@ defmodule Bundlex.Project do
       {:ok, project}
     else
       with {:ok, module} <- load(application),
-           project = %__MODULE__{
-             config: convert_input_config(module.project()),
-             src_path: module.src_path(),
-             module: module,
-             app: application
-           },
-           true <- Keyword.keyword?(project.config) or {:error, :invalid_project_specification} do
+           {:ok, config} <- parse_project_config(module.project()) do
+        project = %__MODULE__{
+          config: config,
+          src_path: module.__src_path__(),
+          module: module,
+          app: application
+        }
+
         Store.store_project(application, project)
         {:ok, project}
       end
@@ -164,28 +167,17 @@ defmodule Bundlex.Project do
     end
   end
 
-  defp convert_input_config(input_config) do
-    natives =
-      Map.keys(@deprecated_key_interfaces)
-      |> Enum.flat_map(fn key ->
-        deprecated_keys = Keyword.get(input_config, key, [])
+  defp parse_project_config(config) do
+    if Keyword.keyword?(config) do
+      config =
+        config
+        |> delistify_interfaces(:libs)
+        |> delistify_interfaces(:natives)
 
-        deprecated_keys
-        |> Enum.map(&convert_to_native(&1, @deprecated_key_interfaces[key]))
-      end)
-
-    if natives != [],
-      do: IO.warn(":nifs, :cnodes and :ports keys are deprecated. Use :natives instead")
-
-    input_config
-    |> Keyword.update(:natives, natives, &(&1 ++ natives))
-    |> delistify_interfaces(:libs)
-    |> delistify_interfaces(:natives)
-  end
-
-  defp convert_to_native({name, config}, interface) do
-    config = Keyword.put(config, :interface, interface)
-    {name, config}
+      {:ok, config}
+    else
+      {:error, :invalid_project_specification}
+    end
   end
 
   defp delistify_interfaces(input_config, native_type) do

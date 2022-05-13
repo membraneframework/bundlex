@@ -4,9 +4,11 @@
 [![API Docs](https://img.shields.io/badge/api-docs-yellow.svg?style=flat)](https://hexdocs.pm/bundlex/)
 [![CircleCI](https://circleci.com/gh/membraneframework/bundlex.svg?style=svg)](https://circleci.com/gh/membraneframework/bundlex)
 
-Bundlex is a multi-platform tool for compiling C code along with elixir projects, for use in NIFs, CNodes and Ports. The tool provides also convenient way of accessing compiled code in elixir modules.
+Bundlex is a multi-platform tool for compiling C code along with elixir projects, for use in NIFs, CNodes and Ports. The tool also provides a convenient way of accessing compiled code in elixir modules.
 
-This tool is a part of [Membrane Framework](https://membraneframework.org/)
+Bundlex has been tested on Linux, Mac OS and FreeBSD. There's some support for Windows as well, but it's experimental and unstable (see issues for details).
+
+This tool is maintained by the [Membrane Framework](https://membraneframework.org/) team.
 
 ## Installation
 

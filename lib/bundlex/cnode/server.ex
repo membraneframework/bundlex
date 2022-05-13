@@ -27,7 +27,7 @@ defmodule Bundlex.CNode.Server do
     {:ok,
      %{
        port: port,
-       state: :waiting,
+       status: :waiting,
        caller: opts.caller,
        link?: opts.link?,
        cnode: cnode,
@@ -40,14 +40,14 @@ defmodule Bundlex.CNode.Server do
   @impl true
   def handle_info(
         {port, {:data, {:eol, 'ready'}}},
-        %{port: port, state: :waiting, msg_part?: false} = state
+        %{port: port, status: :waiting, msg_part?: false} = state
       ) do
     case Node.connect(state.cnode) do
       true ->
         send(state.caller, {self(), {:ok, %Bundlex.CNode{server: self(), node: state.cnode}}})
-        {:noreply, %{state | state: :connected}}
+        {:noreply, %{state | status: :connected}}
 
-      _ ->
+      _connect_failed ->
         send(state.caller, {self(), {:error, :connect_to_cnode}})
         {:stop, :normal, state}
     end
@@ -59,12 +59,12 @@ defmodule Bundlex.CNode.Server do
   end
 
   def handle_info(:timeout, state) do
-    case state.state do
+    case state.status do
       :waiting ->
         send(state.caller, {self(), {:error, :spawn_cnode}})
         {:stop, :normal, state}
 
-      _ ->
+      _status ->
         {:noreply, state}
     end
   end
@@ -129,7 +129,7 @@ defmodule Bundlex.CNode.Server do
         NameStore.return_name(cnode |> node_name)
         :ok
 
-      _ ->
+      _disconnect_failed ->
         {:error, :disconnect_cnode}
     end
   end
