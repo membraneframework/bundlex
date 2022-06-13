@@ -38,7 +38,7 @@ end
 and create `bundlex.exs` file in the project root folder, containing Bundlex project module:
 
 ```elixir
-defmodule Membrane.Element.Mad.BundlexProject do
+defmodule MyApp.BundlexProject do
   use Bundlex.Project
 
   def project() do
