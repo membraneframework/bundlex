@@ -15,10 +15,9 @@ defmodule Bundlex.Toolchain.Common.Unix do
   def compiler_commands(native, compile, link, lang, options \\ []) do
     includes = native.includes |> paths("-I")
     pkg_config_cflags = native.pkg_configs |> pkg_config(:cflags)
-    compiler_flags = resolve_compiler_flags(native.compiler_flags, native.interface)
+    compiler_flags = resolve_compiler_flags(native.compiler_flags, native.interface, lang)
     output = Toolchain.output_path(native.app, native.name, native.interface)
     output_obj = output <> "_obj"
-    std_flag = Compilers.get_std_flag(lang)
 
     objects =
       native.sources
@@ -34,7 +33,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
       |> Enum.zip(objects)
       |> Enum.map(fn {source, object} ->
         """
-        #{compile} -Wall -Wextra -c #{std_flag} -O2 -g #{compiler_flags} \
+        #{compile} -Wall -Wextra -c -O2 -g #{compiler_flags} \
         -o #{path(object)} #{includes} #{pkg_config_cflags} #{path(source)}
         """
       end)
@@ -43,9 +42,10 @@ defmodule Bundlex.Toolchain.Common.Unix do
       compile_commands ++ link_commands(native, link, output, objects, options)
   end
 
-  defp resolve_compiler_flags(compiler_flags, interface) do
+  defp resolve_compiler_flags(compiler_flags, interface, lang) do
     compiler_flags
     |> add_interface_macro_flag(interface)
+    |> maybe_add_std_flag(lang)
     |> Enum.join(" ")
   end
 
@@ -56,6 +56,19 @@ defmodule Bundlex.Toolchain.Common.Unix do
   defp add_interface_macro_flag(compiler_flags, interface) do
     macro_flag = "-DBUNDLEX_#{interface |> Atom.to_string() |> String.upcase()}"
     [macro_flag] ++ compiler_flags
+  end
+
+  defp maybe_add_std_flag(compiler_flags, lang) do
+    if standard_specyfied?(compiler_flags) do
+      compiler_flags
+    else
+      flag = Compilers.get_default_std_flag(lang)
+      [flag | compiler_flags]
+    end
+  end
+
+  defp standard_specyfied?(compiler_flags) do
+    Enum.any?(compiler_flags, &String.match?(&1, ~r/^-std=/))
   end
 
   defp link_commands(%Native{type: :lib}, _link, output, objects, _options) do
