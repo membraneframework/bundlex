@@ -134,7 +134,7 @@ specified in Bundlex project of this dependency. Empty list by default. See _Dep
 for details.
 * `src_base` - Native files should reside in `project_root/c_src/<src_base>`
 (application name by default).
-* `compiler_flags` - Custom flags for compiler.
+* `compiler_flags` - Custom flags for compiler. Default `-std` flag for `:c` is `-std=c11` and for `:cpp` is `-std=c++17`. 
 * `linker_flags` - Custom flags for linker.
 * `language` - Language of native. `:c` or `:cpp` may be chosen (`:c` by default)
 * `interface` - Interface used to integrate with Elixir code. The following interfaces are available:
