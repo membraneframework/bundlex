@@ -2,6 +2,7 @@ defmodule Bundlex.BuildScript do
   @moduledoc false
 
   use Bunch
+
   alias Bundlex.Platform
 
   @script_ext unix: ".sh", windows: ".bat"
@@ -25,6 +26,12 @@ defmodule Bundlex.BuildScript do
 
   @spec run(t, Platform.name_t()) ::
           :ok | {:error, {:run_build_script, return_code: integer, command: String.t()}}
+  def run(script, platform)
+
+  def run(%__MODULE__{commands: []}, _platform) do
+    IO.warn("The list of commands is empty, did you forget to specify natives?")
+  end
+
   def run(%__MODULE__{commands: commands}, platform) do
     family = platform |> family!()
     cmd = commands |> join_commands(family)
