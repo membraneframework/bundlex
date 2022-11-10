@@ -1,9 +1,21 @@
 defmodule Mix.Tasks.Bundlex.Docs do
+  @shortdoc "Generates doxygen documentation for Bundlex project"
+  @moduledoc """
+  #{@shortdoc}
+
+  Accepts the following command line arguments:
+  - `--store-scripts` - if set, shell scripts are stored in the project
+  root folder for further analysis.
+
+  Add `:bundlex` to compilers in your Mix project to have this task executed
+  each time the project is compiled.
+  """
+
   use Mix.Task
 
   alias Bundlex.{Output, Project}
-  alias Bundlex.Helper.MixHelper
   alias Bundlex.Doxygen.Generator
+  alias Bundlex.Helper.MixHelper
 
   @impl Mix.Task
   def run(_args) do

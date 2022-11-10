@@ -1,4 +1,7 @@
 defmodule Bundlex.Doxygen.Generator do
+  @moduledoc """
+  Module responsible for generating doxygen documentation for Bundlex projects.
+  """
   alias Doxygen.Project
 
   @type doxygen_t :: %{
@@ -8,6 +11,9 @@ defmodule Bundlex.Doxygen.Generator do
           page_path: String.t()
         }
 
+  @doc """
+  Prepares struct with all necessary filepaths for the native documentation
+  """
   @spec doxygen(Project.t()) :: doxygen_t()
   def doxygen(project) do
     project_name = Atom.to_string(project.app)
@@ -35,6 +41,9 @@ defmodule Bundlex.Doxygen.Generator do
     Path.join(["pages", "doxygen", "#{project.app}.md"])
   end
 
+  @doc """
+  Generates doxyfile in the c_src/project directory for Bundlex project.
+  """
   @spec generate_doxyfile(doxygen_t()) :: no_return()
   def generate_doxyfile(doxygen) do
     create_doxyfile_template(doxygen)
@@ -83,6 +92,9 @@ defmodule Bundlex.Doxygen.Generator do
     end)
   end
 
+  @doc """
+  Generates html doxygen documentation for the Bundlex project. Doxyfile must be generated before.
+  """
   @spec generate_doxygen(doxygen_t()) :: no_return()
   def generate_doxygen(doxygen) do
     if not File.exists?(doxygen.doxygen_path) do
@@ -93,6 +105,11 @@ defmodule Bundlex.Doxygen.Generator do
     System.cmd("doxygen", [doxygen.doxyfile_path])
   end
 
+  @doc """
+  Generates page for the Bundlex project in the pages/doxygen directory.
+  Page must be manually added to the docs extras in the mix.exs.
+  Page contains only link to the doxygen html documentation.
+  """
   @spec generate_hex_page(doxygen_t()) :: :ok
   def generate_hex_page(doxygen) do
     pages_dirpath = Path.dirname(doxygen.page_path)
