@@ -4,15 +4,19 @@ defmodule Bundlex.Doxygen.Generator do
   @type doxygen_t :: %{
           project_name: String.t(),
           doxyfile_path: String.t(),
-          doxygen_path: String.t()
+          doxygen_path: String.t(),
+          page_path: String.t()
         }
 
   @spec doxygen(Project.t()) :: doxygen_t()
   def doxygen(project) do
+    project_name = Atom.to_string(project.app)
+
     %{
-      project_name: Atom.to_string(project.app),
+      project_name: project_name,
       doxyfile_path: doxyfile_path(project),
-      doxygen_path: doxygen_path(project)
+      doxygen_path: doxygen_path(project),
+      page_path: page_path(project)
     }
   end
 
@@ -27,10 +31,33 @@ defmodule Bundlex.Doxygen.Generator do
     Path.join(["doc", "doxygen", project_name])
   end
 
+  defp page_path(project) do
+    Path.join(["pages", "doxygen", "#{project.app}.md"])
+  end
+
+  @spec generate_hex_page(doxygen_t()) :: :ok
+  def generate_hex_page(doxygen) do
+    pages_dirpath = Path.dirname(doxygen.page_path)
+
+    if not File.exists?(pages_dirpath) do
+      File.mkdir_p!(pages_dirpath)
+    end
+
+    html_filepath = Path.join(["..", doxygen.doxygen_path, "html", "index.html"])
+
+    page = """
+    # #{doxygen.project_name |> String.capitalize()}
+    [Doxygen documentation of the native code](#{html_filepath})
+    """
+
+    File.write!(doxygen.page_path, page)
+  end
+
   @spec generate_doxygen(doxygen_t()) :: no_return()
   def generate_doxygen(doxygen) do
     if not File.exists?(doxygen.doxygen_path) do
       File.mkdir_p!(doxygen.doxygen_path)
+      File.touch!(Path.join(["doc", ".build"]))
     end
 
     System.cmd("doxygen", [doxygen.doxyfile_path])

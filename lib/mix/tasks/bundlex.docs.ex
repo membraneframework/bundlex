@@ -39,6 +39,24 @@ defmodule Mix.Tasks.Bundlex.Docs do
 
     Generator.generate_doxygen(doxygen)
 
+    Generator.generate_hex_page(doxygen)
+
+    example_docs = """
+    defp docs do
+      [
+        extras: [
+          "#{doxygen.page_path}",
+          ...
+        ],
+        ...
+      ]
+    end
+    """
+
+    IO.puts(
+      "Put \"#{doxygen.page_path}\" in the extras section of docs in the mix.exs.\nExample:\n#{example_docs}"
+    )
+
     # Mix.Task.run("docs", ["--formatter", "bundlex"])
   end
 end
