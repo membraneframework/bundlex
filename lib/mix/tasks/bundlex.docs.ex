@@ -13,33 +13,15 @@ defmodule Mix.Tasks.Bundlex.Docs do
     app = MixHelper.get_app!()
     # platform = Bundlex.platform()
 
-    project =
-      with {:ok, project} <- Project.get(app) do
-        project
-      else
-        {:error, reason} ->
-          Output.raise("Cannot get project for app: #{inspect(app)}, reason: #{inspect(reason)}")
-      end
+    project = get_project(app)
 
     doxygen = Generator.doxygen(project)
 
-    if File.exists?(doxygen.doxyfile_path) do
-      IO.puts("Doxyfile found at #{doxygen.doxyfile_path}. Do you want to overwrite it? [y/N]")
-      ans = IO.read(:stdio, :line)
-
-      if ans == "y" do
-        Generator.generate_doxyfile(doxygen)
-        IO.puts("Doxyfile generated at #{doxygen.doxyfile_path}")
-      else
-        IO.puts("Doxyfile not generated")
-      end
-    else
-      Generator.generate_doxyfile(doxygen)
-    end
+    overwrite_dialogue(doxygen, doxygen.doxyfile_path, &Generator.generate_doxyfile/1)
 
     Generator.generate_doxygen(doxygen)
 
-    Generator.generate_hex_page(doxygen)
+    overwrite_dialogue(doxygen, doxygen.page_path, &Generator.generate_hex_page/1)
 
     example_docs = """
     defp docs do
@@ -53,10 +35,35 @@ defmodule Mix.Tasks.Bundlex.Docs do
     end
     """
 
-    IO.puts(
+    Output.info(
       "Put \"#{doxygen.page_path}\" in the extras section of docs in the mix.exs.\nExample:\n#{example_docs}"
     )
 
     # Mix.Task.run("docs", ["--formatter", "bundlex"])
+  end
+
+  defp get_project(app) do
+    with {:ok, project} <- Project.get(app) do
+      project
+    else
+      {:error, reason} ->
+        Output.raise("Cannot get project for app: #{inspect(app)}, reason: #{inspect(reason)}")
+    end
+  end
+
+  defp overwrite_dialogue(doxygen, filepath, generator) do
+    if File.exists?(filepath) do
+      Output.info("Found #{filepath}. Do you want to overwrite it? [y/N]")
+      ans = IO.read(:stdio, :line)
+
+      if String.downcase(ans) == "y" do
+        generator.(doxygen)
+        Output.info("Generated")
+      else
+        Output.info("Skipped")
+      end
+    else
+      generator.(doxygen)
+    end
   end
 end

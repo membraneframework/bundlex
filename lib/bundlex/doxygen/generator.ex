@@ -35,43 +35,15 @@ defmodule Bundlex.Doxygen.Generator do
     Path.join(["pages", "doxygen", "#{project.app}.md"])
   end
 
-  @spec generate_hex_page(doxygen_t()) :: :ok
-  def generate_hex_page(doxygen) do
-    pages_dirpath = Path.dirname(doxygen.page_path)
-
-    if not File.exists?(pages_dirpath) do
-      File.mkdir_p!(pages_dirpath)
-    end
-
-    html_filepath = Path.join(["..", doxygen.doxygen_path, "html", "index.html"])
-
-    page = """
-    # #{doxygen.project_name |> String.capitalize()}
-    [Doxygen documentation of the native code](#{html_filepath})
-    """
-
-    File.write!(doxygen.page_path, page)
-  end
-
-  @spec generate_doxygen(doxygen_t()) :: no_return()
-  def generate_doxygen(doxygen) do
-    if not File.exists?(doxygen.doxygen_path) do
-      File.mkdir_p!(doxygen.doxygen_path)
-      File.touch!(Path.join(["doc", ".build"]))
-    end
-
-    System.cmd("doxygen", [doxygen.doxyfile_path])
-  end
-
   @spec generate_doxyfile(doxygen_t()) :: no_return()
   def generate_doxyfile(doxygen) do
-    create_doxygen_template(doxygen)
+    create_doxyfile_template(doxygen)
 
     keywords_to_change = keywords_to_change(doxygen)
-    update_doxygen_keywords(doxygen, keywords_to_change)
+    update_doxyfile_keywords(doxygen, keywords_to_change)
   end
 
-  defp create_doxygen_template(doxygen) do
+  defp create_doxyfile_template(doxygen) do
     System.cmd("doxygen", ["-g", doxygen.doxyfile_path])
   end
 
@@ -86,7 +58,7 @@ defmodule Bundlex.Doxygen.Generator do
     }
   end
 
-  defp update_doxygen_keywords(doxygen, keywords_to_change) do
+  defp update_doxyfile_keywords(doxygen, keywords_to_change) do
     doxyfile_path = doxygen.doxyfile_path
 
     File.stream!(doxyfile_path)
@@ -109,5 +81,33 @@ defmodule Bundlex.Doxygen.Generator do
     Enum.reduce(keywords_to_change, line, fn {keyword, value}, acc ->
       String.replace(acc, ~r/(#{keyword}\s*=)\s*(.*)\n/, "\\1 \"#{value}\"\n")
     end)
+  end
+
+  @spec generate_doxygen(doxygen_t()) :: no_return()
+  def generate_doxygen(doxygen) do
+    if not File.exists?(doxygen.doxygen_path) do
+      File.mkdir_p!(doxygen.doxygen_path)
+      File.touch!(Path.join(["doc", ".build"]))
+    end
+
+    System.cmd("doxygen", [doxygen.doxyfile_path])
+  end
+
+  @spec generate_hex_page(doxygen_t()) :: :ok
+  def generate_hex_page(doxygen) do
+    pages_dirpath = Path.dirname(doxygen.page_path)
+
+    if not File.exists?(pages_dirpath) do
+      File.mkdir_p!(pages_dirpath)
+    end
+
+    html_filepath = Path.join(["..", doxygen.doxygen_path, "html", "index.html"])
+
+    page = """
+    # #{doxygen.project_name |> String.capitalize()}
+    [Doxygen documentation of the native code](#{html_filepath})
+    """
+
+    File.write!(doxygen.page_path, page)
   end
 end
