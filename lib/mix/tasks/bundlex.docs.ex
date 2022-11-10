@@ -36,7 +36,7 @@ defmodule Mix.Tasks.Bundlex.Docs do
     """
 
     Output.info(
-      "Put \"#{doxygen.page_path}\" in the extras section of docs in the mix.exs.\nExample:\n#{example_docs}"
+      "Put \"#{doxygen.page_path}\" in the extras section of docs in the mix.exs and then run mix docs.\nExample:\n#{example_docs}"
     )
 
     # Mix.Task.run("docs", ["--formatter", "bundlex"])
