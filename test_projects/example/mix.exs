@@ -10,7 +10,8 @@ defmodule Example.MixProject do
       start_permanent: Mix.env() == :prod,
       deps_path: "../../deps",
       lockfile: "../../mix.lock",
-      deps: deps()
+      deps: deps(),
+      docs: docs()
     ]
   end
 
@@ -25,7 +26,16 @@ defmodule Example.MixProject do
   defp deps do
     [
       {:bundlex, path: "../.."},
-      {:example_lib, path: "../example_lib"}
+      {:example_lib, path: "../example_lib"},
+      {:ex_doc, "~> 0.21", only: :dev, runtime: false}
+    ]
+  end
+
+  defp docs do
+    [
+      extras: [
+        "pages/doxygen/example.md"
+      ]
     ]
   end
 end
