@@ -53,7 +53,24 @@ defmodule Bundlex.Doxygen.Generator do
   end
 
   defp create_doxyfile_template(doxygen) do
-    System.cmd("doxygen", ["-g", doxygen.doxyfile_path])
+    cmd_bundlex(["-g", doxygen.doxyfile_path])
+  end
+
+  defp cmd_bundlex(args) do
+    with {_res, 0} <-
+           System.cmd("doxygen", args) do
+      :ok
+    else
+      {output, status} ->
+        raise RuntimeError, message: "status: #{status} output: #{output}"
+    end
+  rescue
+    e in RuntimeError ->
+      raise ArgumentError, message: "Failed to run doxygen.\nError: #{e.message}"
+
+    e in ErlangError ->
+      raise ArgumentError,
+        message: "Failed to run doxygen. Is it installed?\nError: #{e.original}"
   end
 
   defp keywords_to_change(doxygen) do
@@ -102,7 +119,7 @@ defmodule Bundlex.Doxygen.Generator do
       File.touch!(Path.join(["doc", ".build"]))
     end
 
-    System.cmd("doxygen", [doxygen.doxyfile_path])
+    cmd_bundlex([doxygen.doxyfile_path])
   end
 
   @doc """
