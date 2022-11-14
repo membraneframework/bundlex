@@ -66,9 +66,9 @@ defmodule Mix.Tasks.Bundlex.Docs do
   defp overwrite_dialogue(doxygen, filepath, generator) do
     if File.exists?(filepath) do
       Output.info("Found #{filepath}. Do you want to overwrite it? [y/N]")
-      ans = IO.read(:stdio, :line)
+      ans = IO.read(:stdio, :line) |> String.trim() |> String.downcase()
 
-      if String.downcase(ans) == "y" do
+      if ans == "y" do
         generator.(doxygen)
         Output.info("Generated")
       else
