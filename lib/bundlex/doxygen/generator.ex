@@ -75,7 +75,7 @@ defmodule Bundlex.Doxygen.Generator do
 
   defp keywords_to_change(doxygen) do
     %{
-      "PROJECT_NAME" => "#{doxygen.project_name}",
+      "PROJECT_NAME" => doxygen.project_name,
       "OUTPUT_DIRECTORY" => doxygen.doxygen_path,
       "TAB_SIZE" => "2",
       "BUILTIN_STL_SUPPORT" => "YES",
