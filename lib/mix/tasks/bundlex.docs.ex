@@ -31,21 +31,25 @@ defmodule Mix.Tasks.Bundlex.Docs do
 
     overwrite_dialogue(doxygen, doxygen.page_path, &Generator.generate_hex_page/1)
 
-    example_docs = """
-    defp docs do
-      [
-        extras: [
-          "#{doxygen.page_path}",
+    if not page_included?(doxygen.page_path) do
+      example_docs = """
+      defp docs do
+        [
+          extras: [
+            "#{doxygen.page_path}",
+            ...
+          ],
           ...
-        ],
-        ...
-      ]
-    end
-    """
+        ]
+      end
+      """
 
-    Output.info(
-      "Put \"#{doxygen.page_path}\" in the extras section of docs in the mix.exs and then run mix docs.\nExample:\n#{example_docs}"
-    )
+      Output.info("""
+      Doxygen documentation page not included in the project docs.
+      Add the following snippet to your mix.exs file:
+      #{example_docs}
+      """)
+    end
   end
 
   defp get_project(app) do
@@ -70,6 +74,16 @@ defmodule Mix.Tasks.Bundlex.Docs do
       end
     else
       generator.(doxygen)
+    end
+  end
+
+  defp page_included?(doxygen_page) do
+    with config = Mix.Project.config(),
+         {:ok, docs} <- Keyword.fetch(config, :docs),
+         {:ok, extras} <- Keyword.fetch(docs, :extras) do
+      doxygen_page in extras
+    else
+      :error -> false
     end
   end
 end
