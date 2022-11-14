@@ -19,11 +19,7 @@ defmodule Mix.Tasks.Bundlex.Docs do
 
   @impl Mix.Task
   def run(_args) do
-    {:ok, _apps} = Application.ensure_all_started(:bundlex)
-    # commands = []
-
     app = MixHelper.get_app!()
-    # platform = Bundlex.platform()
 
     project = get_project(app)
 
@@ -50,8 +46,6 @@ defmodule Mix.Tasks.Bundlex.Docs do
     Output.info(
       "Put \"#{doxygen.page_path}\" in the extras section of docs in the mix.exs and then run mix docs.\nExample:\n#{example_docs}"
     )
-
-    # Mix.Task.run("docs", ["--formatter", "bundlex"])
   end
 
   defp get_project(app) do
