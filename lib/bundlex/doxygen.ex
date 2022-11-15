@@ -1,4 +1,4 @@
-defmodule Bundlex.Doxygen.Generator do
+defmodule Bundlex.Doxygen do
   @moduledoc """
   Module responsible for generating doxygen documentation for Bundlex projects.
   """

@@ -14,7 +14,7 @@ defmodule Mix.Tasks.Bundlex.Doxygen do
   use Mix.Task
 
   alias Bundlex.{Output, Project}
-  alias Bundlex.Doxygen.Generator
+  alias Bundlex.Doxygen
   alias Bundlex.Helper.MixHelper
 
   @impl Mix.Task
@@ -25,20 +25,20 @@ defmodule Mix.Tasks.Bundlex.Doxygen do
 
     project = get_project(app)
 
-    doxygen = Generator.doxygen(project)
+    doxygen = Doxygen.doxygen(project)
 
     if skip_overwrite_check? do
-      Generator.generate_doxyfile(doxygen)
+      Doxygen.generate_doxyfile(doxygen)
     else
-      overwrite_dialogue(doxygen, doxygen.doxyfile_path, &Generator.generate_doxyfile/1)
+      overwrite_dialogue(doxygen, doxygen.doxyfile_path, &Doxygen.generate_doxyfile/1)
     end
 
-    Generator.generate_doxygen(doxygen)
+    Doxygen.generate_doxygen(doxygen)
 
     if skip_overwrite_check? do
-      Generator.generate_hex_page(doxygen)
+      Doxygen.generate_hex_page(doxygen)
     else
-      overwrite_dialogue(doxygen, doxygen.page_path, &Generator.generate_hex_page/1)
+      overwrite_dialogue(doxygen, doxygen.page_path, &Doxygen.generate_hex_page/1)
     end
 
     if not page_included?(doxygen.page_path) do
