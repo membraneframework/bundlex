@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Bundlex.Docs do
+defmodule Mix.Tasks.Bundlex.Doxygen do
   @shortdoc "Generates doxygen documentation for Bundlex project"
   @moduledoc """
   #{@shortdoc}
