@@ -40,7 +40,7 @@ defmodule Mix.Tasks.Bundlex.Doxygen do
       overwrite_dialogue(doxygen, doxygen.page_path, &Doxygen.generate_hex_page/1)
     end
 
-    if not page_included?(doxygen.page_path) do
+    unless page_included?(doxygen.page_path) do
       example_docs = """
       defp docs do
         [

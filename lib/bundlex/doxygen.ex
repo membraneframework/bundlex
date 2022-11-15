@@ -49,7 +49,7 @@ defmodule Bundlex.Doxygen do
   @doc """
   Generates doxyfile in the c_src/project directory for Bundlex project.
   """
-  @spec generate_doxyfile(doxygen_t()) :: no_return()
+  @spec generate_doxyfile(doxygen_t()) :: :ok
   def generate_doxyfile(doxygen) do
     create_doxyfile_template(doxygen)
 
