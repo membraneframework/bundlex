@@ -18,18 +18,28 @@ defmodule Mix.Tasks.Bundlex.Docs do
   alias Bundlex.Helper.MixHelper
 
   @impl Mix.Task
-  def run(_args) do
+  def run(args) do
+    skip_overwrite_check? = "-y" in args or "--yes" in args
+
     app = MixHelper.get_app!()
 
     project = get_project(app)
 
     doxygen = Generator.doxygen(project)
 
-    overwrite_dialogue(doxygen, doxygen.doxyfile_path, &Generator.generate_doxyfile/1)
+    if skip_overwrite_check? do
+      Generator.generate_doxyfile(doxygen)
+    else
+      overwrite_dialogue(doxygen, doxygen.doxyfile_path, &Generator.generate_doxyfile/1)
+    end
 
     Generator.generate_doxygen(doxygen)
 
-    overwrite_dialogue(doxygen, doxygen.page_path, &Generator.generate_hex_page/1)
+    if skip_overwrite_check? do
+      Generator.generate_hex_page(doxygen)
+    else
+      overwrite_dialogue(doxygen, doxygen.page_path, &Generator.generate_hex_page/1)
+    end
 
     if not page_included?(doxygen.page_path) do
       example_docs = """
