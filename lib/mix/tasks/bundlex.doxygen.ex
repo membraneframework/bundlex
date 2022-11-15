@@ -13,8 +13,7 @@ defmodule Mix.Tasks.Bundlex.Doxygen do
 
   use Mix.Task
 
-  alias Bundlex.{Output, Project}
-  alias Bundlex.Doxygen
+  alias Bundlex.{Doxygen, Output, Project}
   alias Bundlex.Helper.MixHelper
 
   @impl Mix.Task
@@ -88,8 +87,9 @@ defmodule Mix.Tasks.Bundlex.Doxygen do
   end
 
   defp page_included?(doxygen_page) do
-    with config = Mix.Project.config(),
-         {:ok, docs} <- Keyword.fetch(config, :docs),
+    config = Mix.Project.config()
+
+    with {:ok, docs} <- Keyword.fetch(config, :docs),
          {:ok, extras} <- Keyword.fetch(docs, :extras) do
       doxygen_page in extras
     else
