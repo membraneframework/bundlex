@@ -2,7 +2,8 @@ defmodule Bundlex.Doxygen.Generator do
   @moduledoc """
   Module responsible for generating doxygen documentation for Bundlex projects.
   """
-  alias Doxygen.Project
+
+  alias Bundlex.Project
 
   @type doxygen_t :: %{
           project_name: String.t(),
