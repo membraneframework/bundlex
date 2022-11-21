@@ -195,7 +195,9 @@ Please refer to the module's documentation to see how to use it.
 
 ### Documentation of the native code
 
-Bundlex provides a way to generate documentation of the native code. To do so, run `mix bundlex.doxygen` command. The documentation will be generated in `doc/doxygen` directory. The documentation is generated using [Doxygen](http://www.doxygen.nl/). The documentation is generated for each native separately, so the documentation of the native `my_native` will be generated in `doc/bundlex/my_native` directory. The configuration file for Doxygen is `c_src/my_native/Doxyfile` and is generated automatically.  Additionally, hex doc page with the link to the Doxygen documentation is generated in the `pages/doxygen/my_native.md` and should be included in the `mix.exs` file: 
+Bundlex provides a way to generate documentation of the native code. The documentation is generated using [Doxygen](http://www.doxygen.nl/).
+
+To do so, run `mix bundlex.doxygen` command. The documentation is generated for each native separately. The documentation of the native `my_native` will be generated in `doc/bundlex/my_native` directory. Additionally, hex doc page with the link to the Doxygen documentation is generated in the `pages/doxygen/my_native.md` and should be included in the `mix.exs` file: 
 ```elixir
 defp docs do
   [

@@ -33,7 +33,7 @@ defmodule Bundlex.Doxygen do
 
   defp doxyfile_path(project) do
     project_name = "#{project.app}"
-    project_dirpath = Path.join([project.src_path, project_name])
+    project_dirpath = Path.join(["doc", "doxygen", project_name])
     Path.join(project_dirpath, "Doxyfile")
   end
 
@@ -58,6 +58,7 @@ defmodule Bundlex.Doxygen do
   end
 
   defp create_doxyfile_template(doxygen) do
+    ensure_doxygen_dir_existence(doxygen)
     cmd_bundlex(["-g", doxygen.doxyfile_path])
   end
 
@@ -125,12 +126,17 @@ defmodule Bundlex.Doxygen do
   """
   @spec generate_doxygen(doxygen_t()) :: no_return()
   def generate_doxygen(doxygen) do
-    if not File.exists?(doxygen.doxygen_path) do
-      File.mkdir_p!(doxygen.doxygen_path)
-      File.touch!(Path.join(["doc", ".build"]))
-    end
+    ensure_doxygen_dir_existence(doxygen)
 
     cmd_bundlex([doxygen.doxyfile_path])
+  end
+
+  defp ensure_doxygen_dir_existence(doxygen) do
+    if not File.exists?(doxygen.doxygen_path) do
+      File.mkdir_p!(doxygen.doxygen_path)
+    end
+
+    File.touch!(Path.join(["doc", ".build"]))
   end
 
   @doc """
