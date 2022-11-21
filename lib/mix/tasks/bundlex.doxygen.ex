@@ -26,11 +26,7 @@ defmodule Mix.Tasks.Bundlex.Doxygen do
 
     doxygen = Doxygen.doxygen(project)
 
-    if skip_overwrite_check? do
-      Doxygen.generate_doxyfile(doxygen)
-    else
-      overwrite_dialogue(doxygen, doxygen.doxyfile_path, &Doxygen.generate_doxyfile/1)
-    end
+    Doxygen.generate_doxyfile(doxygen)
 
     Doxygen.generate_doxygen(doxygen)
 
