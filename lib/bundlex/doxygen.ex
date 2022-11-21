@@ -92,7 +92,9 @@ defmodule Bundlex.Doxygen do
       "TAB_SIZE" => "2",
       "BUILTIN_STL_SUPPORT" => "YES",
       "RECURSIVE" => "YES",
-      "GENERATE_LATEX" => "NO"
+      "GENERATE_LATEX" => "NO",
+      "INPUT" => Path.join(["c_src", doxygen.project_name]),
+      "EXTRACT_STATIC" => "YES"
     }
   end
 
@@ -124,7 +126,7 @@ defmodule Bundlex.Doxygen do
   @doc """
   Generates html doxygen documentation for the Bundlex project. Doxyfile must be generated before.
   """
-  @spec generate_doxygen(doxygen_t()) :: no_return()
+  @spec generate_doxygen(doxygen_t()) :: :ok
   def generate_doxygen(doxygen) do
     ensure_doxygen_dir_existence(doxygen)
 
