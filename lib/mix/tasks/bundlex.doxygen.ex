@@ -50,7 +50,7 @@ defmodule Mix.Tasks.Bundlex.Doxygen do
       """
 
       Output.info("""
-      Doxygen documentation page not included in the project docs.
+      Doxygen documentation page is not included in the project docs.
       Add the following snippet to your mix.exs file:
       #{example_docs}
       """)
