@@ -1,7 +1,3 @@
-defmodule Bundlex.DoxygenError do
-  defexception [:message]
-end
-
 defmodule Bundlex.Doxygen do
   @moduledoc """
   Module responsible for generating doxygen documentation for Bundlex projects.
@@ -72,17 +68,15 @@ defmodule Bundlex.Doxygen do
     end
   rescue
     e in RuntimeError ->
-      reraise e, __STACKTRACE__
+      reraise Bundlex.Doxygen.Error, [message: e.message], __STACKTRACE__
 
-    e in ErlangError ->
-      with %{original: :enoent} <- e do
-        reraise Bundlex.DoxygenError,
-                [
-                  message:
-                    "Failed to run `doxygen` command with args #{inspect(args)}. Ensure, that you have `doxygen` available on your machine"
-                ],
-                __STACKTRACE__
-      end
+    ErlangError ->
+      reraise Bundlex.Doxygen.Error,
+              [
+                message:
+                  "Failed to run `doxygen` command with args #{inspect(args)}. Ensure, that you have `doxygen` available on your machine"
+              ],
+              __STACKTRACE__
   end
 
   defp keywords_to_change(doxygen) do
