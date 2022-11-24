@@ -24,7 +24,7 @@ defmodule Mix.Tasks.Bundlex.Doxygen do
 
     Doxygen.generate_doxyfile(doxygen)
 
-    Doxygen.generate_doxygen(doxygen)
+    Doxygen.generate_doxygen_documentation(doxygen)
 
     if skip_overwrite_check? do
       Doxygen.generate_hex_page(doxygen)

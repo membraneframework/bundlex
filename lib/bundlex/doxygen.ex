@@ -120,8 +120,8 @@ defmodule Bundlex.Doxygen do
   @doc """
   Generates html doxygen documentation for the Bundlex project. Doxyfile must be generated before.
   """
-  @spec generate_doxygen(doxygen_t()) :: :ok
-  def generate_doxygen(doxygen) do
+  @spec generate_doxygen_documentation(doxygen_t()) :: :ok
+  def generate_doxygen_documentation(doxygen) do
     ensure_doxygen_dir_existence(doxygen)
 
     cmd_bundlex([doxygen.doxyfile_path])
