@@ -4,11 +4,7 @@ defmodule Mix.Tasks.Bundlex.Doxygen do
   #{@shortdoc}
 
   Accepts the following command line arguments:
-  - `--store-scripts` - if set, shell scripts are stored in the project
-  root folder for further analysis.
-
-  Add `:bundlex` to compilers in your Mix project to have this task executed
-  each time the project is compiled.
+  - `--yes`, `-y` - skips confirmation prompt and overwrites existing meta files
   """
 
   use Mix.Task
