@@ -64,7 +64,10 @@ defmodule Bundlex.Doxygen do
       :ok
     else
       {output, status} ->
-        "Running doxygen command with args: #{inspect(args)} failed with exit code: #{inspect(status)} and output: #{inspect(output)}"
+        error_message =
+          "Running doxygen command with args: #{inspect(args)} failed with exit code: #{inspect(status)} and output: #{inspect(output)}"
+
+        raise error_message
     end
   rescue
     e in RuntimeError ->
