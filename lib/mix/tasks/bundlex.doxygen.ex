@@ -5,6 +5,7 @@ defmodule Mix.Tasks.Bundlex.Doxygen do
 
   Accepts the following command line arguments:
   - `--yes`, `-y` - skips confirmation prompt and overwrites existing meta files
+  - `--no`, `-n` - skips confirmation prompt and does not overwrite existing meta files
   """
 
   use Mix.Task
@@ -15,6 +16,11 @@ defmodule Mix.Tasks.Bundlex.Doxygen do
   @impl Mix.Task
   def run(args) do
     skip_overwrite_check? = "-y" in args or "--yes" in args
+    always_overwrite? = "-n" in args or "--no" in args
+
+    if skip_overwrite_check? and always_overwrite? do
+      Mix.raise("Cannot use both --yes and --no options")
+    end
 
     app = MixHelper.get_app!()
 
@@ -29,7 +35,18 @@ defmodule Mix.Tasks.Bundlex.Doxygen do
     if skip_overwrite_check? do
       Doxygen.generate_hex_page(doxygen)
     else
-      overwrite_dialogue(doxygen, doxygen.page_path, &Doxygen.generate_hex_page/1)
+      overwrite? =
+        if always_overwrite? do
+          true
+        else
+          Mix.shell().yes?("Do you want to overwrite existing hex page?")
+        end
+
+      if overwrite? do
+        Doxygen.generate_hex_page(doxygen)
+      else
+        Output.info("Skipping hex page generation")
+      end
     end
 
     unless page_included?(doxygen.page_path) do
@@ -59,22 +76,6 @@ defmodule Mix.Tasks.Bundlex.Doxygen do
     else
       {:error, reason} ->
         Output.raise("Cannot get project for app: #{inspect(app)}, reason: #{inspect(reason)}")
-    end
-  end
-
-  defp overwrite_dialogue(doxygen, filepath, generator) do
-    if File.exists?(filepath) do
-      Output.info("Found #{filepath}. Do you want to overwrite it? [y/N]")
-      ans = IO.read(:stdio, :line) |> String.trim() |> String.downcase()
-
-      if ans == "y" do
-        generator.(doxygen)
-        Output.info("Generated")
-      else
-        Output.info("Skipped")
-      end
-    else
-      generator.(doxygen)
     end
   end
 
