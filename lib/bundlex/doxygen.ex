@@ -70,16 +70,19 @@ defmodule Bundlex.Doxygen do
         raise error_message
     end
   rescue
-    e in RuntimeError ->
-      reraise Bundlex.Doxygen.Error, [message: e.message], __STACKTRACE__
+    e in ErlangError ->
+      case e do
+        %ErlangError{original: :enoent} ->
+          reraise Bundlex.Doxygen.Error,
+                  [
+                    message:
+                      "Failed to run `doxygen` command with args #{inspect(args)}. Ensure, that you have `doxygen` available on your machine"
+                  ],
+                  __STACKTRACE__
 
-    ErlangError ->
-      reraise Bundlex.Doxygen.Error,
-              [
-                message:
-                  "Failed to run `doxygen` command with args #{inspect(args)}. Ensure, that you have `doxygen` available on your machine"
-              ],
-              __STACKTRACE__
+        e ->
+          reraise e, __STACKTRACE__
+      end
   end
 
   defp keywords_to_change(doxygen) do
