@@ -36,11 +36,7 @@ defmodule Mix.Tasks.Bundlex.Doxygen do
       Doxygen.generate_hex_page(doxygen)
     else
       overwrite? =
-        if always_overwrite? do
-          true
-        else
-          Mix.shell().yes?("Do you want to overwrite existing hex page?")
-        end
+        always_overwrite? or Mix.shell().yes?("Do you want to overwrite existing hex page?")
 
       if overwrite? do
         Doxygen.generate_hex_page(doxygen)
