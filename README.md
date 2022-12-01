@@ -210,7 +210,23 @@ defp docs do
   ]
 end
 ```
+If you want to keep own changes in the `pages/doxygen/my_native.md` file, you can use `--no` option to skip the generation of this file. Otherwise, if you want the file to be always overwritten, use `--yes` option.
+
 After that, the documentation can be generated with `mix docs` command.
+
+### Include native documentation in the hex docs
+
+To include the native documentation in the hex docs, add the following alias to the `mix.exs` file:
+
+```elixir
+def project do
+  [
+    ...
+    aliases: [docs: ["bundlex.doxygen --no", "docs"]],
+    ...
+  ]
+end
+```
 
 ## More examples
 
