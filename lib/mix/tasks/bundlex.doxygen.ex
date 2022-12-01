@@ -15,6 +15,8 @@ defmodule Mix.Tasks.Bundlex.Doxygen do
 
   @impl Mix.Task
   def run(args) do
+    {:ok, _apps} = Application.ensure_all_started(:bundlex)
+
     skip_overwrite_check? = "-y" in args or "--yes" in args
     always_overwrite? = "-n" in args or "--no" in args
 
