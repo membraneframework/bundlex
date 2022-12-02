@@ -197,36 +197,26 @@ Please refer to the module's documentation to see how to use it.
 
 Bundlex provides a way to generate documentation of the native code. The documentation is generated using [Doxygen](http://www.doxygen.nl/).
 
-To do so, run `$ mix bundlex.doxygen` command. The documentation is generated for each native separately. The documentation of the native `my_native` will be generated in `doc/bundlex/my_native` directory. Additionally, hex doc page with the link to the Doxygen documentation is generated in the `pages/doxygen/my_native.md` and should be included in the `mix.exs` file: 
+To do so, run `$ mix bundlex.doxygen` command. The documentation is generated for each native separately. The documentation of the native `project_name` will be generated in `doc/bundlex/project_name` directory. Additionally, hex doc page with the link to the Doxygen documentation is generated in the `pages/doxygen/project_name.md` and should be included in the `mix.exs` file: 
 
 ```elixir
 defp docs do
   [
     extras: [
-      "pages/doxygen/my_native.md",
+      "pages/doxygen/project_name.md",
       ...
     ],
     ...
   ]
 end
 ```
-If you want to keep own changes in the `pages/doxygen/my_native.md` file, you can use `--no` option to skip the generation of this file. Otherwise, if you want the file to be always overwritten, use `--yes` option.
+If you want to keep own changes in the `pages/doxygen/project_name.md` file, you can use `--no` option to skip the generation of this file. Otherwise, if you want the file to be always overwritten, use `--yes` option.
 
 After that, the documentation can be generated with `mix docs` command.
 
 ### Include native documentation in the hex docs
 
-To include the native documentation in the hex docs, add the following alias to the `mix.exs` file:
-
-```elixir
-def project do
-  [
-    ...
-    aliases: [docs: ["bundlex.doxygen --no", "docs"]],
-    ...
-  ]
-end
-```
+To include the native documentation in the hex docs, you need to generate the documentation with `$ mix bundlex.doxygen` command and include hex page in the `extras`, before running `$ mix hex.publish` command.
 
 ## More examples
 
