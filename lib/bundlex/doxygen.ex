@@ -159,7 +159,7 @@ defmodule Bundlex.Doxygen do
     html_filepath = Path.join(["."] ++ doxygen_path ++ ["html", "index.html"])
 
     page = """
-    # #{doxygen.project_name |> String.capitalize()}
+    # Native code documentation
     [Doxygen documentation of the native code](#{html_filepath})
     """
 
