@@ -11,8 +11,7 @@ defmodule Example.MixProject do
       deps_path: "../../deps",
       lockfile: "../../mix.lock",
       deps: deps(),
-      docs: docs(),
-      aliases: [docs: ["bundlex.doxygen --no", "docs"]]
+      docs: docs()
     ]
   end
 
