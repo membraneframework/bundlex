@@ -154,7 +154,9 @@ defmodule Bundlex.Doxygen do
       File.mkdir_p!(pages_dirpath)
     end
 
-    html_filepath = Path.join(["..", doxygen.doxygen_path, "html", "index.html"])
+    [_doc | doxygen_path] = Path.split(doxygen.doxygen_path)
+
+    html_filepath = Path.join(["."] ++ doxygen_path ++ ["html", "index.html"])
 
     page = """
     # #{doxygen.project_name |> String.capitalize()}

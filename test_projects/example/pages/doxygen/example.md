@@ -1,2 +1,2 @@
 # Example
-[Doxygen documentation of the native code](../doc/doxygen/example/html/index.html)
+[Doxygen documentation of the native code](./doxygen/example/html/index.html)
