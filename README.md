@@ -29,7 +29,7 @@ defmodule MyApp.Mixfile do
 
   defp deps() do
     [
-      {:bundlex, "~> 1.0.1"}
+      {:bundlex, "~> 1.1.0"}
     ]
   end
 end
@@ -192,6 +192,31 @@ As in the case of NIFs, CNodes compiled with Bundlex can be used like any other 
 
 Similarly to CNodes Bundlex provides `Bundlex.Port` module for a little easier interacting with Ports.
 Please refer to the module's documentation to see how to use it.
+
+### Documentation of the native code
+
+Bundlex provides a way to generate documentation of the native code. The documentation is generated using [Doxygen](http://www.doxygen.nl/).
+
+To do so, run `$ mix bundlex.doxygen` command. The documentation is generated for each native separately. The documentation of the native `project_name` will be generated in `doc/bundlex/project_name` directory. Additionally, hex doc page with the link to the Doxygen documentation is generated in the `pages/doxygen/project_name.md` and should be included in the `mix.exs` file: 
+
+```elixir
+defp docs do
+  [
+    extras: [
+      "pages/doxygen/project_name.md",
+      ...
+    ],
+    ...
+  ]
+end
+```
+If you want to keep own changes in the `pages/doxygen/project_name.md` file, you can use `--no` option to skip the generation of this file. Otherwise, if you want the file to be always overwritten, use `--yes` option.
+
+After that, the documentation can be generated with `mix docs` command.
+
+### Include native documentation in the hex docs
+
+To include the native documentation in the hex docs, you need to generate the documentation with `$ mix bundlex.doxygen` command and include hex page in the `extras`, before running `$ mix hex.publish` command.
 
 ## More examples
 
