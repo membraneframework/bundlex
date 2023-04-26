@@ -121,6 +121,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
 
   defp pkg_config(%Native{pkg_configs: packages, app: app}, options) do
     options = options |> Bunch.listify() |> Enum.map(&"--#{&1}")
+    System.put_env("PATH", System.get_env("PATH", "") <> ":/usr/local/bin:/opt/homebrew/bin")
 
     case System.cmd("which", ["pkg-config"]) do
       {_path, 0} ->
