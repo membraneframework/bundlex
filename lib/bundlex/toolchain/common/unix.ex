@@ -2,7 +2,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
   @moduledoc false
 
   use Bunch
-  alias Bundlex.{Native, Toolchain}
+  alias Bundlex.{Native, Output, Toolchain}
   alias Bundlex.Toolchain.Common.Compilers
 
   @spec compiler_commands(
@@ -14,7 +14,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
         ) :: [String.t()]
   def compiler_commands(native, compile, link, lang, options \\ []) do
     includes = native.includes |> paths("-I")
-    pkg_config_cflags = native.pkg_configs |> pkg_config(:cflags)
+    pkg_config_cflags = pkg_config(native, :cflags)
     compiler_flags = resolve_compiler_flags(native.compiler_flags, native.interface, lang)
     output = Toolchain.output_path(native.app, native.name, native.interface)
     output_obj = output <> "_obj"
@@ -113,15 +113,40 @@ defmodule Bundlex.Toolchain.Common.Unix do
   defp libs(native) do
     lib_dirs = native.lib_dirs |> paths("-L")
     libs = native.libs |> Enum.map_join(" ", fn lib -> "-l#{lib}" end)
-    pkg_config_libs = native.pkg_configs |> pkg_config(:libs)
+    pkg_config_libs = pkg_config(native, :libs)
     "#{pkg_config_libs} #{lib_dirs} #{libs}"
   end
 
-  defp pkg_config([], _options), do: ""
+  defp pkg_config(%Native{pkg_configs: []}, _options), do: ""
 
-  defp pkg_config(packages, options) do
+  defp pkg_config(%Native{pkg_configs: packages, app: app}, options) do
     options = options |> Bunch.listify() |> Enum.map(&"--#{&1}")
-    {output, 0} = System.cmd("pkg-config", options ++ packages)
-    String.trim_trailing(output)
+
+    case System.cmd("which", ["pkg-config"]) do
+      {_path, 0} ->
+        :ok
+
+      {_path, _error} ->
+        Output.raise("""
+        pkg-config not found. Bundlex needs pkg-config to find packages in system.
+        On Mac OS, you can install pkg-config via Homebrew by typing `brew install pkg-config`.
+        """)
+    end
+
+    Enum.map_join(packages, " ", fn package ->
+      case System.cmd("pkg-config", options ++ [package], stderr_to_stdout: true) do
+        {output, 0} ->
+          String.trim_trailing(output)
+
+        {output, error} ->
+          Output.raise("""
+          Couldn't find system package #{package} with pkg-config. Check whether it's installed.
+          Installation instructions may be available in the readme of package #{app}.
+          Output from pkg-config:
+          Error: #{error}
+          #{output}
+          """)
+      end
+    end)
   end
 end

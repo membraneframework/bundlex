@@ -62,7 +62,16 @@ defmodule Mix.Tasks.Compile.Bundlex do
         :ok
 
       {:error, {:run_build_script, return_code: ret, command: cmd}} ->
-        Output.raise("Build script:\n\n#{cmd}\n\nreturned non-zero code: #{ret}")
+        Output.raise("""
+        Failed to build the native part of package #{app}. Errors may have been logged above.
+        Make sure that all required packages are properly installed in your system.
+        Requirements and installation guide may be found in the readme of package #{app}.
+
+        Returned code: #{ret}
+        Build script:
+
+        #{cmd}
+        """)
 
       {:error, reason} ->
         Output.raise("Error running build script, reason #{inspect(reason)}")
