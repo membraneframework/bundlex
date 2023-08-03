@@ -14,7 +14,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
         ) :: [String.t()]
   def compiler_commands(native, compile, link, lang, options \\ []) do
     includes = native.includes |> paths("-I")
-    pkg_config_cflags = pkg_config(native, :cflags)
+    pkg_config_cflags = get_pkg_config(native, :cflags)
     compiler_flags = resolve_compiler_flags(native.compiler_flags, native.interface, lang)
     output = Toolchain.output_path(native.app, native.name, native.interface)
     output_obj = output <> "_obj"
@@ -111,16 +111,64 @@ defmodule Bundlex.Toolchain.Common.Unix do
   end
 
   defp libs(native) do
+    precompiled_libs = get_precompiled_libs(native)
+    pkg_config_libs = get_pkg_config(native, :libs)
+
     lib_dirs = native.lib_dirs |> paths("-L")
     libs = native.libs |> Enum.map_join(" ", fn lib -> "-l#{lib}" end)
-    pkg_config_libs = pkg_config(native, :libs)
-    "#{pkg_config_libs} #{lib_dirs} #{libs}"
+
+    "#{precompiled_libs} #{pkg_config_libs} #{lib_dirs} #{libs}"
   end
 
-  defp pkg_config(%Native{pkg_configs: []}, _options), do: ""
 
-  defp pkg_config(%Native{pkg_configs: packages, app: app}, options) do
+  defp get_precompiled_libs(native) do
+    packages = native.os_deps |> Enum.filter(fn {_name, type} -> type == :pkg_config end)
+
+    Enum.each(packages, fn {package_name, {:precompiled, url}} -> download_precompiled_package(package_name, url) end)
+  end
+
+  defp download_precompiled_package(package_name, repository_url) do
+    File.mkdir_p!(Path.dirname(package_name))
+    version = Bundlex.platform() |> IO.inspect(label: :platform)
+    download(get_url(repository_url, version), package_name)
+  end
+
+  defp get_url(repository_url, version) do
+    "some_url"
+  end
+
+  defp network_tool() do
+    cond do
+      executable_exists?("curl") -> :curl
+      executable_exists?("wget") -> :wget
+      true -> nil
+    end
+  end
+
+  defp download(url, dest) do
+    command =
+      case network_tool() do
+        :curl -> "curl --fail -L -o #{dest} #{url}"
+        :wget -> "wget -O #{dest} #{url}"
+      end
+
+    case System.shell(command) do
+      {_, 0} -> :ok
+      _ -> :error
+    end
+  end
+
+  defp executable_exists?(name), do: System.find_executable(name) != nil
+
+  defp get_pkg_config(native, options) do
+    packages = native.os_deps |> Enum.filter(fn {_name, type} -> match?({:precompiled, _url}, type) end)
     options = options |> Bunch.listify() |> Enum.map(&"--#{&1}")
+    do_get_pkg_config(packages, options, native.app)
+  end
+
+  defp do_get_pkg_config([], _options, _app), do: ""
+
+  defp do_get_pkg_config(packages, options, app) do
     System.put_env("PATH", System.get_env("PATH", "") <> ":/usr/local/bin:/opt/homebrew/bin")
 
     case System.cmd("which", ["pkg-config"]) do

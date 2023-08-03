@@ -13,6 +13,9 @@ defmodule Bundlex.Native do
   @type interface_t :: :nif | :cnode | :port
   @type language_t :: :c | :cpp
 
+  @type percompiled_path :: String.t()
+  @type os_dep :: [name: {atom(), :pkgconfig | {:precompiled, percompiled_path}}]
+
   @type t :: %__MODULE__{
           name: atom,
           app: Application.app(),
@@ -20,7 +23,7 @@ defmodule Bundlex.Native do
           includes: [String.t()],
           libs: [String.t()],
           lib_dirs: [String.t()],
-          pkg_configs: [String.t()],
+          os_deps: [os_dep()],
           sources: [String.t()],
           deps: [t],
           compiler_flags: [String.t()],
@@ -38,7 +41,7 @@ defmodule Bundlex.Native do
             includes: [],
             libs: [],
             lib_dirs: [],
-            pkg_configs: [],
+            os_deps: [],
             sources: [],
             deps: [],
             compiler_flags: [],
@@ -197,7 +200,7 @@ defmodule Bundlex.Native do
   defp merge_dep(%__MODULE__{type: :lib} = dependency, %__MODULE__{} = native) do
     Map.merge(
       native,
-      Map.take(dependency, [:includes, :libs, :lib_dirs, :pkg_configs, :linker_flags, :deps]),
+      Map.take(dependency, [:includes, :libs, :lib_dirs, :os_deps, :linker_flags, :deps]),
       fn _k, v1, v2 -> v2 ++ v1 end
     )
   end

@@ -19,7 +19,8 @@ defmodule Example.BundlexProject do
         deps: [example_lib: :example_lib],
         src_base: "example",
         sources: ["example_cnode.c"],
-        interface: [:cnode]
+        interface: [:cnode],
+        os_deps: [ffmpeg: {:precompiled, "some_url"}]
       ],
       example: [
         src_base: "example",
