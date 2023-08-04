@@ -14,7 +14,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
         ) :: [String.t()]
   def compiler_commands(native, compile, link, lang, options \\ []) do
     includes = native.includes |> paths("-I")
-    precompiled_includes = get_precompiled_libs(native, :include)
+    precompiled_includes = Bundlex.Precompiled.get_precompiled_flags(native, :cflags)
     pkg_config_cflags = get_pkg_config(native, :cflags)
     compiler_flags = resolve_compiler_flags(native.compiler_flags, native.interface, lang)
     output = Toolchain.output_path(native.app, native.name, native.interface)
@@ -112,7 +112,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
   end
 
   defp libs(native) do
-    precompiled_libs = get_precompiled_libs(native, :libs)
+    precompiled_libs = Bundlex.Precompiled.get_precompiled_flags(native, :libs)
     pkg_config_libs = get_pkg_config(native, :libs)
 
     lib_dirs = native.lib_dirs |> paths("-L")
@@ -120,94 +120,6 @@ defmodule Bundlex.Toolchain.Common.Unix do
 
     "#{precompiled_libs} #{pkg_config_libs} #{lib_dirs} #{libs}"
   end
-
-  defp get_precompiled_libs(native, type) do
-    native.os_deps
-    |> Enum.filter(fn
-      {:precompiled, _desc} -> true
-      _other -> false
-    end)
-    |> Enum.flat_map(fn {:precompiled, {repository, name_or_names_list}} ->
-      Bunch.listify(name_or_names_list) |> Enum.map(&{repository, to_string(&1) |> remove_lib()})
-    end)
-    |> Enum.flat_map(fn {repository, package_name} ->
-      maybe_download_precompiled_package(repository, package_name, type)
-    end)
-    |> Enum.uniq()
-    |> Enum.join(" ")
-  end
-
-  defp remove_lib(libname) do
-    if String.starts_with?(libname, "lib") do
-      String.slice(libname, 3..-1)
-    else
-      libname
-    end
-  end
-
-  defp maybe_download_precompiled_package(repository_url, package_name, type) do
-    File.mkdir_p("_build/precompiled/")
-    version = Bundlex.platform()
-    url = get_url(repository_url, package_name, version)
-    dest = get_repository_dest(url)
-    path = get_repository_path(url)
-
-    if File.exists?(path) do
-      ""
-    else
-      File.mkdir_p(path)
-      download(url, dest)
-      System.shell("tar -xf #{dest} -C #{path} --strip-components 1")
-      System.shell("rm #{dest}")
-    end
-
-    if type == :lib do
-      full_library_path = Path.join([path, "lib"]) |> Path.absname()
-      ["-L #{full_library_path}", "-l #{package_name}"]
-    else
-      full_include_path = Path.join([path, "include"]) |> Path.absname()
-      ["-I #{full_include_path}"]
-    end
-  end
-
-  defp get_repository_path(repository_url) do
-    last_part =
-      String.split(repository_url, "/") |> Enum.at(-1) |> String.split(".") |> Enum.at(0)
-
-    "_build/precompiled/#{last_part}"
-  end
-
-  defp get_repository_dest(repository_url) do
-    last_part = String.split(repository_url, "/") |> Enum.at(-1)
-    "_build/precompiled/#{last_part}"
-  end
-
-  defp get_url(repository_url, package_name, version) do
-    "#{repository_url}/ffmpeg-master-latest-linux64-gpl-shared.tar.xz"
-  end
-
-  defp network_tool() do
-    cond do
-      executable_exists?("curl") -> :curl
-      executable_exists?("wget") -> :wget
-      true -> nil
-    end
-  end
-
-  defp download(url, dest) do
-    command =
-      case network_tool() do
-        :curl -> "curl --fail -L -o #{dest} #{url}"
-        :wget -> "wget -O #{dest} #{url}"
-      end
-
-    case System.shell(command) do
-      {_, 0} -> :ok
-      _ -> :error
-    end
-  end
-
-  defp executable_exists?(name), do: System.find_executable(name) != nil
 
   defp get_pkg_config(native, options) do
     packages =
