@@ -14,6 +14,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
         ) :: [String.t()]
   def compiler_commands(native, compile, link, lang, options \\ []) do
     includes = native.includes |> paths("-I")
+    precompiled_includes = get_precompiled_libs(native, :include)
     pkg_config_cflags = get_pkg_config(native, :cflags)
     compiler_flags = resolve_compiler_flags(native.compiler_flags, native.interface, lang)
     output = Toolchain.output_path(native.app, native.name, native.interface)
@@ -34,7 +35,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
       |> Enum.map(fn {source, object} ->
         """
         #{compile} -Wall -Wextra -c -O2 -g #{compiler_flags} \
-        -o #{path(object)} #{includes} #{pkg_config_cflags} #{path(source)}
+        -o #{path(object)} #{includes} #{precompiled_includes} #{pkg_config_cflags} #{path(source)}
         """
       end)
 
@@ -111,7 +112,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
   end
 
   defp libs(native) do
-    precompiled_libs = get_precompiled_libs(native)
+    precompiled_libs = get_precompiled_libs(native, :libs)
     pkg_config_libs = get_pkg_config(native, :libs)
 
     lib_dirs = native.lib_dirs |> paths("-L")
@@ -120,21 +121,69 @@ defmodule Bundlex.Toolchain.Common.Unix do
     "#{precompiled_libs} #{pkg_config_libs} #{lib_dirs} #{libs}"
   end
 
-
-  defp get_precompiled_libs(native) do
-    packages = native.os_deps |> Enum.filter(fn {_name, type} -> type == :pkg_config end)
-
-    Enum.each(packages, fn {package_name, {:precompiled, url}} -> download_precompiled_package(package_name, url) end)
+  defp get_precompiled_libs(native, type) do
+    native.os_deps
+    |> Enum.filter(fn
+      {:precompiled, _desc} -> true
+      _other -> false
+    end)
+    |> Enum.flat_map(fn {:precompiled, {repository, name_or_names_list}} ->
+      Bunch.listify(name_or_names_list) |> Enum.map(&{repository, to_string(&1) |> remove_lib()})
+    end)
+    |> Enum.flat_map(fn {repository, package_name} ->
+      maybe_download_precompiled_package(repository, package_name, type)
+    end)
+    |> Enum.uniq()
+    |> Enum.join(" ")
   end
 
-  defp download_precompiled_package(package_name, repository_url) do
-    File.mkdir_p!(Path.dirname(package_name))
-    version = Bundlex.platform() |> IO.inspect(label: :platform)
-    download(get_url(repository_url, version), package_name)
+  defp remove_lib(libname) do
+    if String.starts_with?(libname, "lib") do
+      String.slice(libname, 3..-1)
+    else
+      libname
+    end
   end
 
-  defp get_url(repository_url, version) do
-    "some_url"
+  defp maybe_download_precompiled_package(repository_url, package_name, type) do
+    File.mkdir_p("_build/precompiled/")
+    version = Bundlex.platform()
+    url = get_url(repository_url, package_name, version)
+    dest = get_repository_dest(url)
+    path = get_repository_path(url)
+
+    if File.exists?(path) do
+      ""
+    else
+      File.mkdir_p(path)
+      download(url, dest)
+      System.shell("tar -xf #{dest} -C #{path} --strip-components 1")
+      System.shell("rm #{dest}")
+    end
+
+    if type == :lib do
+      full_library_path = Path.join([path, "lib"]) |> Path.absname()
+      ["-L #{full_library_path}", "-l #{package_name}"]
+    else
+      full_include_path = Path.join([path, "include"]) |> Path.absname()
+      ["-I #{full_include_path}"]
+    end
+  end
+
+  defp get_repository_path(repository_url) do
+    last_part =
+      String.split(repository_url, "/") |> Enum.at(-1) |> String.split(".") |> Enum.at(0)
+
+    "_build/precompiled/#{last_part}"
+  end
+
+  defp get_repository_dest(repository_url) do
+    last_part = String.split(repository_url, "/") |> Enum.at(-1)
+    "_build/precompiled/#{last_part}"
+  end
+
+  defp get_url(repository_url, package_name, version) do
+    "#{repository_url}/ffmpeg-master-latest-linux64-gpl-shared.tar.xz"
   end
 
   defp network_tool() do
@@ -161,7 +210,13 @@ defmodule Bundlex.Toolchain.Common.Unix do
   defp executable_exists?(name), do: System.find_executable(name) != nil
 
   defp get_pkg_config(native, options) do
-    packages = native.os_deps |> Enum.filter(fn {_name, type} -> match?({:precompiled, _url}, type) end)
+    packages =
+      native.os_deps
+      |> Enum.flat_map(fn
+        {:pkgconfig, name_or_names} -> Bunch.listify(name_or_names) |> Enum.map(&to_string(&1))
+        _other -> []
+      end)
+
     options = options |> Bunch.listify() |> Enum.map(&"--#{&1}")
     do_get_pkg_config(packages, options, native.app)
   end
@@ -182,14 +237,14 @@ defmodule Bundlex.Toolchain.Common.Unix do
         """)
     end
 
-    Enum.map_join(packages, " ", fn package ->
-      case System.cmd("pkg-config", options ++ [package], stderr_to_stdout: true) do
+    Enum.map_join(packages, " ", fn package_name ->
+      case System.cmd("pkg-config", options ++ [package_name], stderr_to_stdout: true) do
         {output, 0} ->
           String.trim_trailing(output)
 
         {output, error} ->
           Output.raise("""
-          Couldn't find system package #{package} with pkg-config. Check whether it's installed.
+          Couldn't find system package #{package_name} with pkg-config. Check whether it's installed.
           Installation instructions may be available in the readme of package #{app}.
           Output from pkg-config:
           Error: #{error}

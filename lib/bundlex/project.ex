@@ -56,7 +56,7 @@ defmodule Bundlex.Project do
       :includes,
       :libs,
       :lib_dirs,
-      :pkg_configs,
+      :os_deps,
       :sources,
       :deps,
       :compiler_flags,

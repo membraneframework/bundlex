@@ -13,14 +13,14 @@ defmodule Example.BundlexProject do
         deps: [example_lib: :example_lib],
         src_base: "example",
         sources: ["foo_nif.c"],
-        interface: [:nif]
+        interface: [:nif],
+        os_deps: [precompiled: {"https://github.com/BtbN/FFmpeg-Builds/releases/download/latest", [:avcodec, :libswscale]}, pkgconfig: :libpcre]
       ],
       example: [
         deps: [example_lib: :example_lib],
         src_base: "example",
         sources: ["example_cnode.c"],
-        interface: [:cnode],
-        os_deps: [ffmpeg: {:precompiled, "some_url"}]
+        interface: [:cnode]
       ],
       example: [
         src_base: "example",
