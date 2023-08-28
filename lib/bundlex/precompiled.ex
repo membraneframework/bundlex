@@ -1,49 +1,32 @@
 defmodule Bundlex.Precompiled do
   @precompiled_path "_build/precompiled/"
 
-  def fetch_precompiled(native) do
-    parse_os_deps(native.os_deps)
-    |> Enum.each(fn {repository_url, package_name} ->
-      maybe_download_precompiled_package(repository_url, package_name)
-    end)
-  end
-
   def get_precompiled_flags(native, flags_type) do
     parse_os_deps(native.os_deps)
-    |> Enum.flat_map(fn {repository_url, package_name} ->
-      get_precompiled_flags_for_package(repository_url, package_name, flags_type)
+    |> Enum.flat_map(fn {get_url_lambda, lib_name} ->
+      get_precompiled_flags_for_package(get_url_lambda, lib_name, flags_type)
     end)
     |> Enum.uniq()
     |> Enum.join(" ")
   end
 
-  defp get_precompiled_flags_for_package(repository_url, package_name, flags_type) do
-    version = Bundlex.platform()
-    path = get_url(repository_url, package_name, version) |> get_repository_path()
+  defp get_precompiled_flags_for_package(get_url_lambda, lib_name, flags_type) do
+    platform = Bundlex.platform()
+    path = get_url_lambda.(platform) |> get_package_path()
 
     case flags_type do
       :libs ->
-        full_library_path = Path.join([path, "lib"]) |> Path.absname()
-        ["-L #{full_library_path}", "-l #{package_name}"]
+        IO.inspect("WTF #{lib_name}")
+        full_packages_library_path = Path.join([path, "lib"]) |> Path.absname()
+        ["-L#{full_packages_library_path}", "-l#{lib_name}"]
 
       :cflags ->
         full_include_path = Path.join([path, "include"]) |> Path.absname()
-        ["-I #{full_include_path}"]
+        ["-I#{full_include_path}"]
 
       other ->
         raise "Unknown flag type: #{inspect(other)}"
     end
-  end
-
-  defp parse_os_deps(os_deps) do
-    Enum.filter(os_deps, fn
-      {:precompiled, _desc} -> true
-      _other -> false
-    end)
-    |> Enum.flat_map(fn {:precompiled, {repository, name_or_names_list}} ->
-      Bunch.listify(name_or_names_list)
-      |> Enum.map(&{repository, to_string(&1) |> remove_lib_prefix()})
-    end)
   end
 
   defp remove_lib_prefix(libname) do
@@ -54,37 +37,52 @@ defmodule Bundlex.Precompiled do
     end
   end
 
-  defp maybe_download_precompiled_package(repository_url, package_name) do
-    File.mkdir_p(@precompiled_path)
-    version = Bundlex.platform()
-    url = get_url(repository_url, package_name, version)
-    dest = get_repository_dest(url)
-    path = get_repository_path(url)
+  def fetch_precompiled(native) do
+    IO.inspect(native, label: :whole_native)
 
-    if File.exists?(path) do
-      ""
-    else
-      File.mkdir(path)
-      download(url, dest)
-      System.shell("tar -xf #{dest} -C #{path} --strip-components 1")
-      System.shell("rm #{dest}")
+    parse_os_deps(native.os_deps)
+    |> Enum.each(fn {get_url_lambda, _lib_name} ->
+      maybe_download_precompiled_package(get_url_lambda)
+    end)
+  end
+
+  defp parse_os_deps(os_deps) do
+    Enum.filter(os_deps, fn
+      {:precompiled, _desc} -> true
+      _other -> false
+    end)
+    |> Enum.flat_map(fn {:precompiled, {get_url_lambda, name_or_names_list}} ->
+      Bunch.listify(name_or_names_list)
+      |> Enum.map(&{get_url_lambda, to_string(&1) |> remove_lib_prefix()})
+    end)
+  end
+
+  defp maybe_download_precompiled_package(get_url_lambda) do
+    File.mkdir_p(@precompiled_path)
+    platform = Bundlex.platform()
+    url = get_url_lambda.(platform)
+    package_path = get_package_path(url)
+
+    if not File.exists?(package_path) do
+      File.mkdir(package_path)
+      temporary_destination = "#{@precompiled_path}/temporary"
+      download(url, temporary_destination)
+      System.shell("tar -xf #{temporary_destination} -C #{package_path} --strip-components 1")
+      System.shell("rm #{temporary_destination}")
     end
   end
 
-  defp get_repository_path(repository_url) do
+  defp get_package_path(url) do
+    url = if String.ends_with?(url, "/"), do: String.slice(url, 0..-2), else: url
+
     last_part =
-      String.split(repository_url, "/") |> Enum.at(-1) |> String.split(".") |> Enum.at(0)
+      String.split(url, "/")
+      |> Enum.at(-1)
+      |> String.split(".")
+      |> Enum.reject(&(&1 in ["tar", "xz"]))
+      |> Enum.join(".")
 
     "#{@precompiled_path}#{last_part}"
-  end
-
-  defp get_repository_dest(repository_url) do
-    last_part = String.split(repository_url, "/") |> Enum.at(-1)
-    "#{@precompiled_path}#{last_part}"
-  end
-
-  defp get_url(repository_url, package_name, version) do
-    "#{repository_url}/ffmpeg-master-latest-linux64-gpl-shared.tar.xz"
   end
 
   defp network_tool() do

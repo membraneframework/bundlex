@@ -11,7 +11,8 @@ defmodule Bundlex.Toolchain.GCC do
   def compiler_commands(native) do
     {cflags, lflags} =
       case native do
-        %Native{type: :native, interface: :nif} -> {"-fPIC", "-rdynamic -shared"}
+        # zmiana "-fPIC, "-rdynamic -shared"
+        %Native{type: :native, interface: :nif} -> {"", ""}
         %Native{type: :lib} -> {"-fPIC", ""}
         %Native{} -> {"", ""}
       end
@@ -23,7 +24,8 @@ defmodule Bundlex.Toolchain.GCC do
       "#{compiler} #{cflags}",
       "#{compiler} #{lflags}",
       native.language,
-      wrap_deps: &"-Wl,--whole-archive #{&1} -Wl,--no-whole-archive"
+      # zmiana  -Wl,--no-whole-archive
+      wrap_deps: &"-Wl,--whole-archive #{&1}"
     )
   end
 end
