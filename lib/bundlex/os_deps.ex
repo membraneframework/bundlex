@@ -79,23 +79,21 @@ defmodule Bundlex.OSDeps do
         """)
     end
 
-    [
-      Enum.map_join(lib_names, " ", fn lib_name ->
-        case System.cmd("pkg-config", options ++ [lib_name], stderr_to_stdout: true) do
-          {output, 0} ->
-            String.trim_trailing(output)
+    Enum.map(lib_names, fn lib_name ->
+      case System.cmd("pkg-config", options ++ [lib_name], stderr_to_stdout: true) do
+        {output, 0} ->
+          String.trim_trailing(output)
 
-          {output, error} ->
-            Output.raise("""
-            Couldn't find system library #{lib_name} with pkg-config. Check whether it's installed.
-            Installation instructions may be available in the readme of package #{app}.
-            Output from pkg-config:
-            Error: #{error}
-            #{output}
-            """)
-        end
-      end)
-    ]
+        {output, error} ->
+          Output.raise("""
+          Couldn't find system library #{lib_name} with pkg-config. Check whether it's installed.
+          Installation instructions may be available in the readme of package #{app}.
+          Output from pkg-config:
+          Error: #{error}
+          #{output}
+          """)
+      end
+    end)
   end
 
   defp remove_lib_prefix(libname) do
