@@ -19,11 +19,11 @@ defmodule Bundlex.OSDeps do
   defp parse_os_deps(os_deps) do
     Enum.map(os_deps, fn
       {precompiled_dependency, lib_name_or_names} ->
-        lib_names = Bunch.listify(lib_name_or_names)
+        lib_names = Bunch.listify(lib_name_or_names) |> Enum.map(&Atom.to_string/1)
         {precompiled_dependency, lib_names}
 
       lib_name ->
-        {:pkg_config, [lib_name]}
+        {:pkg_config, [Atom.to_string(lib_name)]}
     end)
   end
 
@@ -45,7 +45,7 @@ defmodule Bundlex.OSDeps do
           "-L#{full_packages_library_path}",
           "-Wl,--disable-new-dtags,-rpath,#{full_packages_library_path}"
         ] ++
-          Enum.map(lib_names, &"-l#{remove_lib_prefix(Atom.to_string(&1))}")
+          Enum.map(lib_names, &"-l#{remove_lib_prefix(&1)}")
 
       flags_type == :cflags ->
         full_include_path =
@@ -79,21 +79,23 @@ defmodule Bundlex.OSDeps do
         """)
     end
 
-    Enum.map_join(lib_names, " ", fn lib_name ->
-      case System.cmd("pkg-config", options ++ [lib_name], stderr_to_stdout: true) do
-        {output, 0} ->
-          String.trim_trailing(output)
+    [
+      Enum.map_join(lib_names, " ", fn lib_name ->
+        case System.cmd("pkg-config", options ++ [lib_name], stderr_to_stdout: true) do
+          {output, 0} ->
+            String.trim_trailing(output)
 
-        {output, error} ->
-          Output.raise("""
-          Couldn't find system library #{lib_name} with pkg-config. Check whether it's installed.
-          Installation instructions may be available in the readme of package #{app}.
-          Output from pkg-config:
-          Error: #{error}
-          #{output}
-          """)
-      end
-    end)
+          {output, error} ->
+            Output.raise("""
+            Couldn't find system library #{lib_name} with pkg-config. Check whether it's installed.
+            Installation instructions may be available in the readme of package #{app}.
+            Output from pkg-config:
+            Error: #{error}
+            #{output}
+            """)
+        end
+      end)
+    ]
   end
 
   defp remove_lib_prefix(libname) do
@@ -107,8 +109,8 @@ defmodule Bundlex.OSDeps do
   def fetch_precompiled(native) do
     parse_os_deps(native.os_deps)
     |> Enum.reject(fn
-      {:pkg_config} -> true
-      _other -> false
+      {:pkg_config, _lib_names} -> true
+      {_precompiled_dependency, _lib_names} -> false
     end)
     |> Enum.each(fn {precompiled_dependency, _lib_names} ->
       maybe_download_precompiled_package(precompiled_dependency)
