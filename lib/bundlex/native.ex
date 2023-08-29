@@ -107,9 +107,8 @@ defmodule Bundlex.Native do
         |> Map.update!(:sources, &Enum.uniq/1)
         |> Map.update!(:deps, fn deps -> Enum.uniq_by(deps, &{&1.app, &1.name}) end)
 
-      Bundlex.Precompiled.fetch_precompiled(native)
+      Bundlex.OSDeps.fetch_precompiled(native)
       commands = Platform.get_module(platform).toolchain_module.compiler_commands(native)
-      File.write("command_pkg.txt", inspect(commands))
       {:ok, commands}
     end
   end

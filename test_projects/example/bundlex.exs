@@ -15,8 +15,9 @@ defmodule Example.BundlexProject do
         sources: ["foo_nif.c"],
         interface: [:nif],
         os_deps: [
-          precompiled: {&get_ffmpeg/1, [:libswscale, :avcodec]},
-          pkgconfig: :libpcre
+          {PrecompiledFFmpeg, [:libswscale, :avcodec]}
+          {PrecompiledLibsrtp, :libsrtp}
+          :libpcre
         ]
       ],
       example: [
@@ -32,8 +33,28 @@ defmodule Example.BundlexProject do
       ]
     ]
   end
+end
 
-  defp get_ffmpeg(platform) do
+defmodule PrecompiledFFmpeg do
+  use Bundlex.PrecompiledDependency
+
+  @impl true
+  def get_build_url(_platform, _target) do
+    # :erlang.system_info(:system_architecture)
+    "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n4.4-latest-linux64-gpl-shared-4.4.tar.xz/"
+  end
+
+  @impl true
+  def get_headers_path(path, _platform, _target) do
+    "#{path}/include"
+  end
+end
+
+defmodule PrecompiledSRTP do
+  use Bundlex.PrecompiledDependency
+
+  @impl true
+  def get_build_url(_platform, _target) do
     "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n4.4-latest-linux64-gpl-shared-4.4.tar.xz/"
   end
 end
