@@ -15,11 +15,10 @@ defmodule Bundlex.Toolchain.Common.Unix do
   def compiler_commands(native, compile, link, lang, options \\ []) do
     includes = native.includes |> paths("-I")
 
-    precompiled_includes =
-      Bundlex.Precompiled.get_precompiled_flags(native, :cflags) <>
-        "-I/workspaces/precompiled/test/ffmpeg-4.4.4/"
+    precompiled_cflags =
+      Bundlex.Precompiled.get_precompiled_flags(native, :cflags)
 
-    pkg_config_cflags = get_pkg_config(native, :cflags) |> IO.inspect(label: :pkg_includes)
+    pkg_config_cflags = get_pkg_config(native, :cflags)
     compiler_flags = resolve_compiler_flags(native.compiler_flags, native.interface, lang)
     output = Toolchain.output_path(native.app, native.name, native.interface)
     output_obj = output <> "_obj"
@@ -39,7 +38,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
       |> Enum.map(fn {source, object} ->
         """
         #{compile} -Wall -Wextra -c -O2 -g #{compiler_flags} \
-        -o #{path(object)} #{includes} #{precompiled_includes} #{pkg_config_cflags} #{path(source)}
+        -o #{path(object)} #{includes} #{precompiled_cflags} #{pkg_config_cflags} #{path(source)}
         """
       end)
 
@@ -118,7 +117,6 @@ defmodule Bundlex.Toolchain.Common.Unix do
   defp libs(native) do
     precompiled_libs =
       Bundlex.Precompiled.get_precompiled_flags(native, :libs)
-      |> IO.inspect(label: :precompiled_libs)
 
     pkg_config_libs = get_pkg_config(native, :libs)
 

@@ -16,9 +16,13 @@ defmodule Bundlex.Precompiled do
 
     case flags_type do
       :libs ->
-        IO.inspect("WTF #{lib_name}")
         full_packages_library_path = Path.join([path, "lib"]) |> Path.absname()
-        ["-L#{full_packages_library_path}", "-l#{lib_name}"]
+
+        [
+          "-L#{full_packages_library_path}",
+          "-l#{lib_name}",
+          "-Wl,--disable-new-dtags,-rpath,#{full_packages_library_path}"
+        ]
 
       :cflags ->
         full_include_path = Path.join([path, "include"]) |> Path.absname()
@@ -38,8 +42,6 @@ defmodule Bundlex.Precompiled do
   end
 
   def fetch_precompiled(native) do
-    IO.inspect(native, label: :whole_native)
-
     parse_os_deps(native.os_deps)
     |> Enum.each(fn {get_url_lambda, _lib_name} ->
       maybe_download_precompiled_package(get_url_lambda)

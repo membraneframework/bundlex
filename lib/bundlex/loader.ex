@@ -132,14 +132,6 @@ defmodule Bundlex.Loader do
       app = unquote(app || MixHelper.get_app!())
       nif_name = unquote(nif_name)
 
-      full_library_flag =
-        "/workspaces/precompiled/membrane_h264_ffmpeg_plugin/_build/precompiled/ffmpeg-n4/lib"
-
-      System.put_env(
-        "LD_LIBRARY_PATH",
-        System.get_env("LD_LIBRARY_PATH", "") <> ":#{full_library_flag}"
-      )
-
       path = Bundlex.build_path(app, nif_name, :nif)
 
       with :ok <- :erlang.load_nif(path |> PathHelper.fix_slashes() |> to_charlist(), 0) do
