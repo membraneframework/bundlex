@@ -124,7 +124,6 @@ defmodule Bundlex.OSDeps do
           case maybe_download_precompiled_package(precompiled_dependency) do
             :unavailable ->
               # fallback
-              IO.inspect("FALLBACK TO PKGCONFIG")
               {:pkg_config, lib_names}
 
             package_path ->
@@ -162,6 +161,8 @@ defmodule Bundlex.OSDeps do
         end
     end
   end
+
+  defp get_package_path(:unavailable), do: :unavailable
 
   defp get_package_path(url) do
     url = if String.ends_with?(url, "/"), do: String.slice(url, 0..-2), else: url
