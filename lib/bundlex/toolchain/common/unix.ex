@@ -15,8 +15,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
   def compiler_commands(native, compile, link, lang, options \\ []) do
     includes = native.includes |> paths("-I")
 
-    os_deps_cflags =
-      Bundlex.OSDeps.get_flags(native, :cflags)
+    os_deps_cflags = Bundlex.OSDeps.get_flags(native, :cflags)
 
     compiler_flags = resolve_compiler_flags(native.compiler_flags, native.interface, lang)
     output = Toolchain.output_path(native.app, native.name, native.interface)
@@ -114,8 +113,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
   end
 
   defp libs(native) do
-    os_deps_libs =
-      Bundlex.OSDeps.get_flags(native, :libs)
+    os_deps_libs = Bundlex.OSDeps.get_flags(native, :libs)
 
     lib_dirs = native.lib_dirs |> paths("-L")
     libs = native.libs |> Enum.map_join(" ", fn lib -> "-l#{lib}" end)
