@@ -1,16 +1,21 @@
 defmodule Bundlex.OSDeps do
+  require Logger
   alias Bundlex.{Output, PrecompiledDependency}
 
   @precompiled_path "_build/#{Mix.env()}/precompiled/"
 
   def get_flags(native, flags_type) do
-    parse_os_deps(native.os_deps)
+    native.os_deps
     |> Enum.flat_map(fn
       {:pkg_config, lib_names} ->
         get_flags_for_pkg_config(lib_names, flags_type, native.app)
 
-      {precompiled_dependency, lib_names} ->
-        get_flags_for_precompiled({precompiled_dependency, lib_names}, flags_type, native.app)
+      {precompiled_dependency_path, lib_names} ->
+        get_flags_for_precompiled(
+          {precompiled_dependency_path, lib_names},
+          flags_type,
+          native.app
+        )
     end)
     |> Enum.uniq()
     |> Enum.join(" ")
@@ -27,20 +32,18 @@ defmodule Bundlex.OSDeps do
     end)
   end
 
-  defp get_flags_for_precompiled({precompiled_dependency, lib_names}, flags_type, app) do
-    path =
-      PrecompiledDependency.get_target()
-      |> precompiled_dependency.get_build_url()
-      |> get_package_path()
-
-    cond do
-      path == :unavailable or not File.exists?(path) ->
-        # fallback
-        get_flags_for_pkg_config(lib_names, flags_type, app)
-
-      flags_type == :libs ->
+  defp get_flags_for_precompiled(
+         {{precompiled_dependency, precompiled_dependency_path}, lib_names},
+         flags_type,
+         app
+       ) do
+    case flags_type do
+      :libs ->
         full_packages_library_path =
-          precompiled_dependency.get_libs_path(path, PrecompiledDependency.get_target())
+          precompiled_dependency.get_libs_path(
+            precompiled_dependency_path,
+            PrecompiledDependency.get_target()
+          )
           |> Path.absname()
 
         [
@@ -49,9 +52,12 @@ defmodule Bundlex.OSDeps do
         ] ++
           Enum.map(lib_names, &"-l#{remove_lib_prefix(&1)}")
 
-      flags_type == :cflags ->
+      :cflags ->
         full_include_path =
-          precompiled_dependency.get_headers_path(path, PrecompiledDependency.get_target())
+          precompiled_dependency.get_headers_path(
+            precompiled_dependency_path,
+            PrecompiledDependency.get_target()
+          )
           |> Path.absname()
 
         ["-I#{full_include_path}"]
@@ -108,14 +114,25 @@ defmodule Bundlex.OSDeps do
   end
 
   def fetch_precompiled(native) do
-    parse_os_deps(native.os_deps)
-    |> Enum.reject(fn
-      {:pkg_config, _lib_names} -> true
-      {_precompiled_dependency, _lib_names} -> false
-    end)
-    |> Enum.each(fn {precompiled_dependency, _lib_names} ->
-      maybe_download_precompiled_package(precompiled_dependency)
-    end)
+    os_deps =
+      parse_os_deps(native.os_deps)
+      |> Enum.map(fn
+        {:pkg_config, lib_names} ->
+          {:pkg_config, lib_names}
+
+        {precompiled_dependency, lib_names} ->
+          case maybe_download_precompiled_package(precompiled_dependency) do
+            :unavailable ->
+              # fallback
+              IO.inspect("FALLBACK TO PKGCONFIG")
+              {:pkg_config, lib_names}
+
+            package_path ->
+              {{precompiled_dependency, package_path}, lib_names}
+          end
+      end)
+
+    %{native | os_deps: os_deps}
   end
 
   defp maybe_download_precompiled_package(precompiled_dependency) do
@@ -123,16 +140,28 @@ defmodule Bundlex.OSDeps do
     url = precompiled_dependency.get_build_url(PrecompiledDependency.get_target())
     package_path = get_package_path(url)
 
-    if package_path != :unavailable and not File.exists?(package_path) do
-      File.mkdir(package_path)
-      temporary_destination = "#{@precompiled_path}/temporary"
-      download(url, temporary_destination)
-      System.shell("tar -xf #{temporary_destination} -C #{package_path} --strip-components 1")
-      System.shell("rm #{temporary_destination}")
+    cond do
+      package_path == :unavailable ->
+        :unavailable
+
+      File.exists?(package_path) ->
+        package_path
+
+      true ->
+        try do
+          File.mkdir(package_path)
+          temporary_destination = "#{@precompiled_path}/temporary"
+          download(url, temporary_destination)
+          System.shell("tar -xf #{temporary_destination} -C #{package_path} --strip-components 1")
+          System.shell("rm #{temporary_destination}")
+          package_path
+        rescue
+          e ->
+            Logger.warning("Couldn't download the dependency due to: #{inspect(e)}.")
+            :unavailable
+        end
     end
   end
-
-  defp get_package_path(:unavailable), do: :unavailable
 
   defp get_package_path(url) do
     url = if String.ends_with?(url, "/"), do: String.slice(url, 0..-2), else: url

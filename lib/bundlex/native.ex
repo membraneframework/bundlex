@@ -13,8 +13,14 @@ defmodule Bundlex.Native do
   @type interface_t :: :nif | :cnode | :port
   @type language_t :: :c | :cpp
 
-  @type lib_name :: atom()
-  @type os_dep :: lib_name() | {Bundlex.PrecompiledDependency.t(), lib_name() | [lib_name()]}
+  @type lib :: atom()
+  @type lib_name :: String.t()
+
+  @type os_dep :: lib_name() | {Bundlex.PrecompiledDependency.t(), lib() | [lib()]}
+  @type os_dep_after_fetching_precompiled ::
+          {:pkg_config, [lib_name()]}
+          | {{Bundlex.PrecompiledDependency.t(), precompiled_package_path :: String.t()},
+             [lib_name()]}
 
   @type t :: %__MODULE__{
           name: atom,
@@ -23,7 +29,7 @@ defmodule Bundlex.Native do
           includes: [String.t()],
           libs: [String.t()],
           lib_dirs: [String.t()],
-          os_deps: [os_dep()],
+          os_deps: [os_dep()] | [os_dep_after_fetching_precompiled()],
           sources: [String.t()],
           deps: [t],
           compiler_flags: [String.t()],
@@ -107,8 +113,13 @@ defmodule Bundlex.Native do
         |> Map.update!(:sources, &Enum.uniq/1)
         |> Map.update!(:deps, fn deps -> Enum.uniq_by(deps, &{&1.app, &1.name}) end)
 
-      Bundlex.OSDeps.fetch_precompiled(native)
-      commands = Platform.get_module(platform).toolchain_module.compiler_commands(native)
+      native_with_fetched_precompiled_deps = Bundlex.OSDeps.fetch_precompiled(native)
+
+      commands =
+        Platform.get_module(platform).toolchain_module.compiler_commands(
+          native_with_fetched_precompiled_deps
+        )
+
       {:ok, commands}
     end
   end
