@@ -1,9 +1,12 @@
 defmodule Bundlex.OSDeps do
+  @moduledoc false
+
   require Logger
   alias Bundlex.{Output, PrecompiledDependency}
 
   @precompiled_path "_build/#{Mix.env()}/precompiled/"
 
+  @spec get_flags(Bundlex.Native.t(), atom()) :: String.t()
   def get_flags(native, flags_type) do
     native.os_deps
     |> Enum.flat_map(fn
@@ -111,6 +114,7 @@ defmodule Bundlex.OSDeps do
     end
   end
 
+  @spec fetch_precompiled(Bundlex.Native.t()) :: Bundlex.Native.t()
   def fetch_precompiled(native) do
     os_deps =
       parse_os_deps(native.os_deps)
@@ -192,7 +196,7 @@ defmodule Bundlex.OSDeps do
 
     case System.shell(command) do
       {_, 0} -> :ok
-      _ -> :error
+      _other -> :error
     end
   end
 

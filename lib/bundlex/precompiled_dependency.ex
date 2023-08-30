@@ -1,8 +1,10 @@
 defmodule Bundlex.PrecompiledDependency do
+  @moduledoc """
+  A module defines a behaviour that is used to describe the external repository with precompiled builds of given dependency.
+  """
+
   @typedoc """
   A type specyfing a module that implements #{inspect(__MODULE__)} behaviour.
-
-  Such a module is used to describe the external repository with precompiled builds of given dependency.
   """
   @type t :: module()
 
