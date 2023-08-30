@@ -13,8 +13,7 @@ defmodule Bundlex.OSDeps do
       {precompiled_dependency_path, lib_names} ->
         get_flags_for_precompiled(
           {precompiled_dependency_path, lib_names},
-          flags_type,
-          native.app
+          flags_type
         )
     end)
     |> Enum.uniq()
@@ -34,8 +33,7 @@ defmodule Bundlex.OSDeps do
 
   defp get_flags_for_precompiled(
          {{precompiled_dependency, precompiled_dependency_path}, lib_names},
-         flags_type,
-         app
+         flags_type
        ) do
     case flags_type do
       :libs ->
