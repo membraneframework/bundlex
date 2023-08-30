@@ -13,8 +13,8 @@ defmodule Bundlex.Native do
   @type interface_t :: :nif | :cnode | :port
   @type language_t :: :c | :cpp
 
-  @type percompiled_path :: String.t()
-  @type os_dep :: [name: {atom(), :pkgconfig | {:precompiled, percompiled_path}}]
+  @type lib_name :: atom()
+  @type os_dep :: lib_name() | {Bundlex.PrecompiledDependency.t(), lib_name() | [lib_name()]}
 
   @type t :: %__MODULE__{
           name: atom,

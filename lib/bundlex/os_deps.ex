@@ -1,5 +1,5 @@
 defmodule Bundlex.OSDeps do
-  alias Bundlex.Output
+  alias Bundlex.{Output, PrecompiledDependency}
 
   @precompiled_path "_build/#{Mix.env()}/precompiled/"
 
@@ -28,18 +28,20 @@ defmodule Bundlex.OSDeps do
   end
 
   defp get_flags_for_precompiled({precompiled_dependency, lib_names}, flags_type, app) do
-    platform = Bundlex.platform()
-    target = nil
-    path = precompiled_dependency.get_build_url(platform, target) |> get_package_path()
+    path =
+      PrecompiledDependency.get_target()
+      |> precompiled_dependency.get_build_url()
+      |> get_package_path()
 
     cond do
-      not File.exists?(path) ->
+      path == :unavailable or not File.exists?(path) ->
         # fallback
         get_flags_for_pkg_config(lib_names, flags_type, app)
 
       flags_type == :libs ->
         full_packages_library_path =
-          precompiled_dependency.get_libs_path(path, platform, target) |> Path.absname()
+          precompiled_dependency.get_libs_path(path, PrecompiledDependency.get_target())
+          |> Path.absname()
 
         [
           "-L#{full_packages_library_path}",
@@ -49,7 +51,8 @@ defmodule Bundlex.OSDeps do
 
       flags_type == :cflags ->
         full_include_path =
-          precompiled_dependency.get_headers_path(path, platform, target) |> Path.absname()
+          precompiled_dependency.get_headers_path(path, PrecompiledDependency.get_target())
+          |> Path.absname()
 
         ["-I#{full_include_path}"]
 
@@ -117,13 +120,10 @@ defmodule Bundlex.OSDeps do
 
   defp maybe_download_precompiled_package(precompiled_dependency) do
     File.mkdir_p(@precompiled_path)
-    platform = Bundlex.platform()
-    # todo
-    target = nil
-    url = precompiled_dependency.get_build_url(platform, target)
+    url = precompiled_dependency.get_build_url(PrecompiledDependency.get_target())
     package_path = get_package_path(url)
 
-    if not File.exists?(package_path) do
+    if package_path != :unavailable and not File.exists?(package_path) do
       File.mkdir(package_path)
       temporary_destination = "#{@precompiled_path}/temporary"
       download(url, temporary_destination)
@@ -131,6 +131,8 @@ defmodule Bundlex.OSDeps do
       System.shell("rm #{temporary_destination}")
     end
   end
+
+  defp get_package_path(:unavailable), do: :unavailable
 
   defp get_package_path(url) do
     url = if String.ends_with?(url, "/"), do: String.slice(url, 0..-2), else: url
