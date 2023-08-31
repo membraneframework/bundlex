@@ -49,7 +49,7 @@ defmodule Bundlex.OSDeps do
 
         [
           "-L#{full_packages_library_path}",
-          "-Wl,--disable-new-dtags,-rpath,#{full_packages_library_path}"
+          "-Wl,-rpath,#{full_packages_library_path}"
         ] ++
           Enum.map(lib_names, &"-l#{remove_lib_prefix(&1)}")
 

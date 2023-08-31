@@ -11,22 +11,18 @@ defmodule Example.BundlexProject do
     use Bundlex.PrecompiledDependency
 
     @impl true
-    def get_build_url(_target) do
+    def get_build_url({_architecture, _vendor, "linux"}) do
       "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n4.4-latest-linux64-gpl-shared-4.4.tar.xz/"
+    end
+
+    @impl true
+    def get_build_url(_other_target) do
+      :unavailable
     end
 
     @impl true
     def get_headers_path(path, _target) do
       "#{path}/include"
-    end
-  end
-
-  defmodule PrecompiledSRTP do
-    use Bundlex.PrecompiledDependency
-
-    @impl true
-    def get_build_url(_target) do
-      "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n4.4-latest-linux64-gpl-shared-4.4.tar.xz/"
     end
   end
 

@@ -23,7 +23,7 @@ defmodule Bundlex.Toolchain.GCC do
       "#{compiler} #{cflags}",
       "#{compiler} #{lflags}",
       native.language,
-      wrap_deps: &"-Wl,--whole-archive #{&1} -Wl,--no-whole-archive"
+      wrap_deps: &"-Wl,--disable-new-dtags,--whole-archive #{&1} -Wl,--no-whole-archive"
     )
   end
 end
