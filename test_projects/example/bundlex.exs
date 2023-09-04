@@ -7,22 +7,11 @@ defmodule Example.BundlexProject do
     ]
   end
 
-  defmodule PrecompiledFFmpeg do
-    use Bundlex.PrecompiledDependency
 
-    @impl true
-    def get_build_url({_architecture, _vendor, "linux"}) do
-      "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n4.4-latest-linux64-gpl-shared-4.4.tar.xz/"
-    end
-
-    @impl true
-    def get_build_url(_other_target) do
-      :unavailable
-    end
-
-    @impl true
-    def get_headers_path(path, _target) do
-      "#{path}/include"
+  defp get_ffmpeg_path() do
+    case Bundlex.get_target() do
+      {_architecture, _vendor, "linux"} -> "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n4.4-latest-linux64-gpl-shared-4.4.tar.xz/"
+      _other -> :unavailable
     end
   end
 
@@ -34,7 +23,7 @@ defmodule Example.BundlexProject do
         sources: ["foo_nif.c"],
         interface: [:nif],
         os_deps: [
-          {PrecompiledFFmpeg, ["libswscale", "libavcodec"]},
+          {get_ffmpeg_path(), ["libswscale", "libavcodec"]},
           "libpng"
         ],
         pkg_configs: ["libswresample"]

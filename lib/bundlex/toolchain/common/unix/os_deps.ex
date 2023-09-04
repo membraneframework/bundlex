@@ -2,7 +2,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   @moduledoc false
 
   require Logger
-  alias Bundlex.{Output, PrecompiledDependency}
+  alias Bundlex.Output
 
   @precompiled_path "#{Mix.Project.build_path()}/bundlex_precompiled/"
 
@@ -35,17 +35,12 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   end
 
   defp get_flags_for_precompiled(
-         {{precompiled_dependency, precompiled_dependency_path}, lib_names},
+         {{_precompiled_dependency_url, precompiled_dependency_path}, lib_names},
          flags_type
        ) do
     case flags_type do
       :libs ->
-        full_packages_library_path =
-          precompiled_dependency.get_libs_path(
-            precompiled_dependency_path,
-            PrecompiledDependency.get_target()
-          )
-          |> Path.absname()
+        full_packages_library_path = Path.absname("#{precompiled_dependency_path}/lib")
 
         [
           "-L#{full_packages_library_path}",
@@ -54,12 +49,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
           Enum.map(lib_names, &"-l#{remove_lib_prefix(&1)}")
 
       :cflags ->
-        full_include_path =
-          precompiled_dependency.get_headers_path(
-            precompiled_dependency_path,
-            PrecompiledDependency.get_target()
-          )
-          |> Path.absname()
+        full_include_path = Path.absname("#{precompiled_dependency_path}/include")
 
         ["-I#{full_include_path}"]
 
@@ -131,10 +121,9 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     %{native | os_deps: os_deps}
   end
 
-  defp maybe_download_precompiled_package(precompiled_dependency) do
+  defp maybe_download_precompiled_package(precompiled_dependency_url) do
     File.mkdir_p(@precompiled_path)
-    url = precompiled_dependency.get_build_url(PrecompiledDependency.get_target())
-    package_path = get_package_path(url)
+    package_path = get_package_path(precompiled_dependency_url)
 
     cond do
       package_path == :unavailable ->
@@ -147,7 +136,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
         try do
           File.mkdir(package_path)
           temporary_destination = "#{@precompiled_path}/temporary"
-          download(url, temporary_destination)
+          download(precompiled_dependency_url, temporary_destination)
           System.shell("tar -xf #{temporary_destination} -C #{package_path} --strip-components 1")
           System.shell("rm #{temporary_destination}")
           package_path

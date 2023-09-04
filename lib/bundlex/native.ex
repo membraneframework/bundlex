@@ -16,12 +16,13 @@ defmodule Bundlex.Native do
   @type language_t :: :c | :cpp
 
   @type lib_name :: String.t()
+  @type precompiled_dependency_url :: String.t() | :unavailable
 
-  @type os_dep :: lib_name() | {Bundlex.PrecompiledDependency.t(), lib_name() | [lib_name()]}
+  @type os_dep ::
+          lib_name() | {precompiled_dependency_url(), lib_name() | [lib_name()]}
   @type os_dep_after_fetching_precompiled ::
           {:pkg_config, [lib_name()]}
-          | {{Bundlex.PrecompiledDependency.t(), precompiled_package_path :: String.t()},
-             [lib_name()]}
+          | {{precompiled_dependency_url(), precompiled_package_path :: String.t()}, [lib_name()]}
 
   @type t :: %__MODULE__{
           name: atom,
