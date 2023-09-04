@@ -1,10 +1,10 @@
-defmodule Bundlex.OSDeps do
+defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   @moduledoc false
 
   require Logger
   alias Bundlex.{Output, PrecompiledDependency}
 
-  @precompiled_path "_build/#{Mix.env()}/precompiled/"
+  @precompiled_path "#{Mix.Project.build_path()}/bundlex_precompiled/"
 
   @spec get_flags(Bundlex.Native.t(), atom()) :: String.t()
   def get_flags(native, flags_type) do
@@ -106,13 +106,8 @@ defmodule Bundlex.OSDeps do
     end)
   end
 
-  defp remove_lib_prefix(libname) do
-    if String.starts_with?(libname, "lib") do
-      String.slice(libname, 3..-1)
-    else
-      libname
-    end
-  end
+  defp remove_lib_prefix("lib" <> libname), do: libname
+  defp remove_lib_prefix(libname), do: libname
 
   @spec fetch_precompiled(Bundlex.Native.t()) :: Bundlex.Native.t()
   def fetch_precompiled(native) do
@@ -173,32 +168,19 @@ defmodule Bundlex.OSDeps do
       String.split(url, "/")
       |> Enum.at(-1)
       |> String.split(".")
-      |> Enum.reject(&(&1 in ["tar", "xz"]))
+      |> Enum.reject(&(&1 in ["tar", "xz", "gz"]))
       |> Enum.join(".")
 
     "#{@precompiled_path}#{last_part}"
   end
 
-  defp network_tool() do
-    cond do
-      executable_exists?("curl") -> :curl
-      executable_exists?("wget") -> :wget
-      true -> nil
-    end
-  end
-
   defp download(url, dest) do
-    command =
-      case network_tool() do
-        :curl -> "curl --fail -L -o #{dest} #{url}"
-        :wget -> "wget -O #{dest} #{url}"
-      end
+    response = Req.get!(url)
 
-    case System.shell(command) do
-      {_, 0} -> :ok
-      _other -> :error
+    if response.status == 200 do
+      File.write(dest, response.body)
+    else
+      :error
     end
   end
-
-  defp executable_exists?(name), do: System.find_executable(name) != nil
 end

@@ -8,6 +8,7 @@ defmodule Bundlex.Native do
   alias Bundlex.Helper.ErlangHelper
   alias Bundlex.{Output, Platform, Project}
   alias Bundlex.Project.Preprocessor
+  alias Bundlex.Toolchain.Common.Unix.OSDeps
 
   @type name_t :: atom()
   @type interface_t :: :nif | :cnode | :port
@@ -113,7 +114,7 @@ defmodule Bundlex.Native do
         |> Map.update!(:sources, &Enum.uniq/1)
         |> Map.update!(:deps, fn deps -> Enum.uniq_by(deps, &{&1.app, &1.name}) end)
 
-      native_with_fetched_precompiled_deps = Bundlex.OSDeps.fetch_precompiled(native)
+      native_with_fetched_precompiled_deps = OSDeps.fetch_precompiled(native)
 
       commands =
         Platform.get_module(platform).toolchain_module.compiler_commands(
