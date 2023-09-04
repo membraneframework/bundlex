@@ -5,6 +5,7 @@ defmodule Bundlex.Native do
 
   use Bunch
 
+  require Logger
   alias Bundlex.Helper.ErlangHelper
   alias Bundlex.{Output, Platform, Project}
   alias Bundlex.Project.Preprocessor
@@ -14,10 +15,9 @@ defmodule Bundlex.Native do
   @type interface_t :: :nif | :cnode | :port
   @type language_t :: :c | :cpp
 
-  @type lib :: atom()
   @type lib_name :: String.t()
 
-  @type os_dep :: lib_name() | {Bundlex.PrecompiledDependency.t(), lib() | [lib()]}
+  @type os_dep :: lib_name() | {Bundlex.PrecompiledDependency.t(), lib_name() | [lib_name()]}
   @type os_dep_after_fetching_precompiled ::
           {:pkg_config, [lib_name()]}
           | {{Bundlex.PrecompiledDependency.t(), precompiled_package_path :: String.t()},
@@ -31,6 +31,7 @@ defmodule Bundlex.Native do
           libs: [String.t()],
           lib_dirs: [String.t()],
           os_deps: [os_dep()] | [os_dep_after_fetching_precompiled()],
+          pkg_configs: [String.t()],
           sources: [String.t()],
           deps: [t],
           compiler_flags: [String.t()],
@@ -49,6 +50,7 @@ defmodule Bundlex.Native do
             libs: [],
             lib_dirs: [],
             os_deps: [],
+            pkg_configs: [],
             sources: [],
             deps: [],
             compiler_flags: [],
@@ -113,6 +115,14 @@ defmodule Bundlex.Native do
         |> merge_deps()
         |> Map.update!(:sources, &Enum.uniq/1)
         |> Map.update!(:deps, fn deps -> Enum.uniq_by(deps, &{&1.app, &1.name}) end)
+
+      native =
+        if native.pkg_configs != [] do
+          Logger.warning("`pkg_config` option has been deprecated. Please use `os_deps` option.")
+          %{native | os_deps: native.os_deps ++ native.pkg_configs}
+        else
+          native
+        end
 
       native_with_fetched_precompiled_deps = OSDeps.fetch_precompiled(native)
 
@@ -213,7 +223,15 @@ defmodule Bundlex.Native do
   defp merge_dep(%__MODULE__{type: :lib} = dependency, %__MODULE__{} = native) do
     Map.merge(
       native,
-      Map.take(dependency, [:includes, :libs, :lib_dirs, :os_deps, :linker_flags, :deps]),
+      Map.take(dependency, [
+        :includes,
+        :libs,
+        :lib_dirs,
+        :os_deps,
+        :pkg_configs,
+        :linker_flags,
+        :deps
+      ]),
       fn _k, v1, v2 -> v2 ++ v1 end
     )
   end

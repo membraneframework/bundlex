@@ -26,11 +26,11 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   defp parse_os_deps(os_deps) do
     Enum.map(os_deps, fn
       {precompiled_dependency, lib_name_or_names} ->
-        lib_names = Bunch.listify(lib_name_or_names) |> Enum.map(&Atom.to_string/1)
+        lib_names = Bunch.listify(lib_name_or_names)
         {precompiled_dependency, lib_names}
 
       lib_name ->
-        {:pkg_config, [Atom.to_string(lib_name)]}
+        {:pkg_config, [lib_name]}
     end)
   end
 

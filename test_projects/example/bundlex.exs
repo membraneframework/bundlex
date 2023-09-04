@@ -34,9 +34,10 @@ defmodule Example.BundlexProject do
         sources: ["foo_nif.c"],
         interface: [:nif],
         os_deps: [
-          {PrecompiledFFmpeg, [:libswscale, :libavcodec]},
-          :libpng
-        ]
+          {PrecompiledFFmpeg, ["libswscale", "libavcodec"]},
+          "libpng"
+        ],
+        pkg_configs: ["libswresample"]
       ],
       example: [
         deps: [example_lib: :example_lib],
