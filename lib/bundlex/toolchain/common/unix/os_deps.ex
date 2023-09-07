@@ -47,11 +47,10 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     end
   end
 
-  defp get_flags_for_pkg_config(lib_names, flags_type, app) do
-    do_get_flags_for_pkg_config(lib_names, "--#{flags_type}", app)
-  end
+  defp get_flags_for_pkg_config([], _flags_type, _app), do: ""
 
-  defp do_get_flags_for_pkg_config(lib_names, flags_type, app) do
+  defp get_flags_for_pkg_config(lib_names, flags_type, app) do
+    flags_type = "--#{flags_type}"
     System.put_env("PATH", System.get_env("PATH", "") <> ":/usr/local/bin:/opt/homebrew/bin")
 
     case System.cmd("which", ["pkg-config"]) do
