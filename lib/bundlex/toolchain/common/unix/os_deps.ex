@@ -6,7 +6,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
 
   @precompiled_path "#{Mix.Project.build_path()}/bundlex_precompiled/"
 
-  @spec get_flags(Bundlex.Native.t(), atom()) :: String.t()
+  @spec get_flags(Bundlex.Native.t(), :clags | :libs) :: String.t()
   def get_flags(native, flags_type) do
     native.os_deps
     |> Enum.flat_map(fn
@@ -21,17 +21,6 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     end)
     |> Enum.uniq()
     |> Enum.join(" ")
-  end
-
-  defp parse_os_deps(os_deps) do
-    Enum.map(os_deps, fn
-      {precompiled_dependency, lib_name_or_names} ->
-        lib_names = Bunch.listify(lib_name_or_names)
-        {precompiled_dependency, lib_names}
-
-      lib_name ->
-        {:pkg_config, [lib_name]}
-    end)
   end
 
   defp get_flags_for_precompiled(
@@ -58,14 +47,11 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     end
   end
 
-  defp get_flags_for_pkg_config(lib_names, options, app) do
-    options = options |> Bunch.listify() |> Enum.map(&"--#{&1}")
-    do_get_flags_for_pkg_config(lib_names, options, app)
+  defp get_flags_for_pkg_config(lib_names, flags_type, app) do
+    do_get_flags_for_pkg_config(lib_names, "--#{flags_type}", app)
   end
 
-  defp do_get_flags_for_pkg_config([], _options, _app), do: ""
-
-  defp do_get_flags_for_pkg_config(lib_names, options, app) do
+  defp do_get_flags_for_pkg_config(lib_names, flags_type, app) do
     System.put_env("PATH", System.get_env("PATH", "") <> ":/usr/local/bin:/opt/homebrew/bin")
 
     case System.cmd("which", ["pkg-config"]) do
@@ -80,7 +66,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     end
 
     Enum.map(lib_names, fn lib_name ->
-      case System.cmd("pkg-config", options ++ [lib_name], stderr_to_stdout: true) do
+      case System.cmd("pkg-config", [flags_type, lib_name], stderr_to_stdout: true) do
         {output, 0} ->
           String.trim_trailing(output)
 
@@ -107,22 +93,33 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
         {:pkg_config, lib_names} ->
           {:pkg_config, lib_names}
 
-        {precompiled_dependency, lib_names} ->
-          case maybe_download_precompiled_package(precompiled_dependency) do
+        {precompiled_dependency_url, lib_names} ->
+          case maybe_download_precompiled_package(precompiled_dependency_url) do
             :unavailable ->
               # fallback
               {:pkg_config, lib_names}
 
             package_path ->
-              {{precompiled_dependency, package_path}, lib_names}
+              {{precompiled_dependency_url, package_path}, lib_names}
           end
       end)
 
     %{native | os_deps: os_deps}
   end
 
+  defp parse_os_deps(os_deps) do
+    Enum.map(os_deps, fn
+      {precompiled_dependency_url, lib_name_or_names} ->
+        lib_names = Bunch.listify(lib_name_or_names)
+        {precompiled_dependency_url, lib_names}
+
+      lib_name ->
+        {:pkg_config, [lib_name]}
+    end)
+  end
+
   defp maybe_download_precompiled_package(precompiled_dependency_url) do
-    File.mkdir_p(@precompiled_path)
+    File.mkdir_p!(@precompiled_path)
     package_path = get_package_path(precompiled_dependency_url)
 
     cond do
@@ -134,7 +131,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
 
       true ->
         try do
-          File.mkdir(package_path)
+          File.mkdir!(package_path)
           temporary_destination = "#{@precompiled_path}/temporary"
           download(precompiled_dependency_url, temporary_destination)
           System.shell("tar -xf #{temporary_destination} -C #{package_path} --strip-components 1")
@@ -142,7 +139,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
           package_path
         rescue
           e ->
-            Logger.warning("Couldn't download the dependency due to: #{inspect(e)}.")
+            IO.warn("Couldn't download the dependency due to: #{inspect(e)}.")
             :unavailable
         end
     end
@@ -167,9 +164,9 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     response = Req.get!(url)
 
     if response.status == 200 do
-      File.write(dest, response.body)
+      File.write!(dest, response.body)
     else
-      :error
+      raise "Cannot download file from #{url}. Repsonse status: #{response.status}"
     end
   end
 end

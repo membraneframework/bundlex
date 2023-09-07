@@ -119,7 +119,7 @@ defmodule Bundlex.Native do
 
       native =
         if native.pkg_configs != [] do
-          Logger.warning("`pkg_config` option has been deprecated. Please use `os_deps` option.")
+          IO.warn("`pkg_configs` option has been deprecated. Please use `os_deps` option.")
           %{native | os_deps: native.os_deps ++ native.pkg_configs}
         else
           native

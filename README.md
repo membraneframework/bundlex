@@ -126,7 +126,7 @@ Configuration of each native may contain following options:
 * `includes` - Paths to look for header files (empty list by default).
 * `lib_dirs` - Absolute paths to look for libraries (empty list by default).
 * `libs` - Names of libraries to link (empty list by default).
-* `pkg_configs` - Names of libraries for which the appropriate flags will be
+* `pkg_configs` - (deprecated) Names of libraries for which the appropriate flags will be
 obtained using pkg-config (empty list by default).
 * `deps` - Dependencies in the form of `{app, lib_name}`, where `app`
 is the application name of the dependency, and `lib_name` is the name of lib
