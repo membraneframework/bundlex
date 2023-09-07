@@ -4,14 +4,12 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   require Logger
   alias Bundlex.Output
 
-  @precompiled_path "#{Mix.Project.build_path()}/bundlex_precompiled/"
-
-  @spec get_flags(Bundlex.Native.t(), :clags | :libs) :: String.t()
+  @spec get_flags(Bundlex.Native.t(), :cflags | :libs) :: String.t()
   def get_flags(native, flags_type) do
     native.os_deps
     |> Enum.flat_map(fn
-      {:pkg_config, lib_names} ->
-        get_flags_for_pkg_config(lib_names, flags_type, native.app)
+      {:pkg_config, lib_name} ->
+        [get_flags_for_pkg_config(lib_name, flags_type, native.app)]
 
       {precompiled_dependency_path, lib_names} ->
         get_flags_for_precompiled(
@@ -22,6 +20,30 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     |> Enum.uniq()
     |> Enum.join(" ")
   end
+
+  @spec fetch_precompiled(Bundlex.Native.t()) :: Bundlex.Native.t()
+  def fetch_precompiled(native) do
+    os_deps =
+      parse_os_deps(native.os_deps)
+      |> Enum.map(fn
+        {:pkg_config, lib_name} ->
+          {:pkg_config, lib_name}
+
+        {precompiled_dependency_url, lib_names} ->
+          case maybe_download_precompiled_package(precompiled_dependency_url) do
+            :unavailable ->
+              # fallback
+              {:pkg_config, lib_names}
+
+            package_path ->
+              {{precompiled_dependency_url, package_path}, lib_names}
+          end
+      end)
+
+    %{native | os_deps: os_deps}
+  end
+
+  defp get_precompiled_path(), do: "#{Mix.Project.build_path()}/bundlex_precompiled/"
 
   defp get_flags_for_precompiled(
          {{_precompiled_dependency_url, precompiled_dependency_path}, lib_names},
@@ -47,9 +69,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     end
   end
 
-  defp get_flags_for_pkg_config([], _flags_type, _app), do: ""
-
-  defp get_flags_for_pkg_config(lib_names, flags_type, app) do
+  defp get_flags_for_pkg_config(lib_name, flags_type, app) do
     flags_type = "--#{flags_type}"
     System.put_env("PATH", System.get_env("PATH", "") <> ":/usr/local/bin:/opt/homebrew/bin")
 
@@ -64,47 +84,23 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
         """)
     end
 
-    Enum.map(lib_names, fn lib_name ->
-      case System.cmd("pkg-config", [flags_type, lib_name], stderr_to_stdout: true) do
-        {output, 0} ->
-          String.trim_trailing(output)
+    case System.cmd("pkg-config", [flags_type, lib_name], stderr_to_stdout: true) do
+      {output, 0} ->
+        String.trim_trailing(output)
 
-        {output, error} ->
-          Output.raise("""
-          Couldn't find system library #{lib_name} with pkg-config. Check whether it's installed.
-          Installation instructions may be available in the readme of package #{app}.
-          Output from pkg-config:
-          Error: #{error}
-          #{output}
-          """)
-      end
-    end)
+      {output, error} ->
+        Output.raise("""
+        Couldn't find system library #{lib_name} with pkg-config. Check whether it's installed.
+        Installation instructions may be available in the readme of package #{app}.
+        Output from pkg-config:
+        Error: #{error}
+        #{output}
+        """)
+    end
   end
 
   defp remove_lib_prefix("lib" <> libname), do: libname
   defp remove_lib_prefix(libname), do: libname
-
-  @spec fetch_precompiled(Bundlex.Native.t()) :: Bundlex.Native.t()
-  def fetch_precompiled(native) do
-    os_deps =
-      parse_os_deps(native.os_deps)
-      |> Enum.map(fn
-        {:pkg_config, lib_names} ->
-          {:pkg_config, lib_names}
-
-        {precompiled_dependency_url, lib_names} ->
-          case maybe_download_precompiled_package(precompiled_dependency_url) do
-            :unavailable ->
-              # fallback
-              {:pkg_config, lib_names}
-
-            package_path ->
-              {{precompiled_dependency_url, package_path}, lib_names}
-          end
-      end)
-
-    %{native | os_deps: os_deps}
-  end
 
   defp parse_os_deps(os_deps) do
     Enum.map(os_deps, fn
@@ -113,12 +109,12 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
         {precompiled_dependency_url, lib_names}
 
       lib_name ->
-        {:pkg_config, [lib_name]}
+        {:pkg_config, lib_name}
     end)
   end
 
   defp maybe_download_precompiled_package(precompiled_dependency_url) do
-    File.mkdir_p!(@precompiled_path)
+    File.mkdir_p!(get_precompiled_path())
     package_path = get_package_path(precompiled_dependency_url)
 
     cond do
@@ -131,10 +127,15 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
       true ->
         try do
           File.mkdir!(package_path)
-          temporary_destination = "#{@precompiled_path}/temporary"
+          temporary_destination = "#{get_precompiled_path()}/temporary"
           download(precompiled_dependency_url, temporary_destination)
-          System.shell("tar -xf #{temporary_destination} -C #{package_path} --strip-components 1")
-          System.shell("rm #{temporary_destination}")
+
+          {_output, 0} =
+            System.shell(
+              "tar -xf #{temporary_destination} -C #{package_path} --strip-components 1"
+            )
+
+          File.rm!(temporary_destination)
           package_path
         rescue
           e ->
@@ -147,25 +148,15 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   defp get_package_path(:unavailable), do: :unavailable
 
   defp get_package_path(url) do
-    url = if String.ends_with?(url, "/"), do: String.slice(url, 0..-2), else: url
-
-    last_part =
-      String.split(url, "/")
-      |> Enum.at(-1)
-      |> String.split(".")
-      |> Enum.reject(&(&1 in ["tar", "xz", "gz"]))
-      |> Enum.join(".")
-
-    "#{@precompiled_path}#{last_part}"
+    "#{get_precompiled_path()}#{Zarex.sanitize(url)}"
   end
 
   defp download(url, dest) do
     response = Req.get!(url)
 
-    if response.status == 200 do
-      File.write!(dest, response.body)
-    else
-      raise "Cannot download file from #{url}. Repsonse status: #{response.status}"
+    case response.status do
+      200 -> File.write!(dest, response.body)
+      _other -> raise "Cannot download file from #{url}. Repsonse status: #{response.status}"
     end
   end
 end

@@ -21,7 +21,7 @@ defmodule Bundlex.Native do
   @type os_dep ::
           lib_name() | {precompiled_dependency_url(), lib_name() | [lib_name()]}
   @type os_dep_after_fetching_precompiled ::
-          {:pkg_config, [lib_name()]}
+          {:pkg_config, lib_name()}
           | {{precompiled_dependency_url(), precompiled_package_path :: String.t()}, [lib_name()]}
 
   @type t :: %__MODULE__{
