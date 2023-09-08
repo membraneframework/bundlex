@@ -22,8 +22,7 @@ defmodule Bundlex.Native do
   @type os_dep ::
           {os_dep_provider() | [os_dep_provider()], lib_name() | [lib_name()]}
   @type os_dep_after_resolving ::
-          {:pkg_config, [lib_name()]}
-          | {{:precompiled, precompiled_package_path :: String.t()}, [lib_name()]}
+          {:pkg_config | {:precompiled, precompiled_package_path :: String.t()}, [lib_name()]}
 
   @type t :: %__MODULE__{
           name: atom,
