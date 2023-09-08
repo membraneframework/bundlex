@@ -25,18 +25,18 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   def fetch_precompiled(native) do
     os_deps =
       parse_os_deps(native.os_deps)
-      |> Enum.map(fn
+      |> Enum.flat_map(fn
         {:pkg_config, lib_name} ->
-          {:pkg_config, lib_name}
+          [{:pkg_config, lib_name}]
 
         {precompiled_dependency_url, lib_names} ->
           case maybe_download_precompiled_package(precompiled_dependency_url) do
             :unavailable ->
               # fallback
-              {:pkg_config, lib_names}
+              Enum.map(lib_names, &{:pkg_config, &1})
 
             package_path ->
-              {{precompiled_dependency_url, package_path}, lib_names}
+              [{{precompiled_dependency_url, package_path}, lib_names}]
           end
       end)
 
