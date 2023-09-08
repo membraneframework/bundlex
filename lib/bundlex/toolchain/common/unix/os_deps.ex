@@ -6,7 +6,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
 
   @spec get_flags(Bundlex.Native.t(), :cflags | :libs) :: String.t()
   def get_flags(native, flags_type) do
-    native.os_deps
+    native.resolved_os_deps
     |> Enum.flat_map(fn
       {:pkg_config, lib_names} ->
         get_flags_for_pkg_config(lib_names, flags_type, native.app)
@@ -21,9 +21,9 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     |> Enum.join(" ")
   end
 
-  @spec resolve_os_deps(Bundlex.Native.t()) :: Bundlex.Native.with_resolved_os_deps()
+  @spec resolve_os_deps(Bundlex.Native.t()) :: Bundlex.Native.t()
   def resolve_os_deps(native) do
-    os_deps =
+    resolved_os_deps =
       native.os_deps
       |> Enum.flat_map(fn {provider_or_providers, lib_name_or_names} ->
         providers = Bunch.listify(provider_or_providers)
@@ -32,7 +32,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
         resolve_single_os_dep(providers, lib_names)
       end)
 
-    %{native | os_deps: os_deps}
+    %{native | resolved_os_deps: resolved_os_deps}
   end
 
   defp resolve_single_os_dep([], lib_names) do
