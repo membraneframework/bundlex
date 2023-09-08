@@ -16,13 +16,14 @@ defmodule Bundlex.Native do
   @type language_t :: :c | :cpp
 
   @type lib_name :: String.t()
-  @type precompiled_dependency_url :: String.t() | :unavailable
+  @type precompiled_dependency_url :: String.t()
+  @type os_dep_provider :: :pkg_config | {:precompiled, precompiled_dependency_url} | nil
 
   @type os_dep ::
-          lib_name() | {precompiled_dependency_url(), lib_name() | [lib_name()]}
-  @type os_dep_after_fetching_precompiled ::
-          {:pkg_config, lib_name()}
-          | {{precompiled_dependency_url(), precompiled_package_path :: String.t()}, [lib_name()]}
+          {os_dep_provider() | [os_dep_provider()], lib_name() | [lib_name()]}
+  @type os_dep_after_resolving ::
+          {:pkg_config, [lib_name()]}
+          | {{:precompiled, precompiled_package_path :: String.t()}, [lib_name()]}
 
   @type t :: %__MODULE__{
           name: atom,
@@ -31,7 +32,25 @@ defmodule Bundlex.Native do
           includes: [String.t()],
           libs: [String.t()],
           lib_dirs: [String.t()],
-          os_deps: [os_dep()] | [os_dep_after_fetching_precompiled()],
+          os_deps: [os_dep()],
+          pkg_configs: [String.t()],
+          sources: [String.t()],
+          deps: [t],
+          compiler_flags: [String.t()],
+          linker_flags: [String.t()],
+          language: language_t,
+          interface: interface_t | nil,
+          preprocessors: [Preprocessor.t()]
+        }
+
+  @type with_resolved_os_deps :: %__MODULE__{
+          name: atom,
+          app: Application.app(),
+          type: :native | :lib,
+          includes: [String.t()],
+          libs: [String.t()],
+          lib_dirs: [String.t()],
+          os_deps: [os_dep_after_resolving()],
           pkg_configs: [String.t()],
           sources: [String.t()],
           deps: [t],
@@ -120,16 +139,16 @@ defmodule Bundlex.Native do
       native =
         if native.pkg_configs != [] do
           IO.warn("`pkg_configs` option has been deprecated. Please use `os_deps` option.")
-          %{native | os_deps: native.os_deps ++ native.pkg_configs}
+          %{native | os_deps: [{:pkg_config, native.pkg_configs} | native.os_deps]}
         else
           native
         end
 
-      native_with_fetched_precompiled_deps = OSDeps.fetch_precompiled(native)
+      native_with_resolved_os_deps = OSDeps.resolve_os_deps(native)
 
       commands =
         Platform.get_module(platform).toolchain_module.compiler_commands(
-          native_with_fetched_precompiled_deps
+          native_with_resolved_os_deps
         )
 
       {:ok, commands}

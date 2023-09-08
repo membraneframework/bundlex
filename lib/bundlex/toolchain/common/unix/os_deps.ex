@@ -8,12 +8,12 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   def get_flags(native, flags_type) do
     native.os_deps
     |> Enum.flat_map(fn
-      {:pkg_config, lib_name} ->
-        [get_flags_for_pkg_config(lib_name, flags_type, native.app)]
+      {:pkg_config, lib_names} ->
+        get_flags_for_pkg_config(lib_names, flags_type, native.app)
 
-      {precompiled_dependency_path, lib_names} ->
+      {{:precompiled, _precompiled_dependency_path}, _lib_names} = os_dep ->
         get_flags_for_precompiled(
-          {precompiled_dependency_path, lib_names},
+          os_dep,
           flags_type
         )
     end)
@@ -21,32 +21,56 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     |> Enum.join(" ")
   end
 
-  @spec fetch_precompiled(Bundlex.Native.t()) :: Bundlex.Native.t()
-  def fetch_precompiled(native) do
+  @spec resolve_os_deps(Bundlex.Native.t()) :: Bundlex.Native.with_resolved_os_deps()
+  def resolve_os_deps(native) do
     os_deps =
-      parse_os_deps(native.os_deps)
-      |> Enum.flat_map(fn
-        {:pkg_config, lib_name} ->
-          [{:pkg_config, lib_name}]
+      native.os_deps
+      |> Enum.flat_map(fn {provider_or_providers, lib_name_or_names} ->
+        providers = Bunch.listify(provider_or_providers)
+        lib_names = Bunch.listify(lib_name_or_names)
 
-        {precompiled_dependency_url, lib_names} ->
-          case maybe_download_precompiled_package(precompiled_dependency_url) do
-            :unavailable ->
-              # fallback
-              Enum.map(lib_names, &{:pkg_config, &1})
-
-            package_path ->
-              [{{precompiled_dependency_url, package_path}, lib_names}]
-          end
+        resolve_single_os_dep(providers, lib_names)
       end)
 
     %{native | os_deps: os_deps}
   end
 
+  defp resolve_single_os_dep([], lib_names) do
+    IO.warn("Couldn't load OS dependencies for libraries: #{inspect(lib_names)}.")
+    []
+  end
+
+  defp resolve_single_os_dep(providers, lib_names) do
+    [first_provider | rest_of_providers] = providers
+
+    case first_provider do
+      nil ->
+        resolve_single_os_dep(rest_of_providers, lib_names)
+
+      :pkg_config ->
+        try do
+          get_flags_for_pkg_config(lib_names, :cflags, nil)
+          [{:pkg_config, lib_names}]
+        rescue
+          _e ->
+            resolve_single_os_dep(rest_of_providers, lib_names)
+        end
+
+      {:precompiled, precompiled_dependency_url} ->
+        case maybe_download_precompiled_package(precompiled_dependency_url) do
+          :unavailable ->
+            resolve_single_os_dep(rest_of_providers, lib_names)
+
+          package_path ->
+            [{{:precompiled, package_path}, lib_names}]
+        end
+    end
+  end
+
   defp get_precompiled_path(), do: "#{Mix.Project.build_path()}/bundlex_precompiled/"
 
   defp get_flags_for_precompiled(
-         {{_precompiled_dependency_url, precompiled_dependency_path}, lib_names},
+         {{:precompiled, precompiled_dependency_path}, lib_names},
          flags_type
        ) do
     case flags_type do
@@ -69,7 +93,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     end
   end
 
-  defp get_flags_for_pkg_config(lib_name, flags_type, app) do
+  defp get_flags_for_pkg_config(lib_names, flags_type, app) do
     flags_type = "--#{flags_type}"
     System.put_env("PATH", System.get_env("PATH", "") <> ":/usr/local/bin:/opt/homebrew/bin")
 
@@ -84,34 +108,36 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
         """)
     end
 
-    case System.cmd("pkg-config", [flags_type, lib_name], stderr_to_stdout: true) do
-      {output, 0} ->
-        String.trim_trailing(output)
+    Enum.map(lib_names, fn lib_name ->
+      case System.cmd("pkg-config", [flags_type, lib_name], stderr_to_stdout: true) do
+        {output, 0} ->
+          String.trim_trailing(output)
 
-      {output, error} ->
-        Output.raise("""
-        Couldn't find system library #{lib_name} with pkg-config. Check whether it's installed.
-        Installation instructions may be available in the readme of package #{app}.
-        Output from pkg-config:
-        Error: #{error}
-        #{output}
-        """)
-    end
+        {output, error} ->
+          Output.raise("""
+          Couldn't find system library #{lib_name} with pkg-config. Check whether it's installed.
+          Installation instructions may be available in the readme of package #{app}.
+          Output from pkg-config:
+          Error: #{error}
+          #{output}
+          """)
+      end
+    end)
   end
 
   defp remove_lib_prefix("lib" <> libname), do: libname
   defp remove_lib_prefix(libname), do: libname
 
-  defp parse_os_deps(os_deps) do
-    Enum.map(os_deps, fn
-      {precompiled_dependency_url, lib_name_or_names} ->
-        lib_names = Bunch.listify(lib_name_or_names)
-        {precompiled_dependency_url, lib_names}
+  # defp parse_os_deps(os_deps) do
+  #   Enum.map(os_deps, fn
+  #     {:precompiled, precompiled_dependency_url, lib_name_or_names} ->
+  #       lib_names = Bunch.listify(lib_name_or_names)
+  #       {precompiled_dependency_url, lib_names}
 
-      lib_name ->
-        {:pkg_config, lib_name}
-    end)
-  end
+  #     lib_name ->
+  #       {:pkg_config, lib_name}
+  #   end)
+  # end
 
   defp maybe_download_precompiled_package(precompiled_dependency_url) do
     File.mkdir_p!(get_precompiled_path())
