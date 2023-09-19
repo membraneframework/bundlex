@@ -8,13 +8,14 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   def resolve_os_deps(native) do
     {cflags_list, libs_list} =
       native.os_deps
-      |> Enum.flat_map(fn {provider_or_providers, lib_name_or_names} ->
+      |> Enum.map(fn {provider_or_providers, lib_name_or_names} ->
         providers = Bunch.listify(provider_or_providers)
         lib_names = Bunch.listify(lib_name_or_names)
 
         resolve_single_os_dep(providers, lib_names, native.app)
       end)
       |> Enum.unzip()
+      |> then(&{List.flatten(elem(&1, 0)), List.flatten(elem(&1, 1))})
 
     compiler_flags =
       Enum.uniq(cflags_list)
@@ -30,8 +31,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   end
 
   defp resolve_single_os_dep([], lib_names, _app) do
-    IO.warn("Couldn't load OS dependencies for libraries: #{inspect(lib_names)}.")
-    []
+    raise "Couldn't load OS dependencies for libraries: #{inspect(lib_names)}."
   end
 
   defp resolve_single_os_dep(providers, lib_names, app) do
@@ -43,12 +43,14 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
 
       :pkg_config ->
         try do
-          [
-            {get_flags_for_pkg_config(lib_names, :cflags, app),
-             get_flags_for_pkg_config(lib_names, :libs, app)}
-          ]
+          {get_flags_for_pkg_config(lib_names, :cflags, app),
+           get_flags_for_pkg_config(lib_names, :libs, app)}
         rescue
-          _e ->
+          e ->
+            IO.warn(
+              "Couldn't load #{inspect(lib_names)} libraries with pkg-config due to: #{inspect(e)}."
+            )
+
             resolve_single_os_dep(rest_of_providers, lib_names, app)
         end
 
@@ -58,10 +60,8 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
             resolve_single_os_dep(rest_of_providers, lib_names, app)
 
           package_path ->
-            [
-              {get_flags_for_precompiled({{:precompiled, package_path}, lib_names}, :cflags),
-               get_flags_for_precompiled({{:precompiled, package_path}, lib_names}, :libs)}
-            ]
+            {get_flags_for_precompiled({{:precompiled, package_path}, lib_names}, :cflags),
+             get_flags_for_precompiled({{:precompiled, package_path}, lib_names}, :libs)}
         end
     end
   end
@@ -76,13 +76,11 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
       :libs ->
         full_packages_library_path = Path.absname("#{precompiled_dependency_path}/lib")
 
-        ([
-           "-L#{full_packages_library_path}",
-           "-Wl,-rpath,#{full_packages_library_path}"
-         ] ++
-           Enum.map(lib_names, &"-l#{remove_lib_prefix(&1)}"))
-        |> Enum.join(" ")
-        |> String.trim_trailing()
+        [
+          "-L#{full_packages_library_path}",
+          "-Wl,-rpath,#{full_packages_library_path}"
+        ] ++
+          Enum.map(lib_names, &"-l#{remove_lib_prefix(&1)}")
 
       :cflags ->
         full_include_path = Path.absname("#{precompiled_dependency_path}/include")
@@ -120,8 +118,6 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
           """)
       end
     end)
-    |> Enum.join(" ")
-    |> String.trim_trailing()
   end
 
   defp remove_lib_prefix("lib" <> libname), do: libname

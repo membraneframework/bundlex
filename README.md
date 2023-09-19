@@ -128,7 +128,7 @@ Configuration of each native may contain following options:
 * `libs` - Names of libraries to link (empty list by default).
 * `pkg_configs` - (deprecated) Names of libraries for which the appropriate flags will be
 obtained using pkg-config (empty list by default).
-* `os_deps` - List of external OS dependencies. It's a list of elements in form of 
+* `os_deps` - List of external OS dependencies. It's a list of tuples in the form of 
   `{provider | [provider], lib_name | [lib_name]}` where `provider` is either `:pkg_config` 
   or a tuple `{:precompiled, <string representing URL to the precompiled library>}` and `lib_name` 
   is a string representing a library that should be provided by a given providers. 
