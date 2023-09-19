@@ -86,11 +86,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
 
       :cflags ->
         full_include_path = Path.absname("#{precompiled_dependency_path}/include")
-
         ["-I#{full_include_path}"]
-
-      true ->
-        raise "Unknown flag type: #{inspect(flags_type)}"
     end
   end
 
