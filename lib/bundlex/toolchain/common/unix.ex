@@ -4,7 +4,6 @@ defmodule Bundlex.Toolchain.Common.Unix do
   use Bunch
   alias Bundlex.{Native, Toolchain}
   alias Bundlex.Toolchain.Common.Compilers
-  alias Bundlex.Toolchain.Common.Unix.OSDeps
 
   @spec compiler_commands(
           Native.t(),
@@ -15,8 +14,6 @@ defmodule Bundlex.Toolchain.Common.Unix do
         ) :: [String.t()]
   def compiler_commands(native, compile, link, lang, options \\ []) do
     includes = native.includes |> paths("-I")
-
-    os_deps_cflags = OSDeps.get_flags(native, :cflags)
 
     compiler_flags = resolve_compiler_flags(native.compiler_flags, native.interface, lang)
     output = Toolchain.output_path(native.app, native.name, native.interface)
@@ -37,7 +34,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
       |> Enum.map(fn {source, object} ->
         """
         #{compile} -Wall -Wextra -c -O2 -g #{compiler_flags} \
-        -o #{path(object)} #{includes} #{os_deps_cflags} #{path(source)}
+        -o #{path(object)} #{includes} #{path(source)}
         """
       end)
 
@@ -114,11 +111,9 @@ defmodule Bundlex.Toolchain.Common.Unix do
   end
 
   defp libs(native) do
-    os_deps_libs = OSDeps.get_flags(native, :libs)
-
     lib_dirs = native.lib_dirs |> paths("-L")
     libs = native.libs |> Enum.map_join(" ", fn lib -> "-l#{lib}" end)
 
-    "#{os_deps_libs} #{lib_dirs} #{libs}"
+    "#{lib_dirs} #{libs}"
   end
 end

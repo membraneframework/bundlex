@@ -21,8 +21,6 @@ defmodule Bundlex.Native do
 
   @type os_dep ::
           {os_dep_provider() | [os_dep_provider()], lib_name() | [lib_name()]}
-  @type resolved_os_dep ::
-          {:pkg_config | {:precompiled, precompiled_package_path :: String.t()}, [lib_name()]}
 
   @type t :: %__MODULE__{
           name: atom,
@@ -32,7 +30,6 @@ defmodule Bundlex.Native do
           libs: [String.t()],
           lib_dirs: [String.t()],
           os_deps: [os_dep()],
-          resolved_os_deps: [resolved_os_dep()],
           pkg_configs: [String.t()],
           sources: [String.t()],
           deps: [t],
@@ -52,7 +49,6 @@ defmodule Bundlex.Native do
             libs: [],
             lib_dirs: [],
             os_deps: [],
-            resolved_os_deps: nil,
             pkg_configs: [],
             sources: [],
             deps: [],

@@ -4,65 +4,66 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   require Logger
   alias Bundlex.Output
 
-  @spec get_flags(Bundlex.Native.t(), :cflags | :libs) :: String.t()
-  def get_flags(native, flags_type) do
-    native.resolved_os_deps
-    |> Enum.flat_map(fn
-      {:pkg_config, lib_names} ->
-        get_flags_for_pkg_config(lib_names, flags_type, native.app)
-
-      {{:precompiled, _precompiled_dependency_path}, _lib_names} = os_dep ->
-        get_flags_for_precompiled(
-          os_dep,
-          flags_type
-        )
-    end)
-    |> Enum.uniq()
-    |> Enum.join(" ")
-  end
-
   @spec resolve_os_deps(Bundlex.Native.t()) :: Bundlex.Native.t()
   def resolve_os_deps(native) do
-    resolved_os_deps =
+    {cflags_list, libs_list} =
       native.os_deps
       |> Enum.flat_map(fn {provider_or_providers, lib_name_or_names} ->
         providers = Bunch.listify(provider_or_providers)
         lib_names = Bunch.listify(lib_name_or_names)
 
-        resolve_single_os_dep(providers, lib_names)
+        resolve_single_os_dep(providers, lib_names, native.app)
       end)
+      |> Enum.unzip()
 
-    %{native | resolved_os_deps: resolved_os_deps}
+    compiler_flags =
+      Enum.uniq(cflags_list)
+      |> Enum.join(" ")
+
+    libs_flags =
+      Enum.uniq(libs_list)
+      |> Enum.join(" ")
+
+    %{
+      native
+      | compiler_flags: [compiler_flags | native.compiler_flags],
+        linker_flags: [libs_flags | native.linker_flags]
+    }
   end
 
-  defp resolve_single_os_dep([], lib_names) do
+  defp resolve_single_os_dep([], lib_names, _app) do
     IO.warn("Couldn't load OS dependencies for libraries: #{inspect(lib_names)}.")
     []
   end
 
-  defp resolve_single_os_dep(providers, lib_names) do
+  defp resolve_single_os_dep(providers, lib_names, app) do
     [first_provider | rest_of_providers] = providers
 
     case first_provider do
       nil ->
-        resolve_single_os_dep(rest_of_providers, lib_names)
+        resolve_single_os_dep(rest_of_providers, lib_names, app)
 
       :pkg_config ->
         try do
-          get_flags_for_pkg_config(lib_names, :cflags, nil)
-          [{:pkg_config, lib_names}]
+          [
+            {get_flags_for_pkg_config(lib_names, :cflags, app),
+             get_flags_for_pkg_config(lib_names, :libs, app)}
+          ]
         rescue
           _e ->
-            resolve_single_os_dep(rest_of_providers, lib_names)
+            resolve_single_os_dep(rest_of_providers, lib_names, app)
         end
 
       {:precompiled, precompiled_dependency_url} ->
         case maybe_download_precompiled_package(precompiled_dependency_url) do
           :unavailable ->
-            resolve_single_os_dep(rest_of_providers, lib_names)
+            resolve_single_os_dep(rest_of_providers, lib_names, app)
 
           package_path ->
-            [{{:precompiled, package_path}, lib_names}]
+            [
+              {get_flags_for_precompiled({{:precompiled, package_path}, lib_names}, :cflags),
+               get_flags_for_precompiled({{:precompiled, package_path}, lib_names}, :libs)}
+            ]
         end
     end
   end
