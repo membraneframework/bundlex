@@ -9,7 +9,7 @@ defmodule Bundlex do
   @type platform_t :: :linux | :macosx | :windows32 | :windows64
 
   @typedoc """
-  A structure containing three fields that describe the platform.
+  A map containing three fields that describe the platform.
 
   It consists of:
   * architecture - e.g. `x86_64` or `arm64`

@@ -128,19 +128,8 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   defp remove_lib_prefix("lib" <> libname), do: libname
   defp remove_lib_prefix(libname), do: libname
 
-  # defp parse_os_deps(os_deps) do
-  #   Enum.map(os_deps, fn
-  #     {:precompiled, precompiled_dependency_url, lib_name_or_names} ->
-  #       lib_names = Bunch.listify(lib_name_or_names)
-  #       {precompiled_dependency_url, lib_names}
-
-  #     lib_name ->
-  #       {:pkg_config, lib_name}
-  #   end)
-  # end
-
   defp maybe_download_precompiled_package(precompiled_dependency_url) do
-    File.mkdir_p!(get_precompiled_path())
+    get_precompiled_path() |> File.mkdir_p!()
     package_path = get_package_path(precompiled_dependency_url)
 
     cond do
@@ -151,8 +140,9 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
         package_path
 
       true ->
+        File.mkdir!(package_path)
+
         try do
-          File.mkdir!(package_path)
           temporary_destination = "#{get_precompiled_path()}/temporary"
           download(precompiled_dependency_url, temporary_destination)
 
