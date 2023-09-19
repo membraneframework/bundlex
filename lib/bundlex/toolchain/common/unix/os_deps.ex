@@ -18,16 +18,14 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
 
     compiler_flags =
       Enum.uniq(cflags_list)
-      |> Enum.join(" ")
 
     libs_flags =
       Enum.uniq(libs_list)
-      |> Enum.join(" ")
 
     %{
       native
-      | compiler_flags: [compiler_flags | native.compiler_flags],
-        linker_flags: [libs_flags | native.linker_flags]
+      | compiler_flags: native.compiler_flags ++ compiler_flags,
+        linker_flags: native.linker_flags ++ libs_flags
     }
   end
 
@@ -78,15 +76,17 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
       :libs ->
         full_packages_library_path = Path.absname("#{precompiled_dependency_path}/lib")
 
-        [
-          "-L#{full_packages_library_path}",
-          "-Wl,-rpath,#{full_packages_library_path}"
-        ] ++
-          Enum.map(lib_names, &"-l#{remove_lib_prefix(&1)}")
+        ([
+           "-L#{full_packages_library_path}",
+           "-Wl,-rpath,#{full_packages_library_path}"
+         ] ++
+           Enum.map(lib_names, &"-l#{remove_lib_prefix(&1)}"))
+        |> Enum.join(" ")
+        |> String.trim_trailing()
 
       :cflags ->
         full_include_path = Path.absname("#{precompiled_dependency_path}/include")
-        ["-I#{full_include_path}"]
+        "-I#{full_include_path}"
     end
   end
 
@@ -120,6 +120,8 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
           """)
       end
     end)
+    |> Enum.join(" ")
+    |> String.trim_trailing()
   end
 
   defp remove_lib_prefix("lib" <> libname), do: libname
