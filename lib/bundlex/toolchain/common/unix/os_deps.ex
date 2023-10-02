@@ -15,13 +15,14 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
         resolve_single_os_dep(providers, lib_names, native.app)
       end)
       |> Enum.unzip()
-      |> then(&{List.flatten(elem(&1, 0)), List.flatten(elem(&1, 1))})
 
     compiler_flags =
-      Enum.uniq(cflags_list)
+      List.flatten(cflags_list)
+      |> Enum.uniq()
 
     libs_flags =
-      Enum.uniq(libs_list)
+      List.flatten(libs_list)
+      |> Enum.uniq()
 
     %{
       native

@@ -27,7 +27,6 @@ defmodule Example.BundlexProject do
           {[get_ffmpeg_url(), :pkg_config], ["libswscale", "libavcodec"]},
           {:pkg_config, "libpng"}
         ],
-        pkg_configs: ["libswresample"]
       ],
       example: [
         deps: [example_lib: :example_lib],
