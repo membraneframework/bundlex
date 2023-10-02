@@ -36,7 +36,7 @@ defmodule Bundlex.BuildScript do
     family = platform |> family!()
     cmd = commands |> join_commands(family)
 
-    case cmd |> Mix.shell().cmd(stderr_to_stdout: true) do
+    case cmd |> Mix.shell().cmd() do
       0 -> :ok
       ret -> {:error, {:run_build_script, return_code: ret, command: cmd}}
     end
