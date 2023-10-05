@@ -5,13 +5,22 @@ defmodule Bundlex.Native do
 
   use Bunch
 
+  require Logger
   alias Bundlex.Helper.ErlangHelper
   alias Bundlex.{Output, Platform, Project}
   alias Bundlex.Project.Preprocessor
+  alias Bundlex.Toolchain.Common.Unix.OSDeps
 
   @type name_t :: atom()
   @type interface_t :: :nif | :cnode | :port
   @type language_t :: :c | :cpp
+
+  @type lib_name :: String.t()
+  @type precompiled_dependency_url :: String.t()
+  @type os_dep_provider :: :pkg_config | {:precompiled, precompiled_dependency_url} | nil
+
+  @type os_dep ::
+          {os_dep_provider() | [os_dep_provider()], lib_name() | [lib_name()]}
 
   @type t :: %__MODULE__{
           name: atom,
@@ -20,6 +29,7 @@ defmodule Bundlex.Native do
           includes: [String.t()],
           libs: [String.t()],
           lib_dirs: [String.t()],
+          os_deps: [os_dep()],
           pkg_configs: [String.t()],
           sources: [String.t()],
           deps: [t],
@@ -38,6 +48,7 @@ defmodule Bundlex.Native do
             includes: [],
             libs: [],
             lib_dirs: [],
+            os_deps: [],
             pkg_configs: [],
             sources: [],
             deps: [],
@@ -104,7 +115,21 @@ defmodule Bundlex.Native do
         |> Map.update!(:sources, &Enum.uniq/1)
         |> Map.update!(:deps, fn deps -> Enum.uniq_by(deps, &{&1.app, &1.name}) end)
 
-      commands = Platform.get_module(platform).toolchain_module.compiler_commands(native)
+      native =
+        if native.pkg_configs != [] do
+          IO.warn("`pkg_configs` option has been deprecated. Please use `os_deps` option.")
+          %{native | os_deps: [{:pkg_config, native.pkg_configs} | native.os_deps]}
+        else
+          native
+        end
+
+      native_with_resolved_os_deps = OSDeps.resolve_os_deps(native)
+
+      commands =
+        Platform.get_module(platform).toolchain_module.compiler_commands(
+          native_with_resolved_os_deps
+        )
+
       {:ok, commands}
     end
   end
@@ -197,7 +222,15 @@ defmodule Bundlex.Native do
   defp merge_dep(%__MODULE__{type: :lib} = dependency, %__MODULE__{} = native) do
     Map.merge(
       native,
-      Map.take(dependency, [:includes, :libs, :lib_dirs, :pkg_configs, :linker_flags, :deps]),
+      Map.take(dependency, [
+        :includes,
+        :libs,
+        :lib_dirs,
+        :os_deps,
+        :pkg_configs,
+        :linker_flags,
+        :deps
+      ]),
       fn _k, v1, v2 -> v2 ++ v1 end
     )
   end

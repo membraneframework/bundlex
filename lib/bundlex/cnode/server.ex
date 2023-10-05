@@ -19,7 +19,7 @@ defmodule Bundlex.CNode.Server do
         {:spawn_executable, Bundlex.build_path(opts.app, opts.native_name, :cnode)},
         args: [host_name(), name, cnode, "#{creation}"],
         line: 2048,
-        env: [{'BUNDLEX_ERLANG_COOKIE', cookie}]
+        env: [{~c"BUNDLEX_ERLANG_COOKIE", cookie}]
       )
 
     Process.send_after(self(), :timeout, 5000)
@@ -39,7 +39,7 @@ defmodule Bundlex.CNode.Server do
 
   @impl true
   def handle_info(
-        {port, {:data, {:eol, 'ready'}}},
+        {port, {:data, {:eol, ~c"ready"}}},
         %{port: port, status: :waiting, msg_part?: false} = state
       ) do
     case Node.connect(state.cnode) do

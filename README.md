@@ -126,8 +126,19 @@ Configuration of each native may contain following options:
 * `includes` - Paths to look for header files (empty list by default).
 * `lib_dirs` - Absolute paths to look for libraries (empty list by default).
 * `libs` - Names of libraries to link (empty list by default).
-* `pkg_configs` - Names of libraries for which the appropriate flags will be
+* `pkg_configs` - (deprecated) Names of libraries for which the appropriate flags will be
 obtained using pkg-config (empty list by default).
+* `os_deps` - List of external OS dependencies. It's a list of tuples in the form of 
+  `{provider | [provider], lib_name | [lib_name]}` where `provider` is either `:pkg_config` 
+  or a tuple `{:precompiled, <string representing URL to the precompiled library>}` and `lib_name` 
+  is a string representing a library that should be provided by a given providers. 
+  In case `pkg_config` provider is used, the `pkg-config` will be used to resolve the compilation 
+  and linking flags (note that the given libary needs to be previously installed in the system). 
+  In case `{:precompiled, <string representing URL to the precompiled library>}` is used, 
+  the precompiled library will be first downloaded from the provider URL and appropriate compilation 
+  and linking flags will be set. 
+  The list of providers is resolved with the order of elements in the providers list - 
+  in case one provider fails to provide a library, the next provider from the list is tried.
 * `deps` - Dependencies in the form of `{app, lib_name}`, where `app`
 is the application name of the dependency, and `lib_name` is the name of lib
 specified in Bundlex project of this dependency. Empty list by default. See _Dependencies_ section below

@@ -21,7 +21,7 @@ defmodule Bundlex.Project do
   * `includes` - Paths to look for header files (empty list by default).
   * `lib_dirs` - Paths to look for libraries (empty list by default).
   * `libs` - Names of libraries to link (empty list by default).
-  * `pkg_configs` - Names of libraries for which the appropriate flags will be
+  * `pkg_configs` - (deprecated) Names of libraries for which the appropriate flags will be
   obtained using pkg-config (empty list by default).
   * `deps` - Dependencies in the form of `{app, lib_name}`, where `app`
   is the application name of the dependency, and `lib_name` is the name of lib
@@ -40,6 +40,7 @@ defmodule Bundlex.Project do
           includes: [String.t()],
           lib_dirs: [String.t()],
           libs: [String.t()],
+          os_deps: [Bundlex.Native.os_dep()],
           pkg_configs: [String.t()],
           deps: [{Application.app(), native_name_t | [native_name_t]}],
           src_base: String.t(),
@@ -57,6 +58,7 @@ defmodule Bundlex.Project do
       :libs,
       :lib_dirs,
       :pkg_configs,
+      :os_deps,
       :sources,
       :deps,
       :compiler_flags,

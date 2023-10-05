@@ -8,6 +8,31 @@ defmodule Bundlex do
 
   @type platform_t :: :linux | :macosx | :windows32 | :windows64
 
+  @typedoc """
+  A map containing three fields that describe the platform.
+
+  It consists of:
+  * architecture - e.g. `x86_64` or `arm64`
+  * vendor - e.g. `pc`
+  * os - operating system, e.g. `linux` or `darwin20.6.0`
+  """
+  @type target ::
+          %{architecture: String.t(), vendor: String.t(), os: String.t()}
+  @doc """
+  A function returning a target triplet for the environment on which it is run.
+  """
+  @spec get_target() :: target()
+  def get_target() do
+    [architecture, vendor, os | _rest] =
+      :erlang.system_info(:system_architecture) |> List.to_string() |> String.split("-")
+
+    %{
+      architecture: architecture,
+      vendor: vendor,
+      os: os
+    }
+  end
+
   @doc """
   Returns current platform name.
   """

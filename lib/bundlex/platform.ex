@@ -45,8 +45,11 @@ defmodule Bundlex.Platform do
     case :os.type() do
       {:win32, _} ->
         {:ok, reg} = :win32reg.open([:read])
-        :ok = :win32reg.change_key(reg, '\\hklm\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion')
-        {:ok, build} = :win32reg.value(reg, 'BuildLabEx')
+
+        :ok =
+          :win32reg.change_key(reg, ~c"\\hklm\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion")
+
+        {:ok, build} = :win32reg.value(reg, ~c"BuildLabEx")
 
         platform_name =
           if build |> to_string |> String.contains?("amd64") do
