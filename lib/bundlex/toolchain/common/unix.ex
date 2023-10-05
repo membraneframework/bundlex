@@ -33,7 +33,7 @@ defmodule Bundlex.Toolchain.Common.Unix do
       |> Enum.zip(objects)
       |> Enum.map(fn {source, object} ->
         """
-        #{compile} -Wall -Wextra -Wno-unused-function -c -O2 -g #{compiler_flags} \
+        #{compile} -Wall -Wextra -c -O2 -g #{compiler_flags} \
         -o #{path(object)} #{includes} #{path(source)}
         """
       end)

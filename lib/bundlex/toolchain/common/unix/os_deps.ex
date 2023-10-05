@@ -16,13 +16,8 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
       end)
       |> Enum.unzip()
 
-    compiler_flags =
-      List.flatten(cflags_list)
-      |> Enum.uniq()
-
-    libs_flags =
-      List.flatten(libs_list)
-      |> Enum.uniq()
+    compiler_flags = cflags_list |> List.flatten() |> Enum.uniq()
+    libs_flags = libs_list |> List.flatten() |> Enum.uniq()
 
     %{
       native
