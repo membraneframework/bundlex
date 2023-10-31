@@ -11,32 +11,21 @@ defmodule Bundlex.Native do
   alias Bundlex.Project.Preprocessor
   alias Bundlex.Toolchain.Common.Unix.OSDeps
 
-  @type name_t :: atom()
-  @type interface_t :: :nif | :cnode | :port
-  @type language_t :: :c | :cpp
-
-  @type lib_name :: String.t()
-  @type precompiled_dependency_url :: String.t()
-  @type os_dep_provider :: :pkg_config | {:precompiled, precompiled_dependency_url} | nil
-
-  @type os_dep ::
-          {os_dep_provider() | [os_dep_provider()], lib_name() | [lib_name()]}
-
   @type t :: %__MODULE__{
-          name: atom,
+          name: Project.native_name(),
           app: Application.app(),
           type: :native | :lib,
           includes: [String.t()],
           libs: [String.t()],
           lib_dirs: [String.t()],
-          os_deps: [os_dep()],
+          os_deps: [Project.os_dep()],
           pkg_configs: [String.t()],
           sources: [String.t()],
           deps: [t],
           compiler_flags: [String.t()],
           linker_flags: [String.t()],
-          language: language_t,
-          interface: interface_t | nil,
+          language: Project.native_language(),
+          interface: Project.native_interface() | nil,
           preprocessors: [Preprocessor.t()]
         }
 

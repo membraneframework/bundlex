@@ -117,43 +117,11 @@ end
 
 As we can see, we can specify two types of resources:
 - natives - code implemented in C that will be used within Elixir code
-- libs - can be used by other resources as dependencies (see `deps` option below)
+- libs - can be used by other resources as dependencies (via `deps` option)
 
-The sources should reside in `project_root/c_src/my_app` directory (this can be changed with `src_base` option, see below).
+The sources should reside in `project_root/c_src/my_app` directory (this can be changed with `src_base` option).
 
-Configuration of each native may contain following options:
-* `sources` - C files to be compiled (at least one must be provided),
-* `includes` - Paths to look for header files (empty list by default).
-* `lib_dirs` - Absolute paths to look for libraries (empty list by default).
-* `libs` - Names of libraries to link (empty list by default).
-* `pkg_configs` - (deprecated) Names of libraries for which the appropriate flags will be
-obtained using pkg-config (empty list by default).
-* `os_deps` - List of external OS dependencies. It's a list of tuples in the form of 
-  `{provider | [provider], lib_name | [lib_name]}` where `provider` is either `:pkg_config` 
-  or a tuple `{:precompiled, <string representing URL to the precompiled library>}` and `lib_name` 
-  is a string representing a library that should be provided by a given providers. 
-  In case `pkg_config` provider is used, the `pkg-config` will be used to resolve the compilation 
-  and linking flags (note that the given libary needs to be previously installed in the system). 
-  In case `{:precompiled, <string representing URL to the precompiled library>}` is used, 
-  the precompiled library will be first downloaded from the provider URL and appropriate compilation 
-  and linking flags will be set. 
-  The list of providers is resolved with the order of elements in the providers list - 
-  in case one provider fails to provide a library, the next provider from the list is tried.
-* `deps` - Dependencies in the form of `{app, lib_name}`, where `app`
-is the application name of the dependency, and `lib_name` is the name of lib
-specified in Bundlex project of this dependency. Empty list by default. See _Dependencies_ section below
-for details.
-* `src_base` - Native files should reside in `project_root/c_src/<src_base>`
-(application name by default).
-* `compiler_flags` - Custom flags for compiler. Default `-std` flag for `:c` is `-std=c11` and for `:cpp` is `-std=c++17`. 
-* `linker_flags` - Custom flags for linker.
-* `language` - Language of native. `:c` or `:cpp` may be chosen (`:c` by default)
-* `interface` - Interface used to integrate with Elixir code. The following interfaces are available:
-    * :nif - dynamically linked to the Erlang VM (see [Erlang docs](http://erlang.org/doc/man/erl_nif.html))
-    * :cnode - executed as separate OS processes, accessed through sockets (see [Erlang docs](http://erlang.org/doc/man/ei_connect.html))
-    * :port - executed as separate OS processes (see [Elixir Port docs](https://hexdocs.pm/elixir/Port.html))
-  Specifying no interface is valid only for libs.
-* `preprocessors` - Modules that will preprocess the native, see `Bundlex.Project.Preprocessor`.
+For more details and available options, see [Bundlex.Project.native_config](https://hexdocs.pm/bundlex/Bundlex.Project.html#t:native_config/0).
 
 ### Dependencies
 

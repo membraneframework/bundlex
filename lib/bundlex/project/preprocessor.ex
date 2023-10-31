@@ -13,8 +13,8 @@ defmodule Bundlex.Project.Preprocessor do
   @callback preprocess_native_config(
               name :: atom,
               app :: atom,
-              config :: Project.native_config_t()
+              config :: Project.native_config()
             ) ::
-              Project.native_config_t()
+              Project.native_config()
   @callback preprocess_native(native :: Native.t()) :: Native.t()
 end

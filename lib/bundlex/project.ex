@@ -11,7 +11,17 @@ defmodule Bundlex.Project do
   @src_dir_name "c_src"
   @bundlex_file_name "bundlex.exs"
 
-  @type native_name_t :: atom
+  @type native_name :: atom
+  @type native_interface :: :nif | :cnode | :port
+  @type native_language :: :c | :cpp
+
+  @type os_dep_provider ::
+          :pkg_config
+          | {:pkg_config, pkg_configs :: String.t() | [String.t()]}
+          | {:precompiled, url :: String.t()}
+          | {:precompiled, url :: String.t(), libs :: String.t() | [String.t()]}
+
+  @type os_dep :: {name :: atom, os_dep_provider | [os_dep_provider]}
 
   @typedoc """
   Type describing configuration of a native.
@@ -21,8 +31,15 @@ defmodule Bundlex.Project do
   * `includes` - Paths to look for header files (empty list by default).
   * `lib_dirs` - Paths to look for libraries (empty list by default).
   * `libs` - Names of libraries to link (empty list by default).
+  * `os_deps` - List of external OS dependencies. It's a keyword list, when each key is the
+  dependency name and the value is a provider or a list of them. In the latter case, subsequent
+  providers from the list will be tried until one of them succeeds. A provider may be one of:
+    - `pkg_config` - resolves the dependency via `pkg-config`.
+    - `precompiled` - downloads the dependency from a given url and sets appropriate compilation
+    and linking flags.
+  Check `t:os_dep/0` for details.
   * `pkg_configs` - (deprecated) Names of libraries for which the appropriate flags will be
-  obtained using pkg-config (empty list by default).
+  obtained using pkg-config (empty list by default). Use `os_deps` instead.
   * `deps` - Dependencies in the form of `{app, lib_name}`, where `app`
   is the application name of the dependency, and `lib_name` is the name of lib
   specified in bundlex project of this dependency. See _Dependencies_ section in
@@ -35,19 +52,19 @@ defmodule Bundlex.Project do
   * `interface` - Interface of native. It can be single atom e.g. :nif or list of atoms.
   * `preprocessors` - Modules implementing `Bundlex.Project.Preprocessor` behaviour
   """
-  @type native_config_t :: [
+  @type native_config :: [
           sources: [String.t()],
           includes: [String.t()],
           lib_dirs: [String.t()],
           libs: [String.t()],
-          os_deps: [Bundlex.Native.os_dep()],
+          os_deps: [os_dep],
           pkg_configs: [String.t()],
-          deps: [{Application.app(), native_name_t | [native_name_t]}],
+          deps: [{Application.app(), native_name | [native_name]}],
           src_base: String.t(),
           compiler_flags: [String.t()],
           linker_flags: [String.t()],
           language: :c | :cpp,
-          interface: [Bundlex.Native.interface_t()] | Bundlex.Native.interface_t() | nil,
+          interface: native_interface | [native_interface],
           preprocessor: [Preprocessor.t()] | Preprocessor.t()
         ]
 
@@ -75,7 +92,7 @@ defmodule Bundlex.Project do
   native packages that are compiled as static libraries and linked to natives
   that have them specified in `deps` field of their configuration.
   """
-  @type config_t :: KVList.t(:natives | :libs, KVList.t(native_name_t, native_config_t))
+  @type config_t :: KVList.t(:natives | :libs, KVList.t(native_name, native_config))
 
   @doc """
   Callback returning project configuration.

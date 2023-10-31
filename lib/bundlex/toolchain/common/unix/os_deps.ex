@@ -13,7 +13,12 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
           resolve_os_dep(name, native.app, Bunch.listify(providers), [])
 
         {providers, lib_names} ->
-          name = lib_names |> Bunch.listify() |> Enum.join("-") |> String.to_atom()
+          IO.warn("""
+          Native #{inspect(native.name)} uses deprecated syntax for `os_deps`. \
+          See `Bundlex.Project.os_dep` for the new syntax.
+          """)
+
+          name = lib_names |> Bunch.listify() |> Enum.join("_") |> String.to_atom()
 
           providers =
             providers
@@ -147,6 +152,10 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
 
   defp remove_lib_prefix("lib" <> libname), do: libname
   defp remove_lib_prefix(libname), do: libname
+
+  defp maybe_download_precompiled_package(_name, nil) do
+    {:error, "ignored, no URL provided"}
+  end
 
   defp maybe_download_precompiled_package(name, url) do
     precompiled_path = get_precompiled_path()
