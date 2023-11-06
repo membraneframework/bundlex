@@ -117,9 +117,9 @@ end
 
 As we can see, we can specify two types of resources:
 - natives - code implemented in C that will be used within Elixir code
-- libs - can be used by other resources as dependencies (via `deps` option)
+- libs - can be used by natives or other libs as [dependencies](#Dependencies)
 
-The sources should reside in `project_root/c_src/my_app` directory (this can be changed with `src_base` option).
+By default, the sources should reside in `project_root/c_src/my_app` directory.
 
 For more details and available options, see [Bundlex.Project.native_config](https://hexdocs.pm/bundlex/Bundlex.Project.html#t:native_config/0).
 

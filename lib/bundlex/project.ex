@@ -31,12 +31,14 @@ defmodule Bundlex.Project do
   * `includes` - Paths to look for header files (empty list by default).
   * `lib_dirs` - Paths to look for libraries (empty list by default).
   * `libs` - Names of libraries to link (empty list by default).
-  * `os_deps` - List of external OS dependencies. It's a keyword list, when each key is the
+  * `os_deps` - List of external OS dependencies. It's a keyword list, where each key is the
   dependency name and the value is a provider or a list of them. In the latter case, subsequent
   providers from the list will be tried until one of them succeeds. A provider may be one of:
-    - `pkg_config` - resolves the dependency via `pkg-config`.
-    - `precompiled` - downloads the dependency from a given url and sets appropriate compilation
-    and linking flags.
+    - `pkg_config` - Resolves the dependency via `pkg-config`. Can be either `{:pkg_config, pkg_configs}`
+    or just `:pkg_config`, in which case the dependency name will be used as the pkg_config name.
+    - `precompiled` - Downloads the dependency from a given url and sets appropriate compilation
+    and linking flags. Can be either `{:precompiled, url, libs}` or `{:precompiled, url}`, in which
+    case the dependency name will be used as the lib name.
   Check `t:os_dep/0` for details.
   * `pkg_configs` - (deprecated) Names of libraries for which the appropriate flags will be
   obtained using pkg-config (empty list by default). Use `os_deps` instead.

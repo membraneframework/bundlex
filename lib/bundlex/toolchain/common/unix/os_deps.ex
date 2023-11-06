@@ -8,27 +8,9 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   def resolve_os_deps(native) do
     {cflags_list, libs_list} =
       native.os_deps
-      |> Enum.map(fn
-        {name, providers} when is_atom(name) and name != :pkg_config ->
-          resolve_os_dep(name, native.app, Bunch.listify(providers), [])
-
-        {providers, lib_names} ->
-          IO.warn("""
-          Native #{inspect(native.name)} uses deprecated syntax for `os_deps`. \
-          See `Bundlex.Project.os_dep` for the new syntax.
-          """)
-
-          name = lib_names |> Bunch.listify() |> Enum.join("_") |> String.to_atom()
-
-          providers =
-            providers
-            |> Bunch.listify()
-            |> Enum.map(fn
-              {:precompiled, url} -> {:precompiled, url, lib_names}
-              :pkg_config -> {:pkg_config, lib_names}
-            end)
-
-          resolve_os_dep(name, native.app, providers, [])
+      |> Enum.map(&handle_old_api(native.name, &1))
+      |> Enum.map(fn {name, providers} ->
+        resolve_os_dep(name, native.app, Bunch.listify(providers), [])
       end)
       |> Enum.unzip()
 
@@ -40,6 +22,51 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
       | compiler_flags: native.compiler_flags ++ compiler_flags,
         linker_flags: native.linker_flags ++ libs_flags
     }
+  end
+
+  defp handle_old_api(native_name, entry) do
+    is_old_api =
+      case entry do
+        {:pkg_config, value} ->
+          is_binary(value) or (is_list(value) and value != [] and Enum.all?(value, &is_binary/1))
+
+        {name, _providers} when is_atom(name) ->
+          false
+
+        {_providers, _lib_names} ->
+          true
+      end
+
+    if is_old_api do
+      IO.warn("""
+      Native #{inspect(native_name)} uses deprecated syntax for `os_deps`. \
+      See `Bundlex.Project.os_dep` for the new syntax.
+      """)
+
+      {providers, lib_names} = entry
+
+      name = lib_names |> Bunch.listify() |> Enum.join("_") |> String.to_atom()
+
+      providers =
+        providers
+        |> Bunch.listify()
+        |> Enum.map(fn
+          {:precompiled, url} -> {:precompiled, url, lib_names}
+          :pkg_config -> {:pkg_config, lib_names}
+        end)
+
+      {name, providers}
+    else
+      entry
+    end
+  end
+
+  defp resolve_os_dep(name, app, [], []) do
+    Output.raise("""
+    Couldn't load OS dependency #{inspect(name)} of package #{app}, \
+    because no providers were specified. \
+    Make sure to follow installation instructions that may be available in the readme of #{app}.
+    """)
   end
 
   defp resolve_os_dep(name, app, [], errors) do
