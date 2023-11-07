@@ -6,7 +6,8 @@ defmodule Bundlex.Toolchain.XCode do
   alias Bundlex.Native
   alias Bundlex.Toolchain.Common.{Compilers, Unix}
 
-  @compilers %Compilers{c: "cc", cpp: "clang++"}
+  @compilers %Compilers{c: System.fetch_env!("CC"), cpp: System.fetch_env!("CXX")}
+  # @compilers %Compilers{c: "cc", cpp: "clang++"}
 
   @impl Toolchain
   def compiler_commands(native) do
@@ -22,6 +23,8 @@ defmodule Bundlex.Toolchain.XCode do
           {"", ""}
       end
 
+    IO.inspect("xcode")
+
     compiler = @compilers |> Map.get(native.language)
 
     Unix.compiler_commands(
@@ -29,7 +32,7 @@ defmodule Bundlex.Toolchain.XCode do
       "#{compiler} #{cflags}",
       "#{compiler} #{lflags}",
       native.language,
-      wrap_deps: &"-Wl,-all_load #{&1}"
+      wrap_deps: &"-Wl, #{&1}"
     )
   end
 end

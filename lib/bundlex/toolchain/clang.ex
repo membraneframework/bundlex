@@ -5,7 +5,8 @@ defmodule Bundlex.Toolchain.Clang do
   alias Bundlex.Native
   alias Bundlex.Toolchain.Common.{Compilers, Unix}
 
-  @compilers %Compilers{c: "clang", cpp: "clang++"}
+  @compilers %Compilers{c: System.fetch_env!("CC"), cpp: System.fetch_env!("CXX")}
+  # @compilers %Compilers{c: "clang", cpp: "clang++"}
 
   @impl Toolchain
   def compiler_commands(native) do
@@ -15,6 +16,8 @@ defmodule Bundlex.Toolchain.Clang do
         %Native{type: :lib} -> {"-fPIC", ""}
         %Native{} -> {"", ""}
       end
+
+    IO.inspect("clang")
 
     compiler = @compilers |> Map.get(native.language)
 

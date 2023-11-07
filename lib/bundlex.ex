@@ -6,7 +6,7 @@ defmodule Bundlex do
   alias Bundlex.Helper.MixHelper
   alias Bundlex.Platform
 
-  @type platform_t :: :linux | :macosx | :windows32 | :windows64
+  @type platform_t :: :linux | :macosx | :windows32 | :windows64 | :nerves
 
   @typedoc """
   A map containing three fields that describe the platform.

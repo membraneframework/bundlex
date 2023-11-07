@@ -130,6 +130,8 @@ defmodule Bundlex.Native do
           native_with_resolved_os_deps
         )
 
+      IO.inspect(Platform.get_module(platform), label: "Platform")
+
       {:ok, commands}
     end
   end

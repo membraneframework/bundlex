@@ -42,6 +42,14 @@ defmodule Bundlex.Platform do
   """
   @spec get_current! :: name_t
   def get_current! do
+    case System.fetch_env("NERVES_APP") do
+      {:ok, _} -> :nerves
+      {:error, _} -> get_current_native!()
+    end
+  end
+
+  @spec get_current_native! :: name_t
+  defp get_current_native! do
     case :os.type() do
       {:win32, _} ->
         {:ok, reg} = :win32reg.open([:read])
@@ -85,6 +93,7 @@ defmodule Bundlex.Platform do
   def family(:linux), do: :unix
   def family(:macosx), do: :unix
   def family(:freebsd), do: :unix
+  def family(:nerves), do: :unix
 
   @spec get_module(family_name_t) :: module
   def get_module(:windows32), do: Bundlex.Platform.Windows32
@@ -92,4 +101,5 @@ defmodule Bundlex.Platform do
   def get_module(:macosx), do: Bundlex.Platform.MacOSX
   def get_module(:linux), do: Bundlex.Platform.Linux
   def get_module(:freebsd), do: Bundlex.Platform.Freebsd
+  def get_module(:nerves), do: Bundlex.Platform.Nerves
 end

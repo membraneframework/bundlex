@@ -1,4 +1,4 @@
-defmodule Bundlex.Toolchain.GCC do
+defmodule Bundlex.Toolchain.Nerves do
   @moduledoc false
 
   use Bundlex.Toolchain
@@ -6,7 +6,6 @@ defmodule Bundlex.Toolchain.GCC do
   alias Bundlex.Toolchain.Common.{Compilers, Unix}
 
   @compilers %Compilers{c: System.fetch_env!("CC"), cpp: System.fetch_env!("CXX")}
-  # @compilers %Compilers{c: "gcc", cpp: "g++"}
 
   @impl Toolchain
   def compiler_commands(native) do
@@ -17,7 +16,7 @@ defmodule Bundlex.Toolchain.GCC do
         %Native{} -> {"", ""}
       end
 
-    IO.inspect("gcc")
+    IO.inspect("nerves")
 
     compiler = @compilers |> Map.get(native.language)
 
