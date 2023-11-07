@@ -16,8 +16,6 @@ defmodule Bundlex.Toolchain.Nerves do
         %Native{} -> {"", ""}
       end
 
-    IO.inspect("nerves")
-
     compiler = @compilers |> Map.get(native.language)
 
     Unix.compiler_commands(
