@@ -2,14 +2,14 @@ defmodule Bundlex.Toolchain.Common.Unix do
   @moduledoc false
 
   use Bunch
-  alias Bundlex.{Native, Toolchain}
+  alias Bundlex.{Native, Project, Toolchain}
   alias Bundlex.Toolchain.Common.Compilers
 
   @spec compiler_commands(
           Native.t(),
           compile :: String.t(),
           link :: String.t(),
-          lang :: Native.language_t(),
+          lang :: Project.native_language(),
           options :: Keyword.t()
         ) :: [String.t()]
   def compiler_commands(native, compile, link, lang, options \\ []) do

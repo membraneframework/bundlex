@@ -39,7 +39,7 @@ defmodule ExampleTest do
     _port = Bundlex.Port.open(name)
 
     receive do
-      {_port, {:data, msg}} -> assert msg == 'bundlex_port_test'
+      {_port, {:data, msg}} -> assert msg == ~c"bundlex_port_test"
     after
       2_000 -> raise "timeout"
     end

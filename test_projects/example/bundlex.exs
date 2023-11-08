@@ -7,13 +7,22 @@ defmodule Example.BundlexProject do
     ]
   end
 
+  defp get_ffmpeg() do
+    url =
+      case Bundlex.get_target() do
+        %{os: "linux"} ->
+          "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n4.4-latest-linux64-gpl-shared-4.4.tar.xz/"
 
-  defp get_ffmpeg_url() do
-    case Bundlex.get_target() do
-      %{os: "linux"} -> {:precompiled, "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n4.4-latest-linux64-gpl-shared-4.4.tar.xz/"}
-      %{architecture: "x86_64", os: "darwin"<>_rest_of_os_name} -> {:precompiled, "https://github.com/membraneframework-labs/precompiled_ffmpeg/releases/download/version1/ffmpeg_macos_intel.tar.gz"}
-      _other -> nil
-    end
+        %{architecture: "x86_64", os: "darwin" <> _rest_of_os_name} ->
+          "https://github.com/membraneframework-precompiled/precompiled_ffmpeg/releases/latest/download/ffmpeg_macos_intel.tar.gz"
+
+        _other ->
+          nil
+      end
+
+    libs = ["libswscale", "libavcodec"]
+
+    [{:precompiled, url, libs}, {:pkg_config, libs}]
   end
 
   defp natives do
@@ -24,9 +33,9 @@ defmodule Example.BundlexProject do
         sources: ["foo_nif.c"],
         interface: [:nif],
         os_deps: [
-          {[get_ffmpeg_url(), :pkg_config], ["libswscale", "libavcodec"]},
-          {:pkg_config, "libpng"}
-        ],
+          {:pkg_config, "libpng"}, # deprecated, testing for regression
+          ffmpeg: get_ffmpeg(),
+        ]
       ],
       example: [
         deps: [example_lib: :example_lib],
