@@ -82,7 +82,7 @@ defmodule Bundlex.Project do
   @type native_config :: unquote(native_config_type)
 
   @spec native_config_keys :: [atom]
-  def native_config_keys, do: unquote(Bunch.KVEnum.keys(native_config_type))
+  def native_config_keys, do: unquote(Keyword.keys(native_config_type))
 
   @typedoc """
   Type describing input project configuration.
