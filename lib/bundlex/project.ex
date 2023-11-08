@@ -4,7 +4,6 @@ defmodule Bundlex.Project do
   `bundlex.exs` file.
   """
   use Bunch
-  alias Bunch.KVList
   alias Bundlex.Helper.MixHelper
   alias __MODULE__.{Preprocessor, Store}
 
@@ -26,11 +25,20 @@ defmodule Bundlex.Project do
   @typedoc """
   Type describing configuration of a native.
 
-  It's a keyword list containing the following keys:
-  * `sources` - C files to be compiled (at least one must be provided),
-  * `includes` - Paths to look for header files (empty list by default).
-  * `lib_dirs` - Paths to look for libraries (empty list by default).
-  * `libs` - Names of libraries to link (empty list by default).
+  Configuration of each native may contain following options:
+  * `sources` - C files to be compiled (at least one must be provided).
+  * `preprocessors` - Modules that will pre-process the native. They may change this configuration, for example
+  by adding new keys. An example of preprocessor is [Unifex](https://hexdocs.pm/unifex/Unifex.html).
+  See `Bundlex.Project.Preprocessor` for more details.
+  * `interface` - Interface used to integrate with Elixir code. The following interfaces are available:
+    * :nif - dynamically linked to the Erlang VM (see [Erlang docs](http://erlang.org/doc/man/erl_nif.html))
+    * :cnode - executed as separate OS processes, accessed through sockets (see [Erlang docs](http://erlang.org/doc/man/ei_connect.html))
+    * :port - executed as separate OS processes (see [Elixir Port docs](https://hexdocs.pm/elixir/Port.html))
+  Specifying no interface is valid only for libs.
+  * `deps` - Dependencies in the form of `{app, lib_name}`, where `app`
+  is the application name of the dependency, and `lib_name` is the name of lib
+  specified in Bundlex project of this dependency. Empty list by default. See _Dependencies_ section below
+  for details.
   * `os_deps` - List of external OS dependencies. It's a keyword list, where each key is the
   dependency name and the value is a provider or a list of them. In the latter case, subsequent
   providers from the list will be tried until one of them succeeds. A provider may be one of:
@@ -40,52 +48,41 @@ defmodule Bundlex.Project do
     and linking flags. Can be either `{:precompiled, url, libs}` or `{:precompiled, url}`, in which
     case the dependency name will be used as the lib name.
   Check `t:os_dep/0` for details.
-  * `pkg_configs` - (deprecated) Names of libraries for which the appropriate flags will be
-  obtained using pkg-config (empty list by default). Use `os_deps` instead.
-  * `deps` - Dependencies in the form of `{app, lib_name}`, where `app`
-  is the application name of the dependency, and `lib_name` is the name of lib
-  specified in bundlex project of this dependency. See _Dependencies_ section in
-  readme for details.
+  * `pkg_configs` - (deprecated, use `os_deps` instead) Names of libraries for which the appropriate flags will be
+  obtained using pkg-config (empty list by default).
+  * `language` - Language of native. `:c` or `:cpp` may be chosen (`:c` by default).
   * `src_base` - Native files should reside in `project_root/c_src/<src_base>`
   (application name by default).
-  * `compiler_flags` - Custom flags for compiler.
+  * `includes` - Paths to look for header files (empty list by default).
+  * `lib_dirs` - Absolute paths to look for libraries (empty list by default).
+  * `libs` - Names of libraries to link (empty list by default).
+  * `compiler_flags` - Custom flags for compiler. Default `-std` flag for `:c` is `-std=c11` and for `:cpp` is `-std=c++17`.
   * `linker_flags` - Custom flags for linker.
-  * `language` - Language of native. :c or :cpp may be chosen (:c by default)
-  * `interface` - Interface of native. It can be single atom e.g. :nif or list of atoms.
-  * `preprocessors` - Modules implementing `Bundlex.Project.Preprocessor` behaviour
   """
-  @type native_config :: [
-          sources: [String.t()],
-          includes: [String.t()],
-          lib_dirs: [String.t()],
-          libs: [String.t()],
-          os_deps: [os_dep],
-          pkg_configs: [String.t()],
-          deps: [{Application.app(), native_name | [native_name]}],
-          src_base: String.t(),
-          compiler_flags: [String.t()],
-          linker_flags: [String.t()],
-          language: :c | :cpp,
-          interface: native_interface | [native_interface],
-          preprocessor: [Preprocessor.t()] | Preprocessor.t()
-        ]
+
+  native_config_type =
+    quote do
+      [
+        sources: [String.t()],
+        includes: [String.t()],
+        lib_dirs: [String.t()],
+        libs: [String.t()],
+        os_deps: [os_dep],
+        pkg_configs: [String.t()],
+        deps: [{Application.app(), native_name | [native_name]}],
+        src_base: String.t(),
+        compiler_flags: [String.t()],
+        linker_flags: [String.t()],
+        language: :c | :cpp,
+        interface: native_interface | [native_interface],
+        preprocessor: [Preprocessor.t()] | Preprocessor.t()
+      ]
+    end
+
+  @type native_config :: unquote(native_config_type)
 
   @spec native_config_keys :: [atom]
-  def native_config_keys,
-    do: [
-      :includes,
-      :libs,
-      :lib_dirs,
-      :pkg_configs,
-      :os_deps,
-      :sources,
-      :deps,
-      :compiler_flags,
-      :linker_flags,
-      :language,
-      :interface,
-      :preprocessor
-    ]
+  def native_config_keys, do: unquote(Bunch.KVEnum.keys(native_config_type))
 
   @typedoc """
   Type describing input project configuration.
@@ -94,12 +91,12 @@ defmodule Bundlex.Project do
   native packages that are compiled as static libraries and linked to natives
   that have them specified in `deps` field of their configuration.
   """
-  @type config_t :: KVList.t(:natives | :libs, KVList.t(native_name, native_config))
+  @type config :: [{:natives | :libs, [{native_name, native_config}]}]
 
   @doc """
   Callback returning project configuration.
   """
-  @callback project() :: config_t
+  @callback project() :: config
 
   defmacro __using__(_args) do
     quote do
@@ -124,7 +121,7 @@ defmodule Bundlex.Project do
   - `:app` - application that exports project
   """
   @type t :: %__MODULE__{
-          config: config_t,
+          config: config,
           src_path: String.t(),
           module: module,
           app: atom
