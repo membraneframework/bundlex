@@ -25,11 +25,6 @@ defmodule Bundlex.Toolchain.Nerves do
           {nerves_cflags, System.fetch_env!("LDFLAGS")}
       end
 
-
-
-    IO.inspect(System.fetch_env("CFLAGS"), label: "CFLAGS")
-    IO.inspect(System.fetch_env("LDFLAGS"), label: "LDFLAGS")
-
     Unix.compiler_commands(
       native,
       "#{compiler} #{cflags}",
