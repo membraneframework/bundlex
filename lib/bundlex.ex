@@ -38,7 +38,7 @@ defmodule Bundlex do
   """
   @spec platform() :: platform_t()
   def platform() do
-    Platform.get_current!()
+    Platform.get_target!()
   end
 
   @doc """

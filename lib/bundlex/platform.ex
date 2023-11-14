@@ -40,16 +40,17 @@ defmodule Bundlex.Platform do
 
   Otherwise raises Mix error.
   """
-  @spec get_current! :: name_t
-  def get_current! do
-    case System.fetch_env("NERVES_APP") do
+  @spec get_target! :: name_t
+  def get_target! do
+    case System.fetch_env("MIX_TARGET") do
+      {:ok, "host"} -> get_current!()
       {:ok, _} -> :nerves
-      {:error, _} -> get_current_native!()
+      :error -> get_current!()
     end
   end
 
-  @spec get_current_native! :: name_t
-  defp get_current_native! do
+  @spec get_current! :: name_t
+  defp get_current! do
     case :os.type() do
       {:win32, _} ->
         {:ok, reg} = :win32reg.open([:read])

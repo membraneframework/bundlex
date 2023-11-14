@@ -3,20 +3,32 @@ defmodule Bundlex.Toolchain.Nerves do
 
   use Bundlex.Toolchain
   alias Bundlex.Native
-  alias Bundlex.Toolchain.Common.{Compilers, Unix}
-
-  @compilers %Compilers{c: System.fetch_env!("CC"), cpp: System.fetch_env!("CXX")}
+  alias Bundlex.Toolchain.Common.Unix
 
   @impl Toolchain
   def compiler_commands(native) do
-    {cflags, lflags} =
-      case native do
-        %Native{type: :native, interface: :nif} -> {"-fPIC", "-rdynamic -shared"}
-        %Native{type: :lib} -> {"-fPIC", ""}
-        %Native{} -> {"", ""}
+    {compiler, nerves_cflags} =
+      case native.language do
+        :c -> {System.fetch_env!("CC"), System.fetch_env!("CFLAGS")}
+        :cpp -> {System.fetch_env!("CXX"), System.fetch_env!("CXXFLAGS")}
       end
 
-    compiler = @compilers |> Map.get(native.language)
+    {cflags, lflags} =
+      case native do
+        %Native{type: :native, interface: :nif} ->
+          {nerves_cflags <> " -fPIC", System.fetch_env!("LDFLAGS") <> " -rdynamic -shared"}
+
+        %Native{type: :lib} ->
+          {nerves_cflags <> " -fPIC", System.fetch_env!("LDFLAGS")}
+
+        %Native{} ->
+          {nerves_cflags, System.fetch_env!("LDFLAGS")}
+      end
+
+
+
+    IO.inspect(System.fetch_env("CFLAGS"), label: "CFLAGS")
+    IO.inspect(System.fetch_env("LDFLAGS"), label: "LDFLAGS")
 
     Unix.compiler_commands(
       native,
