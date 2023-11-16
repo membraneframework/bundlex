@@ -10,7 +10,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
       native.os_deps
       |> Enum.map(&handle_old_api(native.name, &1))
       |> Enum.map(fn {name, providers} ->
-        resolve_os_dep(name, native.app, Bunch.listify(providers), [])
+        resolve_os_dep(name, native.app, Bunch.listify(providers), native, [])
       end)
       |> Enum.unzip()
 
@@ -61,7 +61,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     end
   end
 
-  defp resolve_os_dep(name, app, [], []) do
+  defp resolve_os_dep(name, app, [], _native, []) do
     Output.raise("""
     Couldn't load OS dependency #{inspect(name)} of package #{app}, \
     because no providers were specified. \
@@ -69,7 +69,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     """)
   end
 
-  defp resolve_os_dep(name, app, [], errors) do
+  defp resolve_os_dep(name, app, [], _native, errors) do
     Output.raise("""
     Couldn't load OS dependency #{inspect(name)} of package #{app}. \
     Make sure to follow installation instructions that may be available in the readme of #{app}.
@@ -80,23 +80,23 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     """)
   end
 
-  defp resolve_os_dep(name, app, [provider | providers], errors) do
-    case resolve_os_dep_provider(name, provider) do
+  defp resolve_os_dep(name, app, [provider | providers], native, errors) do
+    case resolve_os_dep_provider(name, provider, native) do
       {:ok, cflags, libs} ->
         {cflags, libs}
 
       {:error, reason} ->
-        resolve_os_dep(name, app, providers, [
+        resolve_os_dep(name, app, providers, native, [
           "Provider `#{inspect(provider)}` #{reason}" | errors
         ])
     end
   end
 
-  defp resolve_os_dep_provider(name, :pkg_config) do
-    resolve_os_dep_provider(name, {:pkg_config, "#{name}"})
+  defp resolve_os_dep_provider(name, :pkg_config, native) do
+    resolve_os_dep_provider(name, {:pkg_config, "#{name}"}, native)
   end
 
-  defp resolve_os_dep_provider(_name, {:pkg_config, pkg_configs}) do
+  defp resolve_os_dep_provider(_name, {:pkg_config, pkg_configs}, _native) do
     pkg_configs = Bunch.listify(pkg_configs)
 
     with {:ok, cflags} <- get_flags_from_pkg_config(pkg_configs, :cflags),
@@ -105,17 +105,29 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     end
   end
 
-  defp resolve_os_dep_provider(name, {:precompiled, url}) do
-    resolve_os_dep_provider(name, {:precompiled, url, "#{name}"})
+  defp resolve_os_dep_provider(name, {:precompiled, url}, native) do
+    resolve_os_dep_provider(name, {:precompiled, url, "#{name}"}, native)
   end
 
-  defp resolve_os_dep_provider(name, {:precompiled, url, lib_names}) do
-    lib_names = Bunch.listify(lib_names)
+  defp resolve_os_dep_provider(name, {:precompiled, url, lib_names}, native) do
+    disabled_apps =
+      Application.get_env(:bundlex, :disable_precompiled_os_deps, [])
+      |> Keyword.get(:apps, [])
+      |> Bunch.listify()
 
-    with {:ok, package_path} <-
-           maybe_download_precompiled_package(name, url) do
-      {:ok, get_flags_for_precompiled(package_path, lib_names, :cflags),
-       get_flags_for_precompiled(package_path, lib_names, :libs)}
+    if native.app in disabled_apps do
+      {:error,
+       """
+       is disabled in the application configuration, check the config.exs file.
+       """}
+    else
+      lib_names = Bunch.listify(lib_names)
+
+      with {:ok, package_path} <-
+             maybe_download_precompiled_package(name, url) do
+        {:ok, get_flags_for_precompiled(package_path, lib_names, :cflags),
+         get_flags_for_precompiled(package_path, lib_names, :libs)}
+      end
     end
   end
 
