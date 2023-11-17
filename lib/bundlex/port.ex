@@ -4,7 +4,7 @@ defmodule Bundlex.Port do
   """
 
   alias Bundlex.Helper.MixHelper
-  alias Bundlex.Native
+  alias Bundlex.Project
 
   @doc """
   Spawns Port `native_name` from application of calling module.
@@ -18,7 +18,7 @@ defmodule Bundlex.Port do
     end
   end
 
-  @spec open(Application.app(), Native.name_t(), [String.t()]) :: port()
+  @spec open(Application.app(), Project.native_name(), [String.t()]) :: port()
   def open(app, native_name, args) do
     Port.open(
       {:spawn_executable, Bundlex.build_path(app, native_name, :port)},
