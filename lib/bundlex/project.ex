@@ -47,7 +47,15 @@ defmodule Bundlex.Project do
     - `precompiled` - Downloads the dependency from a given url and sets appropriate compilation
     and linking flags. Can be either `{:precompiled, url, libs}` or `{:precompiled, url}`, in which
     case the dependency name will be used as the lib name.
-  Check `t:os_dep/0` for details.
+    Precompiled dependencies for given applications (Mix projects) can be disabled via configuration, for example:
+    ```elixir
+    config :bundlex, :disable_precompiled_os_deps,
+      apps: [:my_application, :another_application]
+    ```
+    Note that this will affect the natives and libs defined in the `bundlex.exs` files of specified
+    applications only, not in their dependencies.
+
+    Check `t:os_dep/0` for details.
   * `pkg_configs` - (deprecated, use `os_deps` instead) Names of libraries for which the appropriate flags will be
   obtained using pkg-config (empty list by default).
   * `language` - Language of native. `:c` or `:cpp` may be chosen (`:c` by default).
