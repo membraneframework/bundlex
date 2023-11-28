@@ -13,7 +13,7 @@ defmodule Bundlex.CNode.NameStore do
   @spec start_link(GenServer.options()) :: Agent.on_start()
   def start_link(opts \\ []) do
     Agent.start_link(
-      fn -> %{seq_num: 0, q: Qex.new(), creations: %{}, self_id: SecureRandom.uuid()} end,
+      fn -> %{seq_num: 0, q: Qex.new(), creations: %{}, self_id: UUID.uuid4()} end,
       opts ++ [name: __MODULE__]
     )
   end
