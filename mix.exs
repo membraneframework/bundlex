@@ -1,7 +1,7 @@
 defmodule Bundlex.Mixfile do
   use Mix.Project
 
-  @version "1.3.1"
+  @version "1.3.2"
   @github_url "https://github.com/membraneframework/bundlex"
 
   def project do
@@ -72,7 +72,7 @@ defmodule Bundlex.Mixfile do
       {:bunch, "~> 1.0"},
       {:qex, "~> 0.5"},
       {:req, "~> 0.4.0"},
-      {:secure_random, "~> 0.5"},
+      {:elixir_uuid, "~> 1.2"},
       {:zarex, "~> 1.0"},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:dialyxir, "~> 1.0", only: :dev, runtime: false},
