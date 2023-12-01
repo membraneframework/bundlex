@@ -69,11 +69,20 @@ defmodule Bundlex.Loader do
         end
       end)
 
+    should_load_nif =
+      case System.fetch_env("MIX_TARGET") do
+        {:ok, "host"} -> true
+        {:ok, _} -> false
+        :error -> true
+      end
+
     nif_module_content =
       quote do
         @moduledoc false
         require unquote(__MODULE__)
-        @on_load :load_nif
+        if unquote(should_load_nif) do
+          @on_load :load_nif
+        end
         @spec load_nif() :: :ok | no_return()
         def load_nif() do
           unquote(__MODULE__).load_nif!(unquote(app), unquote(nif_name))
