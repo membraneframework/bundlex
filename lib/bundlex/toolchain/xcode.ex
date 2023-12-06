@@ -29,7 +29,7 @@ defmodule Bundlex.Toolchain.XCode do
       "#{compiler} #{cflags}",
       "#{compiler} #{lflags}",
       native.language,
-      wrap_deps: &"-Wl, #{&1}"
+      wrap_deps: &"-Wl,-all_load #{&1}"
     )
   end
 end

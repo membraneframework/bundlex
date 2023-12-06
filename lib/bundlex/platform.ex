@@ -34,23 +34,23 @@ defmodule Bundlex.Platform do
   end
 
   @doc """
-  Detects current platform.
+  Detects target platform.
 
   In case of success returns platform name
 
   Otherwise raises Mix error.
   """
-  @spec get_target! :: name_t
-  def get_target! do
-    case System.fetch_env("MIX_TARGET") do
-      {:ok, "host"} -> get_current!()
-      {:ok, _} -> :nerves
-      :error -> get_current!()
+  @spec get_target!() :: name_t
+  def get_target!() do
+    if Mix.target() == :host do
+      get_host!()
+    else
+      :nerves
     end
   end
 
-  @spec get_current! :: name_t
-  defp get_current! do
+  @spec get_host!() :: name_t
+  defp get_host!() do
     case :os.type() do
       {:win32, _} ->
         {:ok, reg} = :win32reg.open([:read])
