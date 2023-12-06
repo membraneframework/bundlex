@@ -42,10 +42,16 @@ defmodule Bundlex.Platform do
   """
   @spec get_target!() :: name_t
   def get_target!() do
-    if Mix.target() == :host do
-      get_host!()
-    else
-      :nerves
+    case {Mix.target(), System.fetch_env("NERVES_APP")} do
+      {:host, _app} ->
+        get_host!()
+
+      {_target, {:ok, _app}} ->
+        :nerves
+
+      {_target, :error} ->
+        IO.warn("Crosscompilation supported only for Nerves systems, assuming host's platform")
+        get_host!()
     end
   end
 
