@@ -68,4 +68,5 @@ defmodule Bundlex.BuildScript do
   defp family!(:macosx), do: :unix
   defp family!(:linux), do: :unix
   defp family!(:freebsd), do: :unix
+  defp family!(:nerves), do: :unix
 end

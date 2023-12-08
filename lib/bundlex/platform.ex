@@ -34,14 +34,29 @@ defmodule Bundlex.Platform do
   end
 
   @doc """
-  Detects current platform.
+  Detects target platform.
 
   In case of success returns platform name
 
   Otherwise raises Mix error.
   """
-  @spec get_current! :: name_t
-  def get_current! do
+  @spec get_target!() :: name_t
+  def get_target!() do
+    case {Mix.target(), System.fetch_env("NERVES_APP")} do
+      {:host, _app} ->
+        get_host!()
+
+      {_target, {:ok, _app}} ->
+        :nerves
+
+      {_target, :error} ->
+        IO.warn("Crosscompilation supported only for Nerves systems, assuming host's platform")
+        get_host!()
+    end
+  end
+
+  @spec get_host!() :: name_t
+  defp get_host!() do
     case :os.type() do
       {:win32, _} ->
         {:ok, reg} = :win32reg.open([:read])
@@ -85,6 +100,7 @@ defmodule Bundlex.Platform do
   def family(:linux), do: :unix
   def family(:macosx), do: :unix
   def family(:freebsd), do: :unix
+  def family(:nerves), do: :unix
 
   @spec get_module(family_name_t) :: module
   def get_module(:windows32), do: Bundlex.Platform.Windows32
@@ -92,4 +108,5 @@ defmodule Bundlex.Platform do
   def get_module(:macosx), do: Bundlex.Platform.MacOSX
   def get_module(:linux), do: Bundlex.Platform.Linux
   def get_module(:freebsd), do: Bundlex.Platform.Freebsd
+  def get_module(:nerves), do: Bundlex.Platform.Nerves
 end

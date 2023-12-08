@@ -48,10 +48,12 @@ defmodule Bundlex.Project do
     and linking flags. Can be either `{:precompiled, url, libs}` or `{:precompiled, url}`, in which
     case the dependency name will be used as the lib name.
     Precompiled dependencies for given applications (Mix projects) can be disabled via configuration, for example:
-    ```elixir
+
+  ```elixir
     config :bundlex, :disable_precompiled_os_deps,
       apps: [:my_application, :another_application]
     ```
+
     Note that this will affect the natives and libs defined in the `bundlex.exs` files of specified
     applications only, not in their dependencies.
 

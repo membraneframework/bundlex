@@ -73,7 +73,11 @@ defmodule Bundlex.Loader do
       quote do
         @moduledoc false
         require unquote(__MODULE__)
-        @on_load :load_nif
+
+        if unquote(Mix.target() == :host) do
+          @on_load :load_nif
+        end
+
         @spec load_nif() :: :ok | no_return()
         def load_nif() do
           unquote(__MODULE__).load_nif!(unquote(app), unquote(nif_name))
