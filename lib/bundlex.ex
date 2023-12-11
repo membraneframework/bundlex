@@ -15,15 +15,10 @@ defmodule Bundlex do
   * architecture - e.g. `x86_64` or `arm64`
   * vendor - e.g. `pc`
   * os - operating system, e.g. `linux` or `darwin20.6.0`
-  * abi (optional) - application binary interface, e.g. `musl` or `gnu`
+  * abi - application binary interface, e.g. `musl` or `gnu` (nil if unknown / non-existent)
   """
   @type target ::
-          %{
-            required(:architecture) => String.t(),
-            required(:vendor) => String.t(),
-            required(:os) => String.t(),
-            optional(:abi) => String.t()
-          }
+          %{architecture: String.t(), vendor: String.t(), os: String.t(), abi: String.t() | nil}
   @doc """
   A function returning a target triplet for the environment on which it is run.
   """
@@ -32,16 +27,12 @@ defmodule Bundlex do
     [architecture, vendor, os | maybe_abi] =
       :erlang.system_info(:system_architecture) |> List.to_string() |> String.split("-")
 
-    target = %{
+    %{
       architecture: architecture,
       vendor: vendor,
-      os: os
+      os: os,
+      abi: List.first(maybe_abi)
     }
-
-    case maybe_abi do
-      [] -> target
-      [abi] -> Map.put(target, :abi, abi)
-    end
   end
 
   @doc """
