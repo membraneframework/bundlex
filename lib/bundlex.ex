@@ -9,27 +9,29 @@ defmodule Bundlex do
   @type platform_t :: :linux | :macosx | :windows32 | :windows64 | :nerves
 
   @typedoc """
-  A map containing three fields that describe the platform.
+  A map containing four fields that describe the platform.
 
   It consists of:
   * architecture - e.g. `x86_64` or `arm64`
   * vendor - e.g. `pc`
   * os - operating system, e.g. `linux` or `darwin20.6.0`
+  * abi - application binary interface, e.g. `musl` or `gnu` (nil if unknown / non-existent)
   """
   @type target ::
-          %{architecture: String.t(), vendor: String.t(), os: String.t()}
+          %{architecture: String.t(), vendor: String.t(), os: String.t(), abi: String.t() | nil}
   @doc """
   A function returning a target triplet for the environment on which it is run.
   """
   @spec get_target() :: target()
   def get_target() do
-    [architecture, vendor, os | _rest] =
+    [architecture, vendor, os | maybe_abi] =
       :erlang.system_info(:system_architecture) |> List.to_string() |> String.split("-")
 
     %{
       architecture: architecture,
       vendor: vendor,
-      os: os
+      os: os,
+      abi: List.first(maybe_abi)
     }
   end
 
