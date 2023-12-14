@@ -138,7 +138,8 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
 
     [
       "-L#{full_packages_library_path}",
-      "-Wl,-rpath,#{full_packages_library_path}"
+      "-Wl,-rpath,#{full_packages_library_path}",
+      "-Wl,-rpath,/opt/homebrew/lib"
     ] ++
       Enum.map(lib_names, &"-l#{remove_lib_prefix(&1)}")
   end
