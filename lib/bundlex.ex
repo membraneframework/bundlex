@@ -19,6 +19,7 @@ defmodule Bundlex do
   """
   @type target ::
           %{architecture: String.t(), vendor: String.t(), os: String.t(), abi: String.t() | nil}
+
   @doc """
   A function returning a target triplet for the environment on which it is run.
   """
