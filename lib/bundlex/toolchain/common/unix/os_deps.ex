@@ -2,6 +2,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   @moduledoc false
 
   require Logger
+  alias Bundlex.Helper.MixHelper
   alias Bundlex.Output
 
   @spec resolve_os_deps(Bundlex.Native.t()) :: Bundlex.Native.t()
@@ -131,7 +132,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     end
   end
 
-  defp get_precompiled_path(), do: "#{Mix.Project.build_path()}/bundlex_precompiled/"
+  defp get_precompiled_path(), do: "#{MixHelper.get_priv_dir(:bundlex)}/precompiled/"
 
   defp get_flags_for_precompiled(precompiled_dependency_path, lib_names, :libs) do
     full_packages_library_path = Path.absname("#{precompiled_dependency_path}/lib")
@@ -200,7 +201,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   defp maybe_download_precompiled_package(name, url) do
     precompiled_path = get_precompiled_path()
     File.mkdir_p!(precompiled_path)
-    package_path = "#{precompiled_path}#{Zarex.sanitize(url)}"
+    package_path = Path.join(precompiled_path, Zarex.sanitize(url))
 
     if File.exists?(package_path) do
       {:ok, package_path}
@@ -208,7 +209,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
       File.mkdir!(package_path)
 
       try do
-        temporary_destination = "#{get_precompiled_path()}/temporary"
+        temporary_destination = Path.join(get_precompiled_path(), "temporary")
         download(url, temporary_destination)
 
         {_output, 0} =
