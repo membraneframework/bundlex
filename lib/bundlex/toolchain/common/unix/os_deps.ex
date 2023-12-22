@@ -2,7 +2,6 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   @moduledoc false
 
   require Logger
-  alias Bundlex.Helper.MixHelper
   alias Bundlex.Output
 
   @spec resolve_os_deps(Bundlex.Native.t()) :: Bundlex.Native.t()
@@ -124,30 +123,45 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     else
       lib_names = Bunch.listify(lib_names)
 
-      with {:ok, package_path} <-
+      with {:ok, dependency_dir_name} <-
              maybe_download_precompiled_package(name, url) do
-        {:ok, get_flags_for_precompiled(package_path, lib_names, :cflags),
-         get_flags_for_precompiled(package_path, lib_names, :libs)}
+        output_path = Bundlex.Toolchain.output_path(native.app, native.interface)
+        dependency_path = Path.join(output_path, dependency_dir_name)
+
+        unless File.exists?(dependency_path) do
+          File.mkdir_p!(output_path)
+
+          File.ln_s!(
+            Path.join([precompiled_abs_path(), dependency_dir_name, "lib"]),
+            dependency_path
+          )
+        end
+
+        {:ok, get_flags_for_precompiled(dependency_dir_name, lib_names, :cflags),
+         get_flags_for_precompiled(dependency_dir_name, lib_names, :libs)}
       end
     end
   end
 
-  defp get_precompiled_path(), do: "#{MixHelper.get_priv_dir(:bundlex)}/precompiled/"
+  defp precompiled_abs_path(),
+    do: Path.join(Bundlex.Toolchain.bundlex_shared_path(), "precompiled")
 
-  defp get_flags_for_precompiled(precompiled_dependency_path, lib_names, :libs) do
-    full_packages_library_path = Path.absname("#{precompiled_dependency_path}/lib")
+  defp precompiled_rel_path(), do: "bundlex_shared/precompiled"
+
+  defp get_flags_for_precompiled(dependency_dir_name, lib_names, :libs) do
+    library_abs_path = Path.join([precompiled_abs_path(), dependency_dir_name, "lib"])
 
     [
-      "-L#{full_packages_library_path}",
-      "-Wl,-rpath,#{full_packages_library_path}",
+      "-L#{library_abs_path}",
+      "-Wl,-rpath,@loader_path/#{dependency_dir_name}",
       "-Wl,-rpath,/opt/homebrew/lib"
     ] ++
       Enum.map(lib_names, &"-l#{remove_lib_prefix(&1)}")
   end
 
-  defp get_flags_for_precompiled(precompiled_dependency_path, _lib_names, :cflags) do
-    full_include_path = Path.absname("#{precompiled_dependency_path}/include")
-    ["-I#{full_include_path}"]
+  defp get_flags_for_precompiled(dependency_dir_name, _lib_names, :cflags) do
+    include_abs_path = Path.join([precompiled_abs_path(), dependency_dir_name, "include"])
+    ["-I#{include_abs_path}"]
   end
 
   defp get_flags_from_pkg_config(pkg_configs, flags_type) do
@@ -199,24 +213,25 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   end
 
   defp maybe_download_precompiled_package(name, url) do
-    precompiled_path = get_precompiled_path()
+    precompiled_path = precompiled_abs_path()
     File.mkdir_p!(precompiled_path)
-    package_path = Path.join(precompiled_path, Zarex.sanitize(url))
+    package_dir_name = Zarex.sanitize(url)
+    package_path = Path.join(precompiled_path, package_dir_name)
 
     if File.exists?(package_path) do
-      {:ok, package_path}
+      {:ok, package_dir_name}
     else
       File.mkdir!(package_path)
 
       try do
-        temporary_destination = Path.join(get_precompiled_path(), "temporary")
+        temporary_destination = Path.join(precompiled_abs_path(), "temporary")
         download(url, temporary_destination)
 
         {_output, 0} =
           System.shell("tar -xf #{temporary_destination} -C #{package_path} --strip-components 1")
 
         File.rm!(temporary_destination)
-        {:ok, package_path}
+        {:ok, package_dir_name}
       rescue
         e ->
           File.rm_rf!(package_path)

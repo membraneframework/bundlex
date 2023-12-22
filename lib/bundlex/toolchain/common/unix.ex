@@ -110,6 +110,26 @@ defmodule Bundlex.Toolchain.Common.Unix do
     ~s("#{path}")
   end
 
+  defp relative_path(path) do
+    path = path |> String.replace(~S("), ~S(\"))
+    ~s("#{path}")
+  end
+
+  defp path_from_to(from, to) do
+    from = Path.expand(from) |> Path.split()
+    to = Path.expand(to) |> Path.split()
+
+    longest_common_prefix =
+      Enum.zip(from, to)
+      |> Enum.take_while(fn {from, to} -> from == to end)
+      |> Enum.count()
+
+    Path.join(
+      Bunch.Enum.repeated("..", Enum.count(from) - longest_common_prefix) ++
+        Enum.drop(to, longest_common_prefix)
+    )
+  end
+
   defp libs(native) do
     lib_dirs = native.lib_dirs |> paths("-L")
     libs = native.libs |> Enum.map_join(" ", fn lib -> "-l#{lib}" end)
