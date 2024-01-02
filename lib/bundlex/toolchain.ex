@@ -54,6 +54,7 @@ defmodule Bundlex.Toolchain do
     output_path(app, native_interface) |> Path.join("#{native_name}")
   end
 
+  @spec bundlex_shared_path() :: Path.t()
   def bundlex_shared_path() do
     Path.join(MixHelper.get_priv_dir(:bundlex), "shared")
   end

@@ -123,45 +123,27 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     else
       lib_names = Bunch.listify(lib_names)
 
-      with {:ok, dependency_dir_name} <-
-             maybe_download_precompiled_package(name, url) do
-        output_path = Bundlex.Toolchain.output_path(native.app, native.interface)
-        dependency_path = Path.join(output_path, dependency_dir_name)
-
-        unless File.exists?(dependency_path) do
-          File.mkdir_p!(output_path)
-
-          File.ln_s!(
-            Path.join([precompiled_abs_path(), dependency_dir_name, "lib"]),
-            dependency_path
-          )
-        end
-
-        {:ok, get_flags_for_precompiled(dependency_dir_name, lib_names, :cflags),
-         get_flags_for_precompiled(dependency_dir_name, lib_names, :libs)}
+      with {:ok, dep_dir_name, dep_path} <- maybe_download_precompiled_package(name, url) do
+        {:ok, get_precompiled_cflags(dep_path),
+         get_precompiled_libs_flags(dep_path, dep_dir_name, lib_names, native)}
       end
     end
   end
 
-  defp precompiled_abs_path(),
-    do: Path.join(Bundlex.Toolchain.bundlex_shared_path(), "precompiled")
-
-  defp precompiled_rel_path(), do: "bundlex_shared/precompiled"
-
-  defp get_flags_for_precompiled(dependency_dir_name, lib_names, :libs) do
-    library_abs_path = Path.join([precompiled_abs_path(), dependency_dir_name, "lib"])
+  defp get_precompiled_libs_flags(dep_path, dep_dir_name, lib_names, native) do
+    lib_path = Path.join(dep_path, "lib")
+    output_path = Bundlex.Toolchain.output_path(native.app, native.interface)
+    create_relative_symlink(lib_path, output_path, dep_dir_name)
 
     [
-      "-L#{library_abs_path}",
-      "-Wl,-rpath,@loader_path/#{dependency_dir_name}",
+      "-L#{Path.join(dep_path, "lib")}",
+      "-Wl,-rpath,@loader_path/#{dep_dir_name}",
       "-Wl,-rpath,/opt/homebrew/lib"
-    ] ++
-      Enum.map(lib_names, &"-l#{remove_lib_prefix(&1)}")
+    ] ++ Enum.map(lib_names, &"-l#{remove_lib_prefix(&1)}")
   end
 
-  defp get_flags_for_precompiled(dependency_dir_name, _lib_names, :cflags) do
-    include_abs_path = Path.join([precompiled_abs_path(), dependency_dir_name, "include"])
-    ["-I#{include_abs_path}"]
+  defp get_precompiled_cflags(dep_path) do
+    ["-I#{Path.join(dep_path, "include")}"]
   end
 
   defp get_flags_from_pkg_config(pkg_configs, flags_type) do
@@ -213,25 +195,25 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   end
 
   defp maybe_download_precompiled_package(name, url) do
-    precompiled_path = precompiled_abs_path()
+    precompiled_path = Path.join(Bundlex.Toolchain.bundlex_shared_path(), "precompiled")
     File.mkdir_p!(precompiled_path)
     package_dir_name = Zarex.sanitize(url)
     package_path = Path.join(precompiled_path, package_dir_name)
 
     if File.exists?(package_path) do
-      {:ok, package_dir_name}
+      {:ok, package_dir_name, package_path}
     else
       File.mkdir!(package_path)
 
       try do
-        temporary_destination = Path.join(precompiled_abs_path(), "temporary")
+        temporary_destination = Path.join(precompiled_path, "temporary")
         download(url, temporary_destination)
 
         {_output, 0} =
           System.shell("tar -xf #{temporary_destination} -C #{package_path} --strip-components 1")
 
         File.rm!(temporary_destination)
-        {:ok, package_dir_name}
+        {:ok, package_dir_name, package_path}
       rescue
         e ->
           File.rm_rf!(package_path)
@@ -264,5 +246,32 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     Exception.format(:error, exception)
     |> String.trim()
     |> String.replace(~r/^/m, "\t")
+  end
+
+  defp create_relative_symlink(target, dir, name) do
+    symlink = Path.join(dir, name)
+
+    unless File.exists?(symlink) do
+      File.mkdir_p!(dir)
+
+      File.ln_s!(path_from_to(dir, target), symlink)
+    end
+
+    :ok
+  end
+
+  defp path_from_to(from, to) do
+    from = Path.expand(from) |> Path.split()
+    to = Path.expand(to) |> Path.split()
+
+    longest_common_prefix =
+      Enum.zip(from, to)
+      |> Enum.take_while(fn {from, to} -> from == to end)
+      |> Enum.count()
+
+    Path.join(
+      Bunch.Enum.repeated("..", Enum.count(from) - longest_common_prefix) ++
+        Enum.drop(to, longest_common_prefix)
+    )
   end
 end

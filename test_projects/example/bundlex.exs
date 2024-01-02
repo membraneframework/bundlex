@@ -20,9 +20,7 @@ defmodule Example.BundlexProject do
           nil
       end
 
-    libs = ["libswscale", "libavcodec"]
-
-    [{:precompiled, url, libs}, {:pkg_config, libs}]
+    [{:precompiled, url, ["libswscale", "libavcodec"]}]
   end
 
   defp natives do
