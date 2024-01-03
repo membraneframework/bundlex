@@ -135,9 +135,13 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     output_path = Bundlex.Toolchain.output_path(native.app, native.interface)
     create_relative_symlink(lib_path, output_path, dep_dir_name)
 
+    # TODO: pass the platform via arguments
+    # $ORIGIN must be escaped soo that it's not treated as an ENV variable
+    rpath_root = if Bundlex.platform() == :macosx, do: "@loader_path", else: "\\$ORIGIN"
+
     [
       "-L#{Path.join(dep_path, "lib")}",
-      "-Wl,-rpath,@loader_path/#{dep_dir_name}",
+      "-Wl,-rpath,#{rpath_root}/#{dep_dir_name}",
       "-Wl,-rpath,/opt/homebrew/lib"
     ] ++ Enum.map(lib_names, &"-l#{remove_lib_prefix(&1)}")
   end
