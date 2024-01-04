@@ -123,30 +123,31 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     else
       lib_names = Bunch.listify(lib_names)
 
-      with {:ok, package_path} <-
-             maybe_download_precompiled_package(name, url) do
-        {:ok, get_flags_for_precompiled(package_path, lib_names, :cflags),
-         get_flags_for_precompiled(package_path, lib_names, :libs)}
+      with {:ok, dep_dir_name, dep_path} <- maybe_download_precompiled_package(name, url) do
+        {:ok, get_precompiled_cflags(dep_path),
+         get_precompiled_libs_flags(dep_path, dep_dir_name, lib_names, native)}
       end
     end
   end
 
-  defp get_precompiled_path(), do: "#{Mix.Project.build_path()}/bundlex_precompiled/"
+  defp get_precompiled_libs_flags(dep_path, dep_dir_name, lib_names, native) do
+    lib_path = Path.join(dep_path, "lib")
+    output_path = Bundlex.Toolchain.output_path(native.app, native.interface)
+    create_relative_symlink(lib_path, output_path, dep_dir_name)
 
-  defp get_flags_for_precompiled(precompiled_dependency_path, lib_names, :libs) do
-    full_packages_library_path = Path.absname("#{precompiled_dependency_path}/lib")
+    # TODO: pass the platform via arguments
+    # $ORIGIN must be escaped soo that it's not treated as an ENV variable
+    rpath_root = if Bundlex.platform() == :macosx, do: "@loader_path", else: "\\$ORIGIN"
 
     [
-      "-L#{full_packages_library_path}",
-      "-Wl,-rpath,#{full_packages_library_path}",
+      "-L#{Path.join(dep_path, "lib")}",
+      "-Wl,-rpath,#{rpath_root}/#{dep_dir_name}",
       "-Wl,-rpath,/opt/homebrew/lib"
-    ] ++
-      Enum.map(lib_names, &"-l#{remove_lib_prefix(&1)}")
+    ] ++ Enum.map(lib_names, &"-l#{remove_lib_prefix(&1)}")
   end
 
-  defp get_flags_for_precompiled(precompiled_dependency_path, _lib_names, :cflags) do
-    full_include_path = Path.absname("#{precompiled_dependency_path}/include")
-    ["-I#{full_include_path}"]
+  defp get_precompiled_cflags(dep_path) do
+    ["-I#{Path.join(dep_path, "include")}"]
   end
 
   defp get_flags_from_pkg_config(pkg_configs, flags_type) do
@@ -198,24 +199,25 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   end
 
   defp maybe_download_precompiled_package(name, url) do
-    precompiled_path = get_precompiled_path()
+    precompiled_path = Path.join(Bundlex.Toolchain.bundlex_shared_path(), "precompiled")
     File.mkdir_p!(precompiled_path)
-    package_path = "#{precompiled_path}#{Zarex.sanitize(url)}"
+    package_dir_name = Zarex.sanitize(url)
+    package_path = Path.join(precompiled_path, package_dir_name)
 
     if File.exists?(package_path) do
-      {:ok, package_path}
+      {:ok, package_dir_name, package_path}
     else
       File.mkdir!(package_path)
 
       try do
-        temporary_destination = "#{get_precompiled_path()}/temporary"
+        temporary_destination = Path.join(precompiled_path, "temporary")
         download(url, temporary_destination)
 
         {_output, 0} =
           System.shell("tar -xf #{temporary_destination} -C #{package_path} --strip-components 1")
 
         File.rm!(temporary_destination)
-        {:ok, package_path}
+        {:ok, package_dir_name, package_path}
       rescue
         e ->
           File.rm_rf!(package_path)
@@ -248,5 +250,32 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     Exception.format(:error, exception)
     |> String.trim()
     |> String.replace(~r/^/m, "\t")
+  end
+
+  defp create_relative_symlink(target, dir, name) do
+    symlink = Path.join(dir, name)
+
+    unless File.exists?(symlink) do
+      File.mkdir_p!(dir)
+
+      File.ln_s!(path_from_to(dir, target), symlink)
+    end
+
+    :ok
+  end
+
+  defp path_from_to(from, to) do
+    from = Path.expand(from) |> Path.split()
+    to = Path.expand(to) |> Path.split()
+
+    longest_common_prefix =
+      Enum.zip(from, to)
+      |> Enum.take_while(fn {from, to} -> from == to end)
+      |> Enum.count()
+
+    Path.join(
+      Bunch.Enum.repeated("..", Enum.count(from) - longest_common_prefix) ++
+        Enum.drop(to, longest_common_prefix)
+    )
   end
 end

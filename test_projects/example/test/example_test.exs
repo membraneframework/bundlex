@@ -2,13 +2,8 @@ defmodule ExampleTest do
   use ExUnit.Case
 
   test "native with interface NIF" do
-    defmodule Foo do
-      use Bundlex.Loader, nif: :example
-
-      defnif(foo(a, b))
-    end
-
-    assert 10 = Foo.foo(5, 5)
+    assert {11, v} = Example.Foo.foo(5, 6)
+    assert is_integer(v)
   end
 
   test "native with interface CNode" do

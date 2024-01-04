@@ -46,8 +46,12 @@ defmodule Bundlex.Platform do
   else
     def get_target!() do
       case System.fetch_env("NERVES_APP") do
-        {:ok, _app} -> :nerves
-        :error -> get_host!()
+        {:ok, _app} ->
+          :nerves
+
+        :error ->
+          IO.warn("Crosscompilation supported only for Nerves systems, assuming host's platform")
+          get_host!()
       end
     end
   end
