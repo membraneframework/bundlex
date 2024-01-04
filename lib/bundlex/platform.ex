@@ -50,7 +50,10 @@ defmodule Bundlex.Platform do
           :nerves
 
         :error ->
-          IO.warn("Crosscompilation supported only for Nerves systems, assuming host's platform")
+          Output.warn(
+            "Crosscompilation supported only for Nerves systems, assuming host's platform"
+          )
+
           get_host!()
       end
     end

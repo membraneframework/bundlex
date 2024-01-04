@@ -140,11 +140,15 @@ defmodule Bundlex.Loader do
         :ok
       else
         {:error, {reason, text}} ->
-          raise """
+          require Logger
+
+          Logger.error("""
           Bundlex cannot load nif #{inspect(nif_name)} of app #{inspect(app)}
           from "#{path}", check bundlex.exs file for information about nifs.
           Reason: #{inspect(reason)}, #{to_string(text)}
-          """
+          """)
+
+          :abort
       end
     end
   end
