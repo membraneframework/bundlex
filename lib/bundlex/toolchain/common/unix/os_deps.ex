@@ -113,7 +113,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     is_precompiled_disabled =
       case Application.get_env(:bundlex, :disable_precompiled_os_deps, false) do
         bool when is_boolean(bool) -> bool
-        [apps: apps] -> native.app in Bunch.listify(apps)
+        [apps: apps] when is_list(apps) -> native.app in apps
       end
 
     if is_precompiled_disabled do
