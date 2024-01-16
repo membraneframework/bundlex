@@ -41,7 +41,9 @@ defmodule Bundlex.Platform do
   Otherwise raises Mix error.
   """
   @spec get_target!() :: name_t
-  if Mix.target() == :host do
+  mix_target = Mix.target()
+
+  if mix_target == :host do
     def get_target!(), do: get_host!()
   else
     def get_target!() do
@@ -51,7 +53,7 @@ defmodule Bundlex.Platform do
 
         :error ->
           Output.warn(
-            "Crosscompilation supported only for Nerves systems, assuming host's platform"
+            "MIX_TARGET #{inspect(unquote(mix_target))} is not supported. Bundlex will compile for the host platform."
           )
 
           get_host!()
