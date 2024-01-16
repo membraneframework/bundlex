@@ -38,7 +38,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
       end
 
     if is_old_api do
-      IO.warn("""
+      Output.warn("""
       Native #{inspect(native_name)} uses deprecated syntax for `os_deps`. \
       See `Bundlex.Project.os_dep` for the new syntax.
       """)
@@ -110,12 +110,13 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   end
 
   defp resolve_os_dep_provider(name, {:precompiled, url, lib_names}, native) do
-    disabled_apps =
-      Application.get_env(:bundlex, :disable_precompiled_os_deps, [])
-      |> Keyword.get(:apps, [])
-      |> Bunch.listify()
+    is_precompiled_disabled =
+      case Application.get_env(:bundlex, :disable_precompiled_os_deps, false) do
+        bool when is_boolean(bool) -> bool
+        [apps: apps] when is_list(apps) -> native.app in apps
+      end
 
-    if native.app in disabled_apps do
+    if is_precompiled_disabled do
       {:error,
        """
        is disabled in the application configuration, check the config.exs file.
@@ -136,7 +137,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     create_relative_symlink(lib_path, output_path, dep_dir_name)
 
     # TODO: pass the platform via arguments
-    # $ORIGIN must be escaped soo that it's not treated as an ENV variable
+    # $ORIGIN must be escaped so that it's not treated as an ENV variable
     rpath_root = if Bundlex.platform() == :macosx, do: "@loader_path", else: "\\$ORIGIN"
 
     [
@@ -183,11 +184,13 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
       |> then(&{:ok, &1})
     rescue
       e ->
-        {:error,
-         """
-         couldn't load #{inspect(pkg_configs)} libraries with pkg-config due to:
-         #{format_exception(e)}
-         """}
+        error = """
+        couldn't load #{inspect(pkg_configs)} libraries with pkg-config due to:
+        #{format_exception(e)}
+        """
+
+        Output.warn(error)
+        {:error, error}
     end
   end
 
@@ -222,11 +225,13 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
         e ->
           File.rm_rf!(package_path)
 
-          {:error,
-           """
-           couldn't download and extract the precompiled dependency #{inspect(name)} due to:
-           #{format_exception(e)}
-           """}
+          error = """
+          couldn't download and extract the precompiled dependency #{inspect(name)} due to:
+          #{format_exception(e)}
+          """
+
+          Output.warn(error)
+          {:error, error}
       end
     end
   end

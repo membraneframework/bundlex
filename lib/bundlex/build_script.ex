@@ -3,7 +3,7 @@ defmodule Bundlex.BuildScript do
 
   use Bunch
 
-  alias Bundlex.Platform
+  alias Bundlex.{Output, Platform}
 
   @script_ext unix: ".sh", windows: ".bat"
   @script_prefix unix: "#!/bin/sh\n", windows: "@echo off\r\n"
@@ -29,7 +29,7 @@ defmodule Bundlex.BuildScript do
   def run(script, platform)
 
   def run(%__MODULE__{commands: []}, _platform) do
-    IO.warn("The list of commands is empty, did you forget to specify natives?")
+    Output.warn("The list of commands is empty, did you forget to specify natives?")
   end
 
   def run(%__MODULE__{commands: commands}, platform) do

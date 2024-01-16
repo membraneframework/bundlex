@@ -6,6 +6,11 @@ defmodule Bundlex.Output do
     Mix.shell().info("Bundlex: " <> msg)
   end
 
+  @spec warn(String.t()) :: :ok
+  def warn(msg) do
+    IO.warn("Bundlex: " <> msg, [])
+  end
+
   @spec raise(binary()) :: no_return()
   def raise(msg) do
     Mix.raise("Bundlex: " <> msg)
