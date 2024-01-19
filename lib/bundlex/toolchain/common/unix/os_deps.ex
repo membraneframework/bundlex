@@ -237,7 +237,15 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   end
 
   defp download(url, dest) do
-    response = Req.get!(url)
+    response =
+      Req.get!(
+        url,
+        retry: fn
+          _req, %Req.Response{status: status} -> status >= 400
+          _req, _exception -> true
+        end,
+        max_retries: 2
+      )
 
     case response.status do
       200 ->
