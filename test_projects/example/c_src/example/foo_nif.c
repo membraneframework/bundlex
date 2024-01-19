@@ -2,6 +2,7 @@
 
 #include <erl_nif.h>
 #include <example_lib/example_lib_nif.h>
+#include <png.h>
 
 #include <libswscale/swscale.h>
 
@@ -30,9 +31,10 @@ static ERL_NIF_TERM export_foo(ErlNifEnv *env, int argc,
   int a, b;
   enif_get_int(env, argv[0], &a);
   enif_get_int(env, argv[1], &b);
-  int v = swscale_version();
+  int v1 = swscale_version();
+  int v2 = png_access_version_number();
   return enif_make_tuple2(env, enif_make_int(env, add(a, b)),
-                          enif_make_int(env, v));
+                          enif_make_int(env, v1 + v2));
 }
 
 static ErlNifFunc nif_funcs[] = {{"foo", 2, export_foo, 0}};
