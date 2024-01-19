@@ -206,10 +206,12 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     File.mkdir_p!(precompiled_path)
     package_dir_name = Zarex.sanitize(url)
     package_path = Path.join(precompiled_path, package_dir_name)
+    integrity_check_path = Path.join(package_path, ".bundlex_integrity_check")
 
-    if File.exists?(package_path) do
+    if File.exists?(integrity_check_path) do
       {:ok, package_dir_name, package_path}
     else
+      File.rm_rf!(package_path)
       File.mkdir!(package_path)
 
       try do
@@ -220,6 +222,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
           System.shell("tar -xf #{temporary_destination} -C #{package_path} --strip-components 1")
 
         File.rm!(temporary_destination)
+        File.touch!(integrity_check_path)
         {:ok, package_dir_name, package_path}
       rescue
         e ->
