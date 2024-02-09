@@ -263,7 +263,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     unless File.exists?(symlink) do
       File.mkdir_p!(dir)
 
-      File.ln_s!(path_from_to(dir, target), symlink)
+      File.ln_s(path_from_to(dir, target), symlink)
     end
 
     :ok
