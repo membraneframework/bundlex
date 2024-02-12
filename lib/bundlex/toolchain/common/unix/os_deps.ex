@@ -135,11 +135,12 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     logical_lib_path = Path.join(dep_path, "lib")
     {physical_lib_path, 0} = System.shell("realpath #{logical_lib_path}")
 
-    output_path = Bundlex.Toolchain.output_path(native.app, native.interface)
+    logical_output_path = Bundlex.Toolchain.output_path(native.app, native.interface)
+    {physical_output_path, 0} = System.shell("realpath #{logical_output_path}")
 
     physical_dep_dir_name = logical_dep_dir_name <> "_physical"
-    create_relative_symlink(logical_lib_path, output_path, logical_dep_dir_name)
-    create_relative_symlink(physical_lib_path, output_path, physical_dep_dir_name)
+    create_relative_symlink(logical_lib_path, logical_output_path, logical_dep_dir_name)
+    create_relative_symlink(physical_lib_path, physical_output_path, physical_dep_dir_name)
 
     # TODO: pass the platform via arguments
     # $ORIGIN must be escaped so that it's not treated as an ENV variable
