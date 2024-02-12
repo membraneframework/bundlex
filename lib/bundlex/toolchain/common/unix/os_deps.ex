@@ -134,7 +134,9 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   defp get_precompiled_libs_flags(dep_path, dep_dir_name, lib_names, native) do
     lib_path = Path.join(dep_path, "lib")
     output_path = Bundlex.Toolchain.output_path(native.app, native.interface)
+    dep_dir_name2 = dep_dir_name <> "2"
     create_relative_symlink(lib_path, output_path, dep_dir_name)
+    create_relative_symlink(lib_path, output_path, dep_dir_name2)
 
     # TODO: pass the platform via arguments
     # $ORIGIN must be escaped so that it's not treated as an ENV variable
@@ -143,6 +145,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     [
       "-L#{Path.join(dep_path, "lib")}",
       "-Wl,-rpath,#{rpath_root}/#{dep_dir_name}",
+      "-Wl,-rpath,#{rpath_root}/#{dep_dir_name2}",
       "-Wl,-rpath,/opt/homebrew/lib"
     ] ++ Enum.map(lib_names, &"-l#{remove_lib_prefix(&1)}")
   end
@@ -262,7 +265,6 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
 
     unless File.exists?(symlink) do
       File.mkdir_p!(dir)
-
       File.ln_s(path_from_to(dir, target), symlink)
     end
 
