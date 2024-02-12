@@ -137,7 +137,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     create_relative_symlink(lib_path, logical_output_path, logical_dep_dir_name)
 
     {physical_output_path, 0} = System.shell("realpath #{logical_output_path}")
-    physical_output_path = String.slice(physical_output_path, 0..-2)
+    physical_output_path = String.slice(physical_output_path, 0..-2//1)
     physical_dep_dir_name = logical_dep_dir_name <> "_physical"
     create_relative_symlink(lib_path, physical_output_path, physical_dep_dir_name)
 
