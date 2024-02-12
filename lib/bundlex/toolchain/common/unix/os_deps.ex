@@ -132,18 +132,14 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   end
 
   defp get_precompiled_libs_flags(dep_path, logical_dep_dir_name, lib_names, native) do
-    logical_lib_path = Path.join(dep_path, "lib")
-    {physical_lib_path, 0} = System.shell("realpath #{logical_lib_path}")
-
+    lib_path = Path.join(dep_path, "lib")
     logical_output_path = Bundlex.Toolchain.output_path(native.app, native.interface)
-    # {physical_output_path, 0} = System.shell("realpath #{logical_output_path}")
+    create_relative_symlink(lib_path, logical_output_path, logical_dep_dir_name)
 
-    physical_lib_path = String.slice(physical_lib_path, 0..-2)
-    physical_output_path = logical_output_path
+    {physical_output_path, 0} = System.shell("realpath #{logical_output_path}")
+    physical_output_path = String.slice(physical_output_path, 0..-2)
     physical_dep_dir_name = logical_dep_dir_name <> "_physical"
-
-    create_relative_symlink(logical_lib_path, logical_output_path, logical_dep_dir_name)
-    create_relative_symlink(physical_lib_path, physical_output_path, physical_dep_dir_name)
+    create_relative_symlink(lib_path, physical_output_path, physical_dep_dir_name)
 
     # TODO: pass the platform via arguments
     # $ORIGIN must be escaped so that it's not treated as an ENV variable
