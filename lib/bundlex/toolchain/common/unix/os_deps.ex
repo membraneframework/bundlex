@@ -131,12 +131,15 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     end
   end
 
-  defp get_precompiled_libs_flags(dep_path, dep_dir_name, lib_names, native) do
-    lib_path = Path.join(dep_path, "lib")
+  defp get_precompiled_libs_flags(dep_path, logical_dep_dir_name, lib_names, native) do
+    logical_lib_path = Path.join(dep_path, "lib")
+    {physical_lib_path, 0} = System.shell("realpath #{logical_lib_path}")
+
     output_path = Bundlex.Toolchain.output_path(native.app, native.interface)
-    dep_dir_name2 = dep_dir_name <> "2"
-    create_relative_symlink(lib_path, output_path, dep_dir_name)
-    create_relative_symlink(lib_path, output_path, dep_dir_name2)
+
+    physical_dep_dir_name = logical_dep_dir_name <> "_physical"
+    create_relative_symlink(logical_lib_path, output_path, logical_dep_dir_name)
+    create_relative_symlink(physical_lib_path, output_path, physical_dep_dir_name)
 
     # TODO: pass the platform via arguments
     # $ORIGIN must be escaped so that it's not treated as an ENV variable
@@ -144,8 +147,8 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
 
     [
       "-L#{Path.join(dep_path, "lib")}",
-      "-Wl,-rpath,#{rpath_root}/#{dep_dir_name}",
-      "-Wl,-rpath,#{rpath_root}/#{dep_dir_name2}",
+      "-Wl,-rpath,#{rpath_root}/#{logical_dep_dir_name}",
+      "-Wl,-rpath,#{rpath_root}/#{physical_dep_dir_name}",
       "-Wl,-rpath,/opt/homebrew/lib"
     ] ++ Enum.map(lib_names, &"-l#{remove_lib_prefix(&1)}")
   end
