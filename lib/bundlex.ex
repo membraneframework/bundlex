@@ -15,25 +15,41 @@ defmodule Bundlex do
   * architecture - e.g. `x86_64` or `arm64`
   * vendor - e.g. `pc`
   * os - operating system, e.g. `linux` or `darwin20.6.0`
-  * abi - application binary interface, e.g. `musl` or `gnu` (nil if unknown / non-existent)
+  * abi - application binary interface, e.g. `musl` or `gnu`
   """
   @type target ::
-          %{architecture: String.t(), vendor: String.t(), os: String.t(), abi: String.t() | nil}
+          %{
+            architecture: String.t() | :unknown,
+            vendor: String.t() | :unknown,
+            os: String.t() | :unknown,
+            abi: String.t() | :unknown
+          }
 
   @doc """
-  A function returning a target triplet for the environment on which it is run.
+  A function returning information about the target platform (unknown in case of crosscompilation).
   """
   @spec get_target() :: target()
-  def get_target() do
-    [architecture, vendor, os | maybe_abi] =
-      :erlang.system_info(:system_architecture) |> List.to_string() |> String.split("-")
+  if Mix.target() == :host do
+    def get_target() do
+      [architecture, vendor, os | maybe_abi] =
+        :erlang.system_info(:system_architecture) |> List.to_string() |> String.split("-")
 
-    %{
-      architecture: architecture,
-      vendor: vendor,
-      os: os,
-      abi: List.first(maybe_abi)
-    }
+      %{
+        architecture: architecture,
+        vendor: vendor,
+        os: os,
+        abi: List.first(maybe_abi) || :unknown
+      }
+    end
+  else
+    def get_target() do
+      %{
+        architecture: :unknown,
+        vendor: :unknown,
+        os: :unknown,
+        abi: :unknown
+      }
+    end
   end
 
   @doc """
