@@ -6,7 +6,7 @@ defmodule Bundlex do
   alias Bundlex.Helper.MixHelper
   alias Bundlex.Platform
 
-  @type platform_t :: :linux | :macosx | :windows32 | :windows64 | :nerves
+  @type platform_t :: :linux | :macosx | :windows32 | :windows64 | :nerves | :custom
 
   @typedoc """
   A map containing four fields that describe the platform.
@@ -63,7 +63,7 @@ defmodule Bundlex do
   @doc """
   Returns family of the platform obtained with `platform/0`.
   """
-  @spec family() :: :unix | :windows
+  @spec family() :: :unix | :windows | :custom
   def family() do
     Platform.family(platform())
   end

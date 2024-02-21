@@ -53,10 +53,10 @@ defmodule Bundlex.Platform do
 
         :error ->
           Output.warn(
-            "MIX_TARGET #{inspect(unquote(mix_target))} is not supported. Bundlex will compile for the host platform."
+            "Custom MIX_TARGET #{inspect(unquote(mix_target))} is not directly supported. Make sure necessary environment variables are set correctly."
           )
 
-          get_host!()
+         :custom
       end
     end
   end
@@ -107,6 +107,7 @@ defmodule Bundlex.Platform do
   def family(:macosx), do: :unix
   def family(:freebsd), do: :unix
   def family(:nerves), do: :unix
+  def family(:custom), do: :custom
 
   @spec get_module(family_name_t) :: module
   def get_module(:windows32), do: Bundlex.Platform.Windows32
@@ -114,5 +115,6 @@ defmodule Bundlex.Platform do
   def get_module(:macosx), do: Bundlex.Platform.MacOSX
   def get_module(:linux), do: Bundlex.Platform.Linux
   def get_module(:freebsd), do: Bundlex.Platform.Freebsd
-  def get_module(:nerves), do: Bundlex.Platform.Nerves
+  def get_module(:nerves), do: Bundlex.Platform.Custom
+  def get_module(:custom), do: Bundlex.Platform.Custom
 end

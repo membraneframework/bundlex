@@ -1,4 +1,4 @@
-defmodule Bundlex.Toolchain.Nerves do
+defmodule Bundlex.Toolchain.Custom do
   @moduledoc false
 
   use Bundlex.Toolchain
@@ -7,7 +7,7 @@ defmodule Bundlex.Toolchain.Nerves do
 
   @impl Toolchain
   def compiler_commands(native) do
-    {compiler, nerves_cflags} =
+    {compiler, custom_cflags} =
       case native.language do
         :c -> {System.fetch_env!("CC"), System.fetch_env!("CFLAGS")}
         :cpp -> {System.fetch_env!("CXX"), System.fetch_env!("CXXFLAGS")}
@@ -16,13 +16,13 @@ defmodule Bundlex.Toolchain.Nerves do
     {cflags, lflags} =
       case native do
         %Native{type: :native, interface: :nif} ->
-          {nerves_cflags <> " -fPIC", System.fetch_env!("LDFLAGS") <> " -rdynamic -shared"}
+          {custom_cflags <> " -fPIC", System.fetch_env!("LDFLAGS") <> " -rdynamic -shared"}
 
         %Native{type: :lib} ->
-          {nerves_cflags <> " -fPIC", System.fetch_env!("LDFLAGS")}
+          {custom_cflags <> " -fPIC", System.fetch_env!("LDFLAGS")}
 
         %Native{} ->
-          {nerves_cflags, System.fetch_env!("LDFLAGS")}
+          {custom_cflags, System.fetch_env!("LDFLAGS")}
       end
 
     Unix.compiler_commands(
