@@ -179,12 +179,12 @@ Please refer to the module's documentation to see how to use it.
 With proper setup Bundlex can support cross-compilation. When using Nerves the cross-compilation should work out of the box. 
 
 Using your own toolchain is also possible, although it wasn't tested. The following environment variables need to be set:
-- CROSSCOMPILE
-- CC - path to the C compiler for cross-compiling to the target
-- CFLAGS - C compilation flags
-- CXX - path to the C++ compiler for cross-compiling to the target 
-- CXXFLAGS - C++ compilation flags
-- LDFLAGS - Linker flags
+- `CROSSCOMPILE`
+- `CC` - path to the C compiler for cross-compiling to the target
+- `CFLAGS` - C compilation flags
+- `CXX` - path to the C++ compiler for cross-compiling to the target 
+- `CXXFLAGS` - C++ compilation flags
+- `LDFLAGS` - Linker flags
 
 When cross-compiling some warnings may be raised about not being able to load nifs, but that's expected, since they are most likely built for different architecture
 
