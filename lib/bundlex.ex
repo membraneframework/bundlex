@@ -9,7 +9,7 @@ defmodule Bundlex do
   @type platform_t :: :linux | :macosx | :windows32 | :windows64 | :nerves | :custom
 
   @typedoc """
-  A map containing four fields that describe the platform.
+  A map containing four fields that describe the target platform.
 
   It consists of:
   * architecture - e.g. `x86_64` or `arm64`
@@ -26,35 +26,53 @@ defmodule Bundlex do
           }
 
   @doc """
-  A function returning information about the target platform (unknown in case of crosscompilation).
+  A function returning information about the target platform. In case of cross-compilation the
+  information can be provided by setting appropriate environment variables.
   """
   @spec get_target() :: target()
-  if Mix.target() == :host do
-    def get_target() do
-      [architecture, vendor, os | maybe_abi] =
-        :erlang.system_info(:system_architecture) |> List.to_string() |> String.split("-")
+  case System.fetch_env("CROSSCOMPILE") do
+    :error ->
+      def get_target() do
+        [architecture, vendor, os | maybe_abi] =
+          :erlang.system_info(:system_architecture) |> List.to_string() |> String.split("-")
 
-      %{
-        architecture: architecture,
-        vendor: vendor,
-        os: os,
-        abi: List.first(maybe_abi) || :unknown
-      }
-    end
-  else
-    def get_target() do
-      %{
-        architecture: :unknown,
-        vendor: :unknown,
-        os: :unknown,
-        abi: :unknown
-      }
-    end
+        %{
+          architecture: architecture,
+          vendor: vendor,
+          os: os,
+          abi: List.first(maybe_abi) || :unknown
+        }
+      end
+
+    {:ok, _} ->
+      def get_target() do
+        unquote(
+          Enum.map(
+            [
+              {:architecture, "TARGET_ARCH"},
+              {:vendor, "TARGET_VENDOR"},
+              {:os, "TARGET_OS"},
+              {:abi, "TARGET_ABI"}
+            ],
+            fn {key, env} ->
+              value =
+                case System.fetch_env(env) do
+                  {:ok, value} -> value
+                  :error -> :unknown
+                end
+
+              {key, value}
+            end
+          )
+        )
+        |> Enum.into(%{})
+      end
   end
 
   @doc """
   Returns current platform name.
   """
+  @deprecated "Use Bundlex.get_target/0 instead"
   @spec platform() :: platform_t()
   def platform() do
     Platform.get_target!()

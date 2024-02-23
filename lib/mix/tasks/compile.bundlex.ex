@@ -23,7 +23,7 @@ defmodule Mix.Tasks.Compile.Bundlex do
     commands = []
 
     app = MixHelper.get_app!()
-    platform = Bundlex.platform()
+    platform = Platform.get_target!()
 
     project =
       with {:ok, project} <- Project.get(app) do

@@ -41,24 +41,25 @@ defmodule Bundlex.Platform do
   Otherwise raises Mix error.
   """
   @spec get_target!() :: name_t
-  mix_target = Mix.target()
 
-  if mix_target == :host do
-    def get_target!(), do: get_host!()
-  else
-    def get_target!() do
-      case System.fetch_env("NERVES_APP") do
-        {:ok, _app} ->
-          :nerves
+  case System.fetch_env("CROSSCOMPILE") do
+    :error ->
+      def get_target!(), do: get_host!()
 
-        :error ->
-          Output.warn(
-            "Custom MIX_TARGET #{inspect(unquote(mix_target))} is not directly supported. Make sure necessary environment variables are set correctly."
-          )
+    {:ok, _} ->
+      def get_target!() do
+        case System.fetch_env("NERVES_APP") do
+          {:ok, _app} ->
+            :nerves
 
-         :custom
+          :error ->
+            Output.warn(
+              "Cross-compiling without using Nerves. Make sure necessary environment variables are set correctly."
+            )
+
+            :custom
+        end
       end
-    end
   end
 
   @spec get_host!() :: name_t

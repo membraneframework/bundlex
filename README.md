@@ -31,7 +31,7 @@ defmodule MyApp.Mixfile do
 
   defp deps() do
     [
-      {:bundlex, "~> 1.4"}
+      {:bundlex, "~> 1.5"}
     ]
   end
 end
