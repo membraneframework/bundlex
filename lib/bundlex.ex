@@ -19,10 +19,10 @@ defmodule Bundlex do
   """
   @type target ::
           %{
-            architecture: String.t() | :unknown,
-            vendor: String.t() | :unknown,
-            os: String.t() | :unknown,
-            abi: String.t() | :unknown
+            architecture: String.t(),
+            vendor: String.t(),
+            os: String.t(),
+            abi: String.t()
           }
 
   @doc """
@@ -40,7 +40,7 @@ defmodule Bundlex do
           architecture: architecture,
           vendor: vendor,
           os: os,
-          abi: List.first(maybe_abi) || :unknown
+          abi: List.first(maybe_abi) || "unknown"
         }
       end
 
@@ -58,7 +58,7 @@ defmodule Bundlex do
               value =
                 case System.fetch_env(env) do
                   {:ok, value} -> value
-                  :error -> :unknown
+                  :error -> "unknown"
                 end
 
               {key, value}
@@ -75,7 +75,10 @@ defmodule Bundlex do
   @deprecated "Use Bundlex.get_target/0 instead"
   @spec platform() :: platform_t()
   def platform() do
-    Platform.get_target!()
+    case Platform.get_target!() do
+      :custom -> :nerves
+      platform -> platform
+    end
   end
 
   @doc """
