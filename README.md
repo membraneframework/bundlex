@@ -178,7 +178,7 @@ Please refer to the module's documentation to see how to use it.
 
 With proper setup, Bundlex can support cross-compilation. When using Nerves it should work out of the box. 
 
-Not relying on Nerves and using your own toolchain is also possible, although it wasn't tested. In this scenario, the following environment variables need to be set:
+Not relying on Nerves and using your own toolchain is also possible, although it wasn't tested. In this scenario, the following environment variables need to be set during compilation (when changing the target bundlex also needs to be recompiled):
 - `CROSSCOMPILE`
 - `CC` - path to the C compiler for cross-compiling to the target
 - `CFLAGS` - C compilation flags
