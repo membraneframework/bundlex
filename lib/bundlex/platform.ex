@@ -53,7 +53,7 @@ defmodule Bundlex.Platform do
             :nerves
 
           :error ->
-            Output.warn(
+            Output.info(
               "Cross-compiling without using Nerves. Make sure necessary environment variables are set correctly."
             )
 

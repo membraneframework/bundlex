@@ -45,7 +45,7 @@ defmodule Bundlex do
       end
 
     {:ok, _} ->
-      target = 
+      target =
         Map.new(
           [
             {:architecture, "TARGET_ARCH"},
@@ -63,6 +63,7 @@ defmodule Bundlex do
             {key, value}
           end
         )
+
       def get_target() do
         unquote(target)
       end
@@ -72,6 +73,7 @@ defmodule Bundlex do
   Returns current platform name.
   """
   @deprecated "Use Bundlex.get_target/0 instead"
+  @dialyzer {:nowarn_function, platform: 0}
   @spec platform() :: platform_t()
   def platform() do
     case Platform.get_target!() do
