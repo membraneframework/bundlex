@@ -45,27 +45,26 @@ defmodule Bundlex do
       end
 
     {:ok, _} ->
-      def get_target() do
-        unquote(
-          Enum.map(
-            [
-              {:architecture, "TARGET_ARCH"},
-              {:vendor, "TARGET_VENDOR"},
-              {:os, "TARGET_OS"},
-              {:abi, "TARGET_ABI"}
-            ],
-            fn {key, env} ->
-              value =
-                case System.fetch_env(env) do
-                  {:ok, value} -> value
-                  :error -> "unknown"
-                end
+      target = 
+        Map.new(
+          [
+            {:architecture, "TARGET_ARCH"},
+            {:vendor, "TARGET_VENDOR"},
+            {:os, "TARGET_OS"},
+            {:abi, "TARGET_ABI"}
+          ],
+          fn {key, env} ->
+            value =
+              case System.fetch_env(env) do
+                {:ok, value} -> value
+                :error -> "unknown"
+              end
 
-              {key, value}
-            end
-          )
+            {key, value}
+          end
         )
-        |> Enum.into(%{})
+      def get_target() do
+        unquote(target)
       end
   end
 
