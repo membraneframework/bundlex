@@ -48,10 +48,10 @@ defmodule Bundlex do
       target =
         Map.new(
           [
-            {:architecture, "TARGET_ARCH"},
-            {:vendor, "TARGET_VENDOR"},
-            {:os, "TARGET_OS"},
-            {:abi, "TARGET_ABI"}
+            architecture: "TARGET_ARCH",
+            vendor: "TARGET_VENDOR",
+            os: "TARGET_OS",
+            abi: "TARGET_ABI"
           ],
           fn {key, env} ->
             value =
