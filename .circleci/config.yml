@@ -4,7 +4,6 @@ orbs:
   elixir: membraneframework/elixir@dev:94bbc77eef4293223822a2f7f31b136ac0833b1f
 
 workflows:
-  version: 2
   build:
     jobs:
       - elixir/build_test: &parameters
