@@ -140,8 +140,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     # are stored because we need to assure that the relative link in the symlink's target
     # will work properly also when the symlink is put in the location, for which the
     # logical path differs from the physical path
-    {physical_output_path, 0} = System.shell("realpath #{logical_output_path}")
-    physical_output_path = String.trim_trailing(physical_output_path)
+    physical_output_path = logical_output_path |> Path.expand() |> String.trim_trailing()
     physical_dep_dir_name = logical_dep_dir_name <> "_physical"
     create_relative_symlink(lib_path, physical_output_path, physical_dep_dir_name)
 
