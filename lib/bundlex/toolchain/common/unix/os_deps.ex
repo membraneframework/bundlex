@@ -142,7 +142,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     # logical path differs from the physical path
     {physical_output_path, 0} =
       try do
-        System.cmd("realpath", ["logical_output_path"])
+        System.cmd("realpath", [logical_output_path])
       rescue
         e in ErlangError ->
           with %{original: :enoent} <- e do
