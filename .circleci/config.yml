@@ -1,13 +1,14 @@
 version: 2.1
 
 orbs:
-  elixir: membraneframework/elixir@1.5
+  elixir: membraneframework/elixir@dev:2dbaa68cbdd29b5daf35eae94091334d7af903cf
 
 workflows:
   build:
     jobs:
       - elixir/build_test: &parameters
           executor: elixir
+          executor-version: 1.15-otp-26
           filters:
             tags:
               only: /v.*/

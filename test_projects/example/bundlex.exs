@@ -41,7 +41,7 @@ defmodule Example.BundlexProject do
         sources: ["foo_nif.c"],
         interface: [:nif],
         os_deps: [
-          {:pkg_config, "libcrypt"}, # deprecated syntax, testing for regression
+          {:pkg_config, "libpng"}, # deprecated syntax, testing for regression
           ffmpeg: get_ffmpeg(),
         ]
       ],
