@@ -147,7 +147,12 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
 
     # TODO: pass the platform via arguments
     # $ORIGIN must be escaped so that it's not treated as an ENV variable
-    rpath_root = if Bundlex.platform() == :macosx, do: "@loader_path", else: "\\$ORIGIN"
+    rpath_root =
+      case Bundlex.get_target() do
+        %{os: "darwin" <> _rest} -> "@loader_path"
+        %{os: "linux"} -> "\\$ORIGIN"
+        %{os: _other} -> ""
+      end
 
     [
       "-L#{Path.join(dep_path, "lib")}",

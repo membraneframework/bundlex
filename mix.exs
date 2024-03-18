@@ -1,7 +1,7 @@
 defmodule Bundlex.Mixfile do
   use Mix.Project
 
-  @version "1.4.6"
+  @version "1.5.0"
   @github_url "https://github.com/membraneframework/bundlex"
 
   def project do

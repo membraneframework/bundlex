@@ -4,9 +4,11 @@
 [![API Docs](https://img.shields.io/badge/api-docs-yellow.svg?style=flat)](https://hexdocs.pm/bundlex/)
 [![CircleCI](https://circleci.com/gh/membraneframework/bundlex.svg?style=svg)](https://circleci.com/gh/membraneframework/bundlex)
 
-Bundlex is a multi-platform tool for compiling C code along with elixir projects, for use in NIFs, CNodes and Ports. The tool also provides a convenient way of accessing compiled code in elixir modules.
+Bundlex is a multi-platform tool for compiling C and C++ code along with elixir projects, for use in NIFs, CNodes and Ports. The tool also provides a convenient way of accessing compiled code in elixir modules.
 
 Bundlex has been tested on Linux, Mac OS and FreeBSD. There's some support for Windows as well, but it's experimental and unstable (see issues for details).
+
+Bundlex also supports cross-compilation and has been tested with platforms running Nerves.
 
 This tool is maintained by the [Membrane Framework](https://membraneframework.org/) team.
 
@@ -29,7 +31,7 @@ defmodule MyApp.Mixfile do
 
   defp deps() do
     [
-      {:bundlex, "~> 1.4"}
+      {:bundlex, "~> 1.5"}
     ]
   end
 end
@@ -171,6 +173,26 @@ As in the case of NIFs, CNodes compiled with Bundlex can be used like any other 
 
 Similarly to CNodes Bundlex provides `Bundlex.Port` module for a little easier interacting with Ports.
 Please refer to the module's documentation to see how to use it.
+
+### Cross-compilation
+
+With proper setup, Bundlex can support cross-compilation. When using Nerves it should work out of the box. 
+
+Not relying on Nerves and using your own toolchain is also possible, although it wasn't tested. In this scenario, the following environment variables need to be set during compilation (when changing the target bundlex also needs to be recompiled):
+- `CROSSCOMPILE` - value is not important, just needs to be set
+- `CC` - path to the C compiler for cross-compiling to the target
+- `CFLAGS` - C compilation flags
+- `CXX` - path to the C++ compiler for cross-compiling to the target 
+- `CXXFLAGS` - C++ compilation flags
+- `LDFLAGS` - Linker flags
+
+If you wish for `Bundlex.get_target/0` to return accurate information about your target, set the following environment variables:
+- `TARGET_ARCH` - The target CPU architecture (e.g., `arm`, `aarch64`, `mipsel`, `x86_64`, `riscv64`)
+- `TARGET_VENDOR` - Vendor of your target platform
+- `TARGET_OS` - The targes OS (e.g. `linux`)
+- `TARGET_ABI` - The target ABI (e.g., `gnueabihf`, `musl`)
+
+When cross-compiling some warnings may be raised about not being able to load nifs, but that's expected, since they are most likely built for different architecture.
 
 ### Documentation of the native code
 

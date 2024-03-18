@@ -41,24 +41,25 @@ defmodule Bundlex.Platform do
   Otherwise raises Mix error.
   """
   @spec get_target!() :: name_t
-  mix_target = Mix.target()
 
-  if mix_target == :host do
-    def get_target!(), do: get_host!()
-  else
-    def get_target!() do
-      case System.fetch_env("NERVES_APP") do
-        {:ok, _app} ->
-          :nerves
+  case System.fetch_env("CROSSCOMPILE") do
+    :error ->
+      def get_target!(), do: get_host!()
 
-        :error ->
-          Output.warn(
-            "MIX_TARGET #{inspect(unquote(mix_target))} is not supported. Bundlex will compile for the host platform."
-          )
+    {:ok, _} ->
+      def get_target!() do
+        case System.fetch_env("NERVES_APP") do
+          {:ok, _app} ->
+            :nerves
 
-          get_host!()
+          :error ->
+            Output.info(
+              "Cross-compiling without using Nerves. Make sure necessary environment variables are set correctly."
+            )
+
+            :custom
+        end
       end
-    end
   end
 
   @spec get_host!() :: name_t
@@ -107,6 +108,7 @@ defmodule Bundlex.Platform do
   def family(:macosx), do: :unix
   def family(:freebsd), do: :unix
   def family(:nerves), do: :unix
+  def family(:custom), do: :custom
 
   @spec get_module(family_name_t) :: module
   def get_module(:windows32), do: Bundlex.Platform.Windows32
@@ -114,5 +116,6 @@ defmodule Bundlex.Platform do
   def get_module(:macosx), do: Bundlex.Platform.MacOSX
   def get_module(:linux), do: Bundlex.Platform.Linux
   def get_module(:freebsd), do: Bundlex.Platform.Freebsd
-  def get_module(:nerves), do: Bundlex.Platform.Nerves
+  def get_module(:nerves), do: Bundlex.Platform.Custom
+  def get_module(:custom), do: Bundlex.Platform.Custom
 end

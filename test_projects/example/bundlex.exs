@@ -16,7 +16,7 @@ defmodule Example.BundlexProject do
         %{architecture: "aarch64", os: "linux"} ->
           "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2023-11-30-12-55/ffmpeg-n6.0.1-linuxarm64-gpl-shared-6.0.tar.xz"
 
-        %{os: "linux"} ->
+        %{architecture: "x86_64", os: "linux"} ->
           "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2023-11-30-12-55/ffmpeg-n6.0.1-linux64-gpl-shared-6.0.tar.xz"
 
         %{architecture: "x86_64", os: "darwin" <> _rest_of_os_name} ->
@@ -41,7 +41,7 @@ defmodule Example.BundlexProject do
         sources: ["foo_nif.c"],
         interface: [:nif],
         os_deps: [
-          {:pkg_config, "libpng"}, # deprecated, testing for regression
+          {:pkg_config, "libpng"}, # deprecated syntax, testing for regression
           ffmpeg: get_ffmpeg(),
         ]
       ],
