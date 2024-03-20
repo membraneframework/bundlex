@@ -44,9 +44,48 @@ defmodule Bundlex.Platform do
 
   case System.fetch_env("CROSSCOMPILE") do
     :error ->
-      def get_target!(), do: get_host!()
+      def get_target!() do
+        case :os.type() do
+          {:win32, _} ->
+            {:ok, reg} = :win32reg.open([:read])
 
-    {:ok, _} ->
+            :ok =
+              :win32reg.change_key(
+                reg,
+                ~c"\\hklm\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion"
+              )
+
+            {:ok, build} = :win32reg.value(reg, ~c"BuildLabEx")
+
+            platform_name =
+              if build |> to_string |> String.contains?("amd64") do
+                :windows64
+              else
+                :windows32
+              end
+
+            :ok = :win32reg.close(reg)
+
+            platform_name
+
+          {:unix, :linux} ->
+            :linux
+
+          {:unix, :freebsd} ->
+            :freebsd
+
+          {:unix, :darwin} ->
+            :macosx
+
+          other ->
+            # TODO add detection for more platforms
+            Output.raise(
+              "Unable to detect current platform. Erlang returned #{inspect(other)} which I don't know how to handle."
+            )
+        end
+      end
+
+    {:ok, _crosscompile} ->
       def get_target!() do
         case System.fetch_env("NERVES_APP") do
           {:ok, _app} ->
@@ -60,45 +99,6 @@ defmodule Bundlex.Platform do
             :custom
         end
       end
-  end
-
-  @spec get_host!() :: name_t
-  defp get_host!() do
-    case :os.type() do
-      {:win32, _} ->
-        {:ok, reg} = :win32reg.open([:read])
-
-        :ok =
-          :win32reg.change_key(reg, ~c"\\hklm\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion")
-
-        {:ok, build} = :win32reg.value(reg, ~c"BuildLabEx")
-
-        platform_name =
-          if build |> to_string |> String.contains?("amd64") do
-            :windows64
-          else
-            :windows32
-          end
-
-        :ok = :win32reg.close(reg)
-
-        platform_name
-
-      {:unix, :linux} ->
-        :linux
-
-      {:unix, :freebsd} ->
-        :freebsd
-
-      {:unix, :darwin} ->
-        :macosx
-
-      other ->
-        # TODO add detection for more platforms
-        Output.raise(
-          "Unable to detect current platform. Erlang returned #{inspect(other)} which I don't know how to handle."
-        )
-    end
   end
 
   @spec family(name_t) :: family_name_t
