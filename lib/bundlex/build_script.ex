@@ -33,7 +33,7 @@ defmodule Bundlex.BuildScript do
   end
 
   def run(%__MODULE__{commands: commands}, platform) do
-    family = platform |> family!()
+    family = Platform.family(platform)
     cmd = commands |> join_commands(family)
 
     case cmd |> Mix.shell().cmd() do
@@ -44,7 +44,7 @@ defmodule Bundlex.BuildScript do
 
   @spec store(t, Platform.name_t(), String.t()) :: {:ok, {String.t(), String.t()}}
   def store(%__MODULE__{commands: commands}, platform, name \\ "bundlex") do
-    family = platform |> family!()
+    family = Platform.family(platform)
     script_name = name <> @script_ext[family]
     script_prefix = @script_prefix[family]
     script = script_prefix <> (commands |> join_commands(family))
@@ -55,18 +55,11 @@ defmodule Bundlex.BuildScript do
     end
   end
 
-  defp join_commands(commands, :unix) do
-    Enum.map_join(commands, " && \\\n", &"(#{&1})") <> "\n"
-  end
-
   defp join_commands(commands, :windows) do
     Enum.join(commands, "\r\n") <> "\r\n"
   end
 
-  defp family!(:windows32), do: :windows
-  defp family!(:windows64), do: :windows
-  defp family!(:macosx), do: :unix
-  defp family!(:linux), do: :unix
-  defp family!(:freebsd), do: :unix
-  defp family!(:nerves), do: :unix
+  defp join_commands(commands, _other) do
+    Enum.map_join(commands, " && \\\n", &"(#{&1})") <> "\n"
+  end
 end

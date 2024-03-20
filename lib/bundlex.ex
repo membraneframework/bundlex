@@ -44,25 +44,16 @@ defmodule Bundlex do
         }
       end
 
-    {:ok, _} ->
+    {:ok, _crosscompile} ->
       target =
-        Map.new(
-          [
-            architecture: "TARGET_ARCH",
-            vendor: "TARGET_VENDOR",
-            os: "TARGET_OS",
-            abi: "TARGET_ABI"
-          ],
-          fn {key, env} ->
-            value =
-              case System.fetch_env(env) do
-                {:ok, value} -> value
-                :error -> "unknown"
-              end
-
-            {key, value}
-          end
-        )
+        [
+          architecture: "TARGET_ARCH",
+          vendor: "TARGET_VENDOR",
+          os: "TARGET_OS",
+          abi: "TARGET_ABI"
+        ]
+        |> Map.new(fn {key, env} -> {key, System.get_env(env, "unknown")} end)
+        |> Macro.escape()
 
       def get_target() do
         unquote(target)
