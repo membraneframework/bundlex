@@ -134,16 +134,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   defp get_precompiled_libs_flags(dep_path, logical_dep_dir_name, lib_names, native) do
     lib_path = Path.join(dep_path, "lib")
     logical_output_path = Bundlex.Toolchain.output_path(native.app, native.interface)
-    create_relative_symlink(lib_path, logical_output_path, logical_dep_dir_name)
-
-    # We create a second ("physical") symlink to the place where the precompiled dependencies
-    # are stored because we need to assure that the relative link in the symlink's target
-    # will work properly also when the symlink is put in the location, for which the
-    # logical path differs from the physical path
-    {physical_output_path, 0} = System.shell("realpath #{logical_output_path}")
-    physical_output_path = String.trim_trailing(physical_output_path)
-    physical_dep_dir_name = logical_dep_dir_name <> "_physical"
-    create_relative_symlink(lib_path, physical_output_path, physical_dep_dir_name)
+    create_relative_symlink_or_copy(lib_path, logical_output_path, logical_dep_dir_name)
 
     # TODO: pass the platform via arguments
     # $ORIGIN must be escaped so that it's not treated as an ENV variable
@@ -157,7 +148,6 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     [
       "-L#{Path.join(dep_path, "lib")}",
       "-Wl,-rpath,#{rpath_root}/#{logical_dep_dir_name}",
-      "-Wl,-rpath,#{rpath_root}/#{physical_dep_dir_name}",
       "-Wl,-rpath,/opt/homebrew/lib"
     ] ++ Enum.map(lib_names, &"-l#{remove_lib_prefix(&1)}")
   end
@@ -272,12 +262,21 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     |> String.replace(~r/^/m, "\t")
   end
 
-  defp create_relative_symlink(target, dir, name) do
-    symlink = Path.join(dir, name)
+  defp create_relative_symlink_or_copy(target, dir, name) do
+    link = Path.join(dir, name)
 
-    unless File.exists?(symlink) do
-      File.mkdir_p!(dir)
-      File.ln_s(path_from_to(dir, target), symlink)
+    unless File.exists?(link) do
+      # If the `priv` directory is symlinked by `mix`
+      # we cannot reliably create a relative symlink
+      # that would work in all cases, including releases,
+      # thus we make a copy instead.
+      if {dir, 0} == System.shell("realpath #{dir}") do
+        File.mkdir_p!(dir)
+        File.ln_s(path_from_to(dir, target), link)
+      else
+        File.mkdir_p!(link)
+        File.cp_r!(target, link)
+      end
     end
 
     :ok
