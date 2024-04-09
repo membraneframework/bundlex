@@ -1,6 +1,6 @@
 defmodule Bundlex.IntegrationTest do
-  Enum.map([false, true], fn priv ->
-    module = if priv, do: WithPrivDir, else: WithoutPrivDir
+  Enum.map([false, true], fn create_priv_dir? ->
+    module = if create_priv_dir?, do: WithPrivDir, else: WithoutPrivDir
 
     defmodule module do
       use ExUnit.Case
@@ -10,7 +10,7 @@ defmodule Bundlex.IntegrationTest do
       setup_all do
         File.rm_rf!(@tmp)
         File.cp_r("test_projects", @tmp)
-        if unquote(priv), do: proj_cmd("mkdir priv")
+        if unquote(create_priv_dir?), do: proj_cmd("mkdir priv")
         proj_cmd("mix test")
         :ok
       end
