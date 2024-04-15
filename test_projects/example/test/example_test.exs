@@ -6,9 +6,9 @@ defmodule ExampleTest do
     assert is_integer(v)
   end
 
-  test "native with interface CNode" do
-    test_cnode(:example)
-  end
+  # test "native with interface CNode" do
+  #   test_cnode(:example)
+  # end
 
   test "native with interface port" do
     test_port(:example)

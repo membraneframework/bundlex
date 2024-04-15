@@ -266,12 +266,15 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
     link = Path.join(dir, name)
 
     unless File.exists?(link) do
+      File.mkdir_p!(dir)
       # If the `priv` directory is symlinked by `mix`
       # we cannot reliably create a relative symlink
       # that would work in all cases, including releases,
       # thus we make a copy instead.
-      if {dir, 0} == System.shell("realpath #{dir}") do
-        File.mkdir_p!(dir)
+      {dir_physical, realpath_result} = System.shell("realpath #{dir} 2>/dev/null")
+      dir_physical = String.trim(dir_physical)
+
+      if realpath_result == 0 and dir_physical == dir do
         File.ln_s(path_from_to(dir, target), link)
       else
         File.mkdir_p!(link)
