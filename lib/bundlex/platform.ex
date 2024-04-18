@@ -86,18 +86,16 @@ defmodule Bundlex.Platform do
       end
 
     {:ok, _crosscompile} ->
-      def get_target!() do
-        case System.fetch_env("NERVES_APP") do
-          {:ok, _app} ->
-            :nerves
+      case System.fetch_env("NERVES_APP") do
+        {:ok, _app} ->
+          def get_target!(), do: :nerves
 
-          :error ->
-            Output.info(
-              "Cross-compiling without using Nerves. Make sure necessary environment variables are set correctly."
-            )
+        :error ->
+          Output.info(
+            "Cross-compiling without using Nerves. Make sure necessary environment variables are set correctly."
+          )
 
-            :custom
-        end
+          def get_target!(), do: :custom
       end
   end
 

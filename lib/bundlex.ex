@@ -78,7 +78,7 @@ defmodule Bundlex do
   """
   @spec family() :: :unix | :windows | :custom
   def family() do
-    Platform.family(platform())
+    Platform.family(Platform.get_target!())
   end
 
   @doc """
