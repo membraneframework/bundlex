@@ -71,7 +71,7 @@ defmodule Bundlex.Mixfile do
     [
       {:bunch, "~> 1.0"},
       {:qex, "~> 0.5"},
-      {:req, "~> 0.4.0"},
+      {:req, ">= 0.4.0"},
       {:elixir_uuid, "~> 1.2"},
       {:zarex, "~> 1.0"},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
