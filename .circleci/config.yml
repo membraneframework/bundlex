@@ -30,3 +30,4 @@ workflows:
               ignore: /.*/
             tags:
               only: /v.*/
+          cache-version: 2
