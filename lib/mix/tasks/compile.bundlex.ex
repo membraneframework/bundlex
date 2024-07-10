@@ -33,7 +33,7 @@ defmodule Mix.Tasks.Compile.Bundlex do
           Output.raise("Cannot get project for app: #{inspect(app)}, reason: #{inspect(reason)}")
       end
 
-    commands = commands ++ Platform.get_module(platform).toolchain_module.before_all!(platform)
+    commands = commands ++ Platform.get_module(platform).toolchain_module().before_all!(platform)
 
     commands =
       commands ++

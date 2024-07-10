@@ -16,7 +16,7 @@ workflows:
           <<: *parameters
       - elixir/lint:
           <<: *parameters
-          cache-version: 2
+          cache-version: 3
       - elixir/hex_publish:
           requires:
             - elixir/build_test
@@ -30,4 +30,4 @@ workflows:
               ignore: /.*/
             tags:
               only: /v.*/
-          cache-version: 2
+          cache-version: 3
