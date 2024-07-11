@@ -115,7 +115,7 @@ defmodule Bundlex.Native do
       native_with_resolved_os_deps = OSDeps.resolve_os_deps(native)
 
       commands =
-        Platform.get_module(platform).toolchain_module.compiler_commands(
+        Platform.get_module(platform).toolchain_module().compiler_commands(
           native_with_resolved_os_deps
         )
 
