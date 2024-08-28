@@ -16,10 +16,10 @@ defmodule Bundlex.Toolchain.VisualStudio do
   alias Bundlex.Native
   alias Bundlex.Output
 
-  @directory_wildcard_x64 "c:\\Program Files (x86)\\Microsoft Visual Studio *"
-  @directory_wildcard_x86 "c:\\Program Files\\Microsoft Visual Studio *"
-  @directory_env "VISUAL_STUDIO_ROOT"
+  @program_files System.get_env("ProgramFiles(x86)") |> Path.expand()
+  @directory_root Path.join([@program_files, "Microsoft Visual Studio"])
 
+  # TODO: These should also include the ability to set the target architecture.
   @impl true
   def before_all!(:windows32) do
     [run_vcvarsall("x86")]
@@ -58,16 +58,16 @@ defmodule Bundlex.Toolchain.VisualStudio do
     dir_part = "\"#{unquoted_dir_part}\""
 
     [
-      "if EXIST #{dir_part} rmdir /S /Q #{dir_part}",
-      "mkdir #{dir_part}",
-      "cl /LD #{includes_part} #{sources_part} #{libs_part} /link /DLL /OUT:\"#{Toolchain.output_path(native.app, native.name, :nif)}.dll\""
+      "(if exist #{dir_part} rmdir /S /Q #{dir_part})",
+      "(mkdir #{dir_part})",
+      ~s[(cl /LD #{includes_part} #{sources_part} #{libs_part} /link /DLL /OUT:"#{Toolchain.output_path(native.app, native.name, :nif) |> PathHelper.fix_slashes}.dll")]
     ]
   end
 
   # Runs vcvarsall.bat script
   defp run_vcvarsall(vcvarsall_arg) do
     vcvarsall_path =
-      determine_visual_studio_root()
+      @directory_root
       |> build_vcvarsall_path()
 
     case File.exists?(vcvarsall_path) do
@@ -77,50 +77,19 @@ defmodule Bundlex.Toolchain.VisualStudio do
         )
 
       true ->
-        "if not defined VCINSTALLDIR call \"#{vcvarsall_path}\" #{vcvarsall_arg}"
+        ~s/(if not defined VCINSTALLDIR call "#{vcvarsall_path}" #{vcvarsall_arg})/
     end
   end
 
-  # Determines root directory of the Visual Studio.
-  defp determine_visual_studio_root() do
-    determine_visual_studio_root(System.get_env(@directory_env))
-  end
-
-  # Determines root directory of the Visual Studio.
-  # Case when we don't have a root path passed via an environment variable.
-  defp determine_visual_studio_root(nil) do
-    visual_studio_path()
-    |> determine_visual_studio_root_with_wildcard()
-  end
-
-  # Determines root directory of the Visual Studio.
-  # Case when we have a root path passed via an environment variable.
-  defp determine_visual_studio_root(directory) do
-    directory
-  end
-
-  defp determine_visual_studio_root_with_wildcard(wildcard) do
-    case PathHelper.latest_wildcard(wildcard) do
-      nil ->
-        Output.raise(
-          "Unable to find Visual Studio root directory. Please ensure that it is either located in \"#{wildcard}\" or #{@directory_env} environment variable pointing to its root is set."
-        )
-
-      directory ->
-        directory
-    end
-  end
-
-  # Builds path to the vcvarsall.bat script that can be used to set environment
-  # variables necessary to use Visual Studio compilers.
   defp build_vcvarsall_path(root) do
-    Path.join([root, "VC", "vcvarsall.bat"])
-  end
-
-  defp visual_studio_path() do
-    case :erlang.system_info(:wordsize) do
-      4 -> @directory_wildcard_x86
-      _word_size -> @directory_wildcard_x64
+    vswhere = Path.join([root, "Installer", "vswhere.exe"])
+    vswhere_args = ["-property", "installationPath", "-latest"]
+    with true <- File.exists?(vswhere),
+         {maybe_installation_path, 0} <- System.cmd(vswhere, vswhere_args)
+    do
+      installation_path = String.trim(maybe_installation_path)
+      Path.join([installation_path, "VC", "Auxiliary", "Build", "vcvarsall.bat"])
+      |> PathHelper.fix_slashes()
     end
   end
 end
