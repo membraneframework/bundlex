@@ -16,9 +16,6 @@ defmodule Bundlex.Toolchain.VisualStudio do
   alias Bundlex.Native
   alias Bundlex.Output
 
-  @program_files System.get_env("ProgramFiles(x86)") |> Path.expand()
-  @directory_root Path.join([@program_files, "Microsoft Visual Studio"])
-
   # TODO: These should also include the ability to set the target architecture.
   @impl true
   def before_all!(:windows32) do
@@ -66,8 +63,11 @@ defmodule Bundlex.Toolchain.VisualStudio do
 
   # Runs vcvarsall.bat script
   defp run_vcvarsall(vcvarsall_arg) do
+    program_files = System.get_env("ProgramFiles(x86)") |> Path.expand()
+    directory_root = Path.join([program_files, "Microsoft Visual Studio"])
+
     vcvarsall_path =
-      @directory_root
+      directory_root
       |> build_vcvarsall_path()
 
     case File.exists?(vcvarsall_path) do
