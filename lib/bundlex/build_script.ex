@@ -34,7 +34,7 @@ defmodule Bundlex.BuildScript do
 
   def run(%__MODULE__{commands: commands}, platform) do
     family = Platform.family(platform)
-    cmd = commands |> join_commands_run(family)
+    cmd = commands |> join_commands(family)
 
     case cmd |> Mix.shell().cmd() do
       0 -> :ok
@@ -55,16 +55,8 @@ defmodule Bundlex.BuildScript do
     end
   end
 
-  # TODO: this is obviously awkward but I'm very tired.
-  # should the toolchains define these?
-  defp join_commands_run(commands, :windows) do
-    Enum.join(commands, " && ")
-  end
-
-  defp join_commands_run(commands, family), do: join_commands(commands, family)
-
   defp join_commands(commands, :windows) do
-    Enum.join(commands, "\r\n") <> "\r\n"
+    Enum.join(commands, " && ") <> "\r\n"
   end
 
   defp join_commands(commands, _other) do
