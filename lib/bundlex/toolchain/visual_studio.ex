@@ -16,7 +16,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
   alias Bundlex.Native
   alias Bundlex.Output
 
-  @program_files System.get_env("ProgramFiles(x86)") |> Path.expand()
+  @program_files System.fetch_env!("ProgramFiles(x86)") |> Path.expand()
   @directory_root Path.join([@program_files, "Microsoft Visual Studio"])
 
   # TODO: These should also include the ability to set the target architecture.
