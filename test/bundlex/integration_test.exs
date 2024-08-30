@@ -51,10 +51,16 @@ defmodule Bundlex.IntegrationTest do
             | env
           ]
 
+        family = Bundlex.family()
+        {cmd, arg} = case family do
+          f when f in [:unix, :custom] -> {"sh", "-c"}
+          :windows -> {"cmd", "/c"}
+        end
+
         assert {_output, 0} =
                  System.cmd(
-                   "sh",
-                   ["-c", "#{proj_cmd} 1>&2"],
+                   cmd,
+                   [arg, "#{proj_cmd} 1>&2"],
                    [cd: project, env: env] ++ opts
                  )
 
