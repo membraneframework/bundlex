@@ -63,7 +63,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
 
   # Runs vcvarsall.bat script
   defp run_vcvarsall(vcvarsall_arg) do
-    program_files = System.get_env("ProgramFiles(x86)") |> Path.expand()
+    program_files = System.fetch_env!("ProgramFiles(x86)") |> Path.expand()
     directory_root = Path.join([program_files, "Microsoft Visual Studio"])
 
     vcvarsall_path =
