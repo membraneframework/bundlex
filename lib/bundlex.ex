@@ -32,16 +32,34 @@ defmodule Bundlex do
   @spec get_target() :: target()
   case System.fetch_env("CROSSCOMPILE") do
     :error ->
-      def get_target() do
-        [architecture, vendor, os | maybe_abi] =
-          :erlang.system_info(:system_architecture) |> List.to_string() |> String.split("-")
+      case Platform.get_target!() do
+        platform when platform in [:windows32, :windows64] ->
+          def get_target() do
+            os = "windows"
+            <<^os::binary, architecture::binary>> = Atom.to_string(unquote(platform))
+            {architecture, ""} = Integer.parse(architecture)
+            vendor = "pc"
 
-        %{
-          architecture: architecture,
-          vendor: vendor,
-          os: os,
-          abi: List.first(maybe_abi) || "unknown"
-        }
+            %{
+              architecture: architecture,
+              vendor: vendor,
+              os: os,
+              abi: "unknown"
+            }
+          end
+
+        _ ->
+          def get_target() do
+            [architecture, vendor, os | maybe_abi] =
+              :erlang.system_info(:system_architecture) |> List.to_string() |> String.split("-")
+
+            %{
+              architecture: architecture,
+              vendor: vendor,
+              os: os,
+              abi: List.first(maybe_abi) || "unknown"
+            }
+          end
       end
 
     {:ok, _crosscompile} ->
