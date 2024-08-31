@@ -36,8 +36,7 @@ defmodule Bundlex do
         platform when platform in [:windows32, :windows64] ->
           def get_target() do
             os = "windows"
-            <<^os::binary, architecture::binary>> = Atom.to_string(unquote(platform))
-            {architecture, ""} = Integer.parse(architecture)
+            architecture = System.fetch_env!("PROCESSOR_ARCHITECTURE")
             vendor = "pc"
 
             %{
