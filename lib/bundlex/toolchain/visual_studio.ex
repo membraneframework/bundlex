@@ -16,7 +16,6 @@ defmodule Bundlex.Toolchain.VisualStudio do
   alias Bundlex.Native
   alias Bundlex.Output
 
-  # TODO: These should also include the ability to set the target architecture.
   @impl true
   def before_all!(:windows32) do
     [run_vcvarsall("x86")]
