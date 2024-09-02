@@ -32,33 +32,28 @@ defmodule Bundlex do
   @spec get_target() :: target()
   case System.fetch_env("CROSSCOMPILE") do
     :error ->
-      case Platform.get_target!() do
-        platform when platform in [:windows32, :windows64] ->
-          def get_target() do
-            os = "windows"
-            architecture = System.fetch_env!("PROCESSOR_ARCHITECTURE")
-            vendor = "pc"
+      if Platform.get_target!() in [:windows32, :windows64] do
+        def get_target() do
+          %{
+            architecture: System.fetch_env!("PROCESSOR_ARCHITECTURE"),
+            vendor: "pc",
+            os: "windows",
+            abi: "unknown"
+          }
+        end
 
-            %{
-              architecture: architecture,
-              vendor: vendor,
-              os: os,
-              abi: "unknown"
-            }
-          end
+      else
+        def get_target() do
+          [architecture, vendor, os | maybe_abi] =
+            :erlang.system_info(:system_architecture) |> List.to_string() |> String.split("-")
 
-        _ ->
-          def get_target() do
-            [architecture, vendor, os | maybe_abi] =
-              :erlang.system_info(:system_architecture) |> List.to_string() |> String.split("-")
-
-            %{
-              architecture: architecture,
-              vendor: vendor,
-              os: os,
-              abi: List.first(maybe_abi) || "unknown"
-            }
-          end
+          %{
+            architecture: architecture,
+            vendor: vendor,
+            os: os,
+            abi: List.first(maybe_abi) || "unknown"
+          }
+        end
       end
 
     {:ok, _crosscompile} ->
