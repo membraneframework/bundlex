@@ -59,25 +59,26 @@ defmodule Bundlex.Toolchain.VisualStudio do
 
     output_path = Toolchain.output_path(native.app, native.name, interface)
 
-    commands = case native do
-      %Native{type: :native, interface: :nif} ->
-        [
-          "(cl #{compile_options} #{includes_part} #{sources_part})",
-          ~s[(link #{link_options} #{libs_part} /DLL /OUT:"#{PathHelper.fix_slashes(output_path)}.dll" *.obj)]
-        ]
+    commands =
+      case native do
+        %Native{type: :native, interface: :nif} ->
+          [
+            "(cl #{compile_options} #{includes_part} #{sources_part})",
+            ~s[(link #{link_options} #{libs_part} /DLL /OUT:"#{PathHelper.fix_slashes(output_path)}.dll" *.obj)]
+          ]
 
-      %Native{type: :lib} ->
-        [
-          "(cl #{compile_options} #{includes_part} #{sources_part})",
-          ~s[(lib /OUT:"#{PathHelper.fix_slashes(output_path)}.lib" *.obj)]
-        ]
+        %Native{type: :lib} ->
+          [
+            "(cl #{compile_options} #{includes_part} #{sources_part})",
+            ~s[(lib /OUT:"#{PathHelper.fix_slashes(output_path)}.lib" *.obj)]
+          ]
 
-      %Native{type: type, interface: :nif} when type in [:cnode, :port] ->
-        [
-          "(cl #{compile_options} #{includes_part} #{sources_part})",
-          ~s[(link /libpath:"#{:code.root_dir() |> Path.join("lib/erl_interface-5.5.2/lib") |> PathHelper.fix_slashes()}" #{link_options} #{libs_part} /OUT:"#{PathHelper.fix_slashes(output_path)}.exe" *.obj)]
-        ]
-    end
+        %Native{type: type, interface: :nif} when type in [:cnode, :port] ->
+          [
+            "(cl #{compile_options} #{includes_part} #{sources_part})",
+            ~s[(link /libpath:"#{:code.root_dir() |> Path.join("lib/erl_interface-5.5.2/lib") |> PathHelper.fix_slashes()}" #{link_options} #{libs_part} /OUT:"#{PathHelper.fix_slashes(output_path)}.exe" *.obj)]
+          ]
+      end
 
     [
       "(if exist #{dir_part} rmdir /S /Q #{dir_part})",
@@ -112,10 +113,11 @@ defmodule Bundlex.Toolchain.VisualStudio do
   defp build_vcvarsall_path(root) do
     vswhere = Path.join([root, "Installer", "vswhere.exe"])
     vswhere_args = ["-property", "installationPath", "-latest"]
+
     with true <- File.exists?(vswhere),
-         {maybe_installation_path, 0} <- System.cmd(vswhere, vswhere_args)
-    do
+         {maybe_installation_path, 0} <- System.cmd(vswhere, vswhere_args) do
       installation_path = String.trim(maybe_installation_path)
+
       Path.join([installation_path, "VC", "Auxiliary", "Build", "vcvarsall.bat"])
       |> PathHelper.fix_slashes()
     end

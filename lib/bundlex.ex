@@ -41,7 +41,6 @@ defmodule Bundlex do
             abi: "unknown"
           }
         end
-
       else
         def get_target() do
           [architecture, vendor, os | maybe_abi] =
