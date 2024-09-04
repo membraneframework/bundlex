@@ -27,16 +27,16 @@ defmodule Bundlex.Toolchain.VisualStudio do
   end
 
   @impl true
-  def compiler_commands(%Native{interface: :nif} = native) do
+  def compiler_commands(%Native{interface: interface} = native) do
     # TODO escape quotes properly
 
     includes_part =
       Enum.map_join(native.includes, " ", fn include ->
-        "/I \"#{PathHelper.fix_slashes(include)}\""
+        ~s(/I "#{PathHelper.fix_slashes(include)}")
       end)
 
     sources_part =
-      Enum.map_join(native.sources, " ", fn source -> "\"#{PathHelper.fix_slashes(source)}\"" end)
+      Enum.map_join(native.sources, " ", fn source -> ~s("#{PathHelper.fix_slashes(source)}") end)
 
     if not (native.libs |> Enum.empty?()) and not GitHelper.lfs_present?() do
       Output.raise(
@@ -48,16 +48,45 @@ defmodule Bundlex.Toolchain.VisualStudio do
 
     unquoted_dir_part =
       native.app
-      |> Toolchain.output_path(:nif)
+      |> Toolchain.output_path(interface)
       |> PathHelper.fix_slashes()
 
-    dir_part = "\"#{unquoted_dir_part}\""
+    dir_part = ~s("#{unquoted_dir_part}")
+
+    common_options = "/nologo"
+    compile_options = "#{common_options} /EHsc /D__WIN32__ /D_WINDOWS /DWIN32 /O2 /c"
+    link_options = "#{common_options} /INCREMENTAL:NO /FORCE"
+
+    output_path = Toolchain.output_path(native.app, native.name, interface)
+
+    commands = case native do
+      %Native{type: :native, interface: :nif} ->
+        [
+          "(cl #{compile_options} #{includes_part} #{sources_part})",
+          ~s[(link #{link_options} #{libs_part} /DLL /OUT:"#{PathHelper.fix_slashes(output_path)}.dll" *.obj)]
+        ]
+
+      %Native{type: :lib} ->
+        [
+          "(cl #{compile_options} #{includes_part} #{sources_part})",
+          ~s[(lib /OUT:"#{PathHelper.fix_slashes(output_path)}.lib" *.obj)]
+        ]
+
+      %Native{type: type, interface: :nif} when type in [:cnode, :port] ->
+        [
+          "(cl #{compile_options} #{includes_part} #{sources_part})",
+          ~s[(link /libpath:"#{:code.root_dir() |> Path.join("lib/erl_interface-5.5.2/lib") |> PathHelper.fix_slashes()}" #{link_options} #{libs_part} /OUT:"#{PathHelper.fix_slashes(output_path)}.exe" *.obj)]
+        ]
+    end
 
     [
       "(if exist #{dir_part} rmdir /S /Q #{dir_part})",
       "(mkdir #{dir_part})",
-      ~s[(cl /LD #{includes_part} #{sources_part} #{libs_part} /link /DLL /OUT:"#{Toolchain.output_path(native.app, native.name, :nif) |> PathHelper.fix_slashes}.dll")]
+      "(pushd #{dir_part})",
+      commands,
+      "(popd)"
     ]
+    |> List.flatten()
   end
 
   # Runs vcvarsall.bat script
