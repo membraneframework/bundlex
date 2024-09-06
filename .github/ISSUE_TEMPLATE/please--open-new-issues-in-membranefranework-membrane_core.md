@@ -1,5 +1,5 @@
 ---
-name: Please, open new issues in membranefranework/membrane_core
+name: Please, open new issues in membraneframework/membrane_core
 about: New issues related to this repo should be opened there
 title: "[DO NOT OPEN]"
 labels: ''
