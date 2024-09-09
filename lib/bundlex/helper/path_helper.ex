@@ -3,15 +3,6 @@ defmodule Bundlex.Helper.PathHelper do
   # Module containing helper functions that ease traversing directories.
 
   @doc """
-  Tries to find a path that matches given pattern that has the biggest
-  version number if it is expected to be a suffix.
-  """
-  @spec latest_wildcard(String.t()) :: nil | String.t()
-  def latest_wildcard(pattern) do
-    pattern |> Path.wildcard() |> Enum.max(fn -> nil end)
-  end
-
-  @doc """
   Fixes slashes in the given path to match convention used on current
   operating system.
 

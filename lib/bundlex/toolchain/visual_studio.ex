@@ -16,10 +16,6 @@ defmodule Bundlex.Toolchain.VisualStudio do
   alias Bundlex.Native
   alias Bundlex.Output
 
-  @directory_wildcard_x64 "c:\\Program Files (x86)\\Microsoft Visual Studio *"
-  @directory_wildcard_x86 "c:\\Program Files\\Microsoft Visual Studio *"
-  @directory_env "VISUAL_STUDIO_ROOT"
-
   @impl true
   def before_all!(:windows32) do
     [run_vcvarsall("x86")]
@@ -31,16 +27,16 @@ defmodule Bundlex.Toolchain.VisualStudio do
   end
 
   @impl true
-  def compiler_commands(%Native{interface: :nif} = native) do
+  def compiler_commands(%Native{interface: interface} = native) do
     # TODO escape quotes properly
 
     includes_part =
       Enum.map_join(native.includes, " ", fn include ->
-        "/I \"#{PathHelper.fix_slashes(include)}\""
+        ~s(/I "#{PathHelper.fix_slashes(include)}")
       end)
 
     sources_part =
-      Enum.map_join(native.sources, " ", fn source -> "\"#{PathHelper.fix_slashes(source)}\"" end)
+      Enum.map_join(native.sources, " ", fn source -> ~s("#{PathHelper.fix_slashes(source)}") end)
 
     if not (native.libs |> Enum.empty?()) and not GitHelper.lfs_present?() do
       Output.raise(
@@ -52,22 +48,55 @@ defmodule Bundlex.Toolchain.VisualStudio do
 
     unquoted_dir_part =
       native.app
-      |> Toolchain.output_path(:nif)
+      |> Toolchain.output_path(interface)
       |> PathHelper.fix_slashes()
 
-    dir_part = "\"#{unquoted_dir_part}\""
+    dir_part = ~s("#{unquoted_dir_part}")
+
+    common_options = "/nologo"
+    compile_options = "#{common_options} /EHsc /D__WIN32__ /D_WINDOWS /DWIN32 /O2 /c"
+    link_options = "#{common_options} /INCREMENTAL:NO /FORCE"
+
+    output_path = Toolchain.output_path(native.app, native.name, interface)
+
+    commands =
+      case native do
+        %Native{type: :native, interface: :nif} ->
+          [
+            "(cl #{compile_options} #{includes_part} #{sources_part})",
+            ~s[(link #{link_options} #{libs_part} /DLL /OUT:"#{PathHelper.fix_slashes(output_path)}.dll" *.obj)]
+          ]
+
+        %Native{type: :lib} ->
+          [
+            "(cl #{compile_options} #{includes_part} #{sources_part})",
+            ~s[(lib /OUT:"#{PathHelper.fix_slashes(output_path)}.lib" *.obj)]
+          ]
+
+        %Native{type: type, interface: :nif} when type in [:cnode, :port] ->
+          [
+            "(cl #{compile_options} #{includes_part} #{sources_part})",
+            ~s[(link /libpath:"#{:code.root_dir() |> Path.join("lib/erl_interface-5.5.2/lib") |> PathHelper.fix_slashes()}" #{link_options} #{libs_part} /OUT:"#{PathHelper.fix_slashes(output_path)}.exe" *.obj)]
+          ]
+      end
 
     [
-      "if EXIST #{dir_part} rmdir /S /Q #{dir_part}",
-      "mkdir #{dir_part}",
-      "cl /LD #{includes_part} #{sources_part} #{libs_part} /link /DLL /OUT:\"#{Toolchain.output_path(native.app, native.name, :nif)}.dll\""
+      "(if exist #{dir_part} rmdir /S /Q #{dir_part})",
+      "(mkdir #{dir_part})",
+      "(pushd #{dir_part})",
+      commands,
+      "(popd)"
     ]
+    |> List.flatten()
   end
 
   # Runs vcvarsall.bat script
   defp run_vcvarsall(vcvarsall_arg) do
+    program_files = System.fetch_env!("ProgramFiles(x86)") |> Path.expand()
+    directory_root = Path.join([program_files, "Microsoft Visual Studio"])
+
     vcvarsall_path =
-      determine_visual_studio_root()
+      directory_root
       |> build_vcvarsall_path()
 
     case File.exists?(vcvarsall_path) do
@@ -77,50 +106,20 @@ defmodule Bundlex.Toolchain.VisualStudio do
         )
 
       true ->
-        "if not defined VCINSTALLDIR call \"#{vcvarsall_path}\" #{vcvarsall_arg}"
+        ~s/(if not defined VCINSTALLDIR call "#{vcvarsall_path}" #{vcvarsall_arg})/
     end
   end
 
-  # Determines root directory of the Visual Studio.
-  defp determine_visual_studio_root() do
-    determine_visual_studio_root(System.get_env(@directory_env))
-  end
-
-  # Determines root directory of the Visual Studio.
-  # Case when we don't have a root path passed via an environment variable.
-  defp determine_visual_studio_root(nil) do
-    visual_studio_path()
-    |> determine_visual_studio_root_with_wildcard()
-  end
-
-  # Determines root directory of the Visual Studio.
-  # Case when we have a root path passed via an environment variable.
-  defp determine_visual_studio_root(directory) do
-    directory
-  end
-
-  defp determine_visual_studio_root_with_wildcard(wildcard) do
-    case PathHelper.latest_wildcard(wildcard) do
-      nil ->
-        Output.raise(
-          "Unable to find Visual Studio root directory. Please ensure that it is either located in \"#{wildcard}\" or #{@directory_env} environment variable pointing to its root is set."
-        )
-
-      directory ->
-        directory
-    end
-  end
-
-  # Builds path to the vcvarsall.bat script that can be used to set environment
-  # variables necessary to use Visual Studio compilers.
   defp build_vcvarsall_path(root) do
-    Path.join([root, "VC", "vcvarsall.bat"])
-  end
+    vswhere = Path.join([root, "Installer", "vswhere.exe"])
+    vswhere_args = ["-property", "installationPath", "-latest"]
 
-  defp visual_studio_path() do
-    case :erlang.system_info(:wordsize) do
-      4 -> @directory_wildcard_x86
-      _word_size -> @directory_wildcard_x64
+    with true <- File.exists?(vswhere),
+         {maybe_installation_path, 0} <- System.cmd(vswhere, vswhere_args) do
+      installation_path = String.trim(maybe_installation_path)
+
+      Path.join([installation_path, "VC", "Auxiliary", "Build", "vcvarsall.bat"])
+      |> PathHelper.fix_slashes()
     end
   end
 end

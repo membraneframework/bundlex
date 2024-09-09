@@ -56,7 +56,7 @@ defmodule Bundlex.BuildScript do
   end
 
   defp join_commands(commands, :windows) do
-    Enum.join(commands, "\r\n") <> "\r\n"
+    Enum.join(commands, " && ") <> "\r\n"
   end
 
   defp join_commands(commands, _other) do
