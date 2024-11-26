@@ -85,7 +85,14 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
       {:ok, cflags, libs} ->
         {cflags, libs}
 
+      {:skip, reason} ->
+        resolve_os_dep(name, app, providers, native, [
+          "Provider `#{inspect(provider)}` #{reason}" | errors
+        ])
+
       {:error, reason} ->
+        warn_provider_change(reason, provider, providers)
+
         resolve_os_dep(name, app, providers, native, [
           "Provider `#{inspect(provider)}` #{reason}" | errors
         ])
@@ -117,7 +124,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
       end
 
     if is_precompiled_disabled do
-      {:error,
+      {:skip,
        """
        is disabled in the application configuration, check the config.exs file.
        """}
@@ -194,7 +201,6 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
         #{format_exception(e)}
         """
 
-        Output.warn(error)
         {:error, error}
     end
   end
@@ -235,7 +241,6 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
           #{format_exception(e)}
           """
 
-          Output.warn(error)
           {:error, error}
       end
     end
@@ -299,4 +304,25 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
         Enum.drop(to, longest_common_prefix)
     )
   end
+
+  # pkg_config .pc name can differ on different systems/vendors
+  # no warning is emited if next provider is same type, example:
+  # {:pkg_config, "SDL2"},
+  # {:pkg_config, "sdl2"}
+  defp warn_provider_change(reason, provider, [next_provider | _]) do
+    if provider_type(provider) !== provider_type(next_provider) do
+      Output.warn("""
+      Couldn't load OS dependency using #{inspect(provider)}
+
+      #{reason}
+
+      Loading using #{inspect(next_provider)}
+      """)
+    end
+  end
+
+  defp warn_provider_change(_reason, _provider, _providers), do: nil
+
+  defp provider_type(provider) when is_atom(provider), do: provider
+  defp provider_type(provider), do: elem(provider, 0)
 end
