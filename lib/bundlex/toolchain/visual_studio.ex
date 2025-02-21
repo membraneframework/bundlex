@@ -120,6 +120,16 @@ defmodule Bundlex.Toolchain.VisualStudio do
 
       Path.join([installation_path, "VC", "Auxiliary", "Build", "vcvarsall.bat"])
       |> PathHelper.fix_slashes()
+    else
+      false ->
+        Output.raise(
+          "Unable to find vswhere.exe at #{vswhere}. Is Visual Studio installed correctly?"
+        )
+
+      {_output, return_value} ->
+        Output.raise(
+          "vswhere.exe failed with status #{return_value}. Unable to locate Visual Studio installation."
+        )
     end
   end
 end
