@@ -114,12 +114,16 @@ defmodule Bundlex.Toolchain.VisualStudio do
     vswhere = Path.join([root, "Installer", "vswhere.exe"])
     vswhere_args = ["-property", "installationPath", "-latest"]
 
-    with true <- File.exists?(vswhere),
-         {maybe_installation_path, 0} <- System.cmd(vswhere, vswhere_args) do
-      installation_path = String.trim(maybe_installation_path)
+    case {File.exists?(vswhere), System.cmd(vswhere, vswhere_args)} do
+      {true, {maybe_installation_path, 0}} ->
+        installation_path = String.trim(maybe_installation_path)
 
-      Path.join([installation_path, "VC", "Auxiliary", "Build", "vcvarsall.bat"])
-      |> PathHelper.fix_slashes()
+        Path.join([installation_path, "VC", "Auxiliary", "Build", "vcvarsall.bat"])
+        |> PathHelper.fix_slashes()
+
+      {false, _} ->
+        Output.raise("Unable to find vswhere.exe at #{vswhere}. Is Visual Studio installed correctly?")
     end
+
   end
 end
