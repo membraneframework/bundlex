@@ -122,9 +122,14 @@ defmodule Bundlex.Toolchain.VisualStudio do
       |> PathHelper.fix_slashes()
     else
       false ->
-        Output.raise("Unable to find vswhere.exe at #{vswhere}. Is Visual Studio installed correctly?")
+        Output.raise(
+          "Unable to find vswhere.exe at #{vswhere}. Is Visual Studio installed correctly?"
+        )
+
       {_output, return_value} ->
-        Output.raise("vswhere.exe failed with status #{return_value}. Unable to locate Visual Studio installation.")
+        Output.raise(
+          "vswhere.exe failed with status #{return_value}. Unable to locate Visual Studio installation."
+        )
     end
   end
 end
