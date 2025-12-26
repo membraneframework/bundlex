@@ -59,30 +59,34 @@ defmodule Bundlex.Toolchain.VisualStudio do
 
     output_path = Toolchain.output_path(native.app, native.name, interface)
 
+    deps =
+      native.deps
+      |> Enum.map(&(Toolchain.output_path(&1.app, &1.name, &1.interface) <> ".lib"))
+      |> paths()
+
     commands =
       case native do
         %Native{type: :native, interface: :nif} ->
           [
             "(cl #{compile_options} #{includes_part} #{sources_part})",
-            ~s[(link #{link_options} #{libs_part} /DLL /OUT:"#{PathHelper.fix_slashes(output_path)}.dll" *.obj)]
+            ~s[(link #{link_options} #{libs_part} /DLL /OUT:"#{PathHelper.fix_slashes(output_path)}.dll" *.obj #{deps})]
           ]
 
         %Native{type: :lib} ->
           [
             "(cl #{compile_options} #{includes_part} #{sources_part})",
-            ~s[(lib /OUT:"#{PathHelper.fix_slashes(output_path)}.lib" *.obj)]
+            ~s[(lib /OUT:"#{PathHelper.fix_slashes(output_path)}.lib" *.obj #{deps})]
           ]
 
         %Native{type: type, interface: :nif} when type in [:cnode, :port] ->
           [
             "(cl #{compile_options} #{includes_part} #{sources_part})",
-            ~s[(link /libpath:"#{:code.root_dir() |> Path.join("lib/erl_interface-5.5.2/lib") |> PathHelper.fix_slashes()}" #{link_options} #{libs_part} /OUT:"#{PathHelper.fix_slashes(output_path)}.exe" *.obj)]
+            ~s[(link /libpath:"#{:code.root_dir() |> Path.join("lib/erl_interface-5.5.2/lib") |> PathHelper.fix_slashes()}" #{link_options} #{libs_part} /OUT:"#{PathHelper.fix_slashes(output_path)}.exe" *.obj #{deps})]
           ]
       end
 
     [
-      "(if exist #{dir_part} rmdir /S /Q #{dir_part})",
-      "(mkdir #{dir_part})",
+      "(if not exist mkdir #{dir_part})",
       "(pushd #{dir_part})",
       commands,
       "(popd)"
@@ -131,5 +135,14 @@ defmodule Bundlex.Toolchain.VisualStudio do
           "vswhere.exe failed with status #{return_value}. Unable to locate Visual Studio installation."
         )
     end
+  end
+
+  defp paths(paths, flag \\ "") do
+    Enum.map_join(paths, " ", fn p -> "#{flag}#{path(p)}" end)
+  end
+
+  defp path(path) do
+    path = path |> String.replace(~S("), ~S(\")) |> Path.expand()
+    ~s("#{path}")
   end
 end
