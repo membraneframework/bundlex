@@ -86,7 +86,7 @@ defmodule Bundlex.Toolchain.VisualStudio do
       end
 
     [
-      "(if not exist mkdir #{dir_part})",
+      "(if not exist #{dir_part} mkdir #{dir_part})",
       "(pushd #{dir_part})",
       commands,
       "(popd)"
