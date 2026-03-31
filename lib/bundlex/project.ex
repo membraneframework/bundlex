@@ -193,7 +193,9 @@ defmodule Bundlex.Project do
   defp load(application) do
     with {:ok, dir} <- MixHelper.get_project_dir(application) do
       bundlex_file_path = dir |> Path.join(@bundlex_file_name)
-      modules = Code.require_file(bundlex_file_path) |> Keyword.keys()
+      modules =
+        (Code.require_file(bundlex_file_path) || Code.compile_file(bundlex_file_path))
+        |> Keyword.keys()
 
       modules
       |> Enum.find(&project_module?/1)
