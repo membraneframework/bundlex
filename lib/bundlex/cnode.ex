@@ -66,7 +66,7 @@ defmodule Bundlex.CNode do
   Under the hood, this function starts an associated server, which is responsible
   for monitoring the CNode and monitoring calling process to be able to do proper
   cleanup upon a crash. On startup, the server does the following:
-  1. Makes current node distributed if it is not done yet (see `Node.start/3`).
+  1. Makes current node distributed if it is not done yet (see `Node.start/2`).
   1. Assigns CNode a unique name.
   1. Starts CNode OS process using `Port.open/2`.
   1. Waits (at most 5 seconds) until a line `ready` is printed out
