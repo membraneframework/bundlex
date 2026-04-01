@@ -309,7 +309,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   # no warning is emited if next provider is same type, example:
   # {:pkg_config, "SDL2"},
   # {:pkg_config, "sdl2"}
-  defp warn_provider_change(reason, provider, [next_provider | _]) do
+  defp warn_provider_change(reason, provider, [next_provider | _rest]) do
     if provider_type(provider) !== provider_type(next_provider) do
       Output.warn("""
       Couldn't load OS dependency using #{inspect(provider)}

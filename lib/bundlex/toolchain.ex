@@ -23,7 +23,7 @@ defmodule Bundlex.Toolchain do
   """
   @callback compiler_commands(Bundlex.Native.t()) :: [String.t()]
 
-  defmacro __using__(_) do
+  defmacro __using__(_opts) do
     quote location: :keep do
       @behaviour unquote(__MODULE__)
       alias unquote(__MODULE__)

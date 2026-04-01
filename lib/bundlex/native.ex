@@ -137,7 +137,7 @@ defmodule Bundlex.Native do
     {src_base, config} = config |> Keyword.pop(:src_base, "#{meta.app}")
 
     withl fields: [] <- config |> Keyword.keys() |> Enum.reject(&(&1 in @project_keys)),
-          do: native = (config ++ Enum.to_list(meta)) |> __struct__(),
+          do: %__MODULE__{} = native = (config ++ Enum.to_list(meta)) |> __struct__(),
           no_src: false <- native.sources |> Enum.empty?(),
           deps: {:ok, parsed_deps} <- parse_deps(deps, interface) do
       native =
