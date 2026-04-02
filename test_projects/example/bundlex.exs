@@ -8,29 +8,12 @@ defmodule Example.BundlexProject do
   end
 
   defp get_ffmpeg() do
-    url =
-      case Bundlex.get_target() do
-        %{abi: "musl"} ->
-          nil
-
-        %{architecture: "aarch64", os: "linux"} ->
-          "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2023-11-30-12-55/ffmpeg-n6.0.1-linuxarm64-gpl-shared-6.0.tar.xz"
-
-        %{architecture: "x86_64", os: "linux"} ->
-          "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2023-11-30-12-55/ffmpeg-n6.0.1-linux64-gpl-shared-6.0.tar.xz"
-
-        %{architecture: "x86_64", os: "darwin" <> _rest_of_os_name} ->
-          "https://github.com/membraneframework-precompiled/precompiled_ffmpeg/releases/latest/download/ffmpeg_macos_intel.tar.gz"
-
-        %{architecture: "aarch64", os: "darwin" <> _rest_of_os_name} ->
-          "https://github.com/membraneframework-precompiled/precompiled_ffmpeg/releases/latest/download/ffmpeg_macos_arm.tar.gz"
-
-        _other ->
-          nil
-      end
-
-
-    [{:precompiled, url, ["libswscale", "libavcodec"]}]
+    [
+      {:precompiled,
+       Membrane.PrecompiledDependencyProvider.get_dependency_url(:ffmpeg, version: "6.0.1"),
+       ["libswscale", "libavcodec"]},
+      {:pkg_config, ["libswscale", "libavcodec"]}
+    ]
   end
 
   defp natives do
