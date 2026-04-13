@@ -11,6 +11,7 @@ defmodule Bundlex.IntegrationTest do
         File.rm_rf!(@tmp)
         File.cp_r("test_projects", @tmp)
         if unquote(create_priv_dir?), do: proj_cmd("mkdir priv")
+        proj_cmd("mix deps.get")
         proj_cmd("mix test")
         :ok
       end

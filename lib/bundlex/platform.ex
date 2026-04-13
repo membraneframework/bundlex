@@ -46,7 +46,7 @@ defmodule Bundlex.Platform do
     :error ->
       def get_target!() do
         case :os.type() do
-          {:win32, _} ->
+          {:win32, _target} ->
             {:ok, reg} = :win32reg.open([:read])
 
             :ok =

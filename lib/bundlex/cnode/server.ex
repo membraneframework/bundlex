@@ -101,7 +101,7 @@ defmodule Bundlex.CNode.Server do
     if Node.alive?() do
       :ok
     else
-      case Node.start(NameStore.get_self_name(), :shortnames) do
+      case Node.start(NameStore.get_self_name(), name_domain: :shortnames) do
         {:ok, _pid} ->
           Node.set_cookie(:bundlex_cookie)
           :ok
