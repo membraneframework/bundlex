@@ -91,8 +91,12 @@ defmodule Bundlex.Helper.MixHelper do
       get_project_dir()
     else
       case Mix.Project.deps_paths()[application] do
-        nil -> {:error, :unknown_application}
-        path -> {:ok, path}
+        nil ->
+          candidate = Path.join(Mix.Project.deps_path(), to_string(application))
+          if File.dir?(candidate), do: {:ok, candidate}, else: {:error, :unknown_application}
+
+        path ->
+          {:ok, path}
       end
     end
   end
