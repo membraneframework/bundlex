@@ -19,7 +19,17 @@ defmodule Mix.Tasks.Compile.Bundlex do
 
   @impl true
   def run(_args) do
-    {:ok, _apps} = Application.ensure_all_started(:bundlex)
+    case Application.ensure_all_started(:bundlex) do
+      {:ok, _apps} ->
+        :ok
+
+      {:error, {_app, {{:already_started, _pid}, _mfa}}} ->
+        :ok
+
+      {:error, reason} ->
+        raise "Error ensuring :bundlex started: #{inspect(reason)}"
+    end
+
     commands = []
 
     app = MixHelper.get_app!()
