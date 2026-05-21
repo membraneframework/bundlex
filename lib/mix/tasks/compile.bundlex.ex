@@ -6,6 +6,8 @@ defmodule Mix.Tasks.Compile.Bundlex do
   Accepts the following command line arguments:
   - `--store-scripts` - if set, shell scripts are stored in the project
   root folder for further analysis.
+  - `--generate-lsp-config` - if set, generates `compile_commands.json` and `compile_flags.txt`
+  for LSP tools like clangd to enable code navigation, autocompletion, and diagnostics.
 
   Add `:bundlex` to compilers in your Mix project to have this task executed
   each time the project is compiled.
@@ -14,11 +16,12 @@ defmodule Mix.Tasks.Compile.Bundlex do
 
   alias Bundlex.{BuildScript, Native, Output, Platform, Project}
   alias Bundlex.Helper.MixHelper
+  alias Bundlex.LSP
 
   @recursive true
 
   @impl true
-  def run(_args) do
+  def run(args) do
     {:ok, _apps} = Application.ensure_all_started(:bundlex)
     commands = []
 
@@ -32,6 +35,8 @@ defmodule Mix.Tasks.Compile.Bundlex do
         {:error, reason} ->
           Output.raise("Cannot get project for app: #{inspect(app)}, reason: #{inspect(reason)}")
       end
+
+    project_dir = File.cwd!()
 
     commands = commands ++ Platform.get_module(platform).toolchain_module().before_all!(platform)
 
@@ -50,11 +55,17 @@ defmodule Mix.Tasks.Compile.Bundlex do
     build_script = BuildScript.new(commands)
 
     {cmdline_options, _argv, _errors} =
-      OptionParser.parse(System.argv(), switches: [store_scripts: :boolean])
+      OptionParser.parse(args,
+        switches: [store_scripts: :boolean, generate_lsp_config: :boolean]
+      )
 
     if cmdline_options[:store_scripts] do
       {:ok, {filename, _script}} = build_script |> BuildScript.store(platform)
       Output.info("Stored build script at #{File.cwd!() |> Path.join(filename)}")
+    end
+
+    if cmdline_options[:generate_lsp_config] do
+      generate_lsp_config(build_script, project_dir)
     end
 
     case build_script |> BuildScript.run(platform) do
@@ -78,5 +89,17 @@ defmodule Mix.Tasks.Compile.Bundlex do
     end
 
     {:ok, []}
+  end
+
+  defp generate_lsp_config(build_script, project_dir) do
+    commands = build_script.commands
+
+    case LSP.Config.generate(commands, project_dir) do
+      {:ok, _generated} ->
+        :ok
+
+      {:error, reason} ->
+        Output.warn("Failed to generate LSP config: #{reason}")
+    end
   end
 end
