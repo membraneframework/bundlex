@@ -226,6 +226,7 @@ defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
       try do
         temporary_destination = Path.join(precompiled_path, "temporary")
         download(url, temporary_destination)
+        Output.info("Successfully downloaded precompiled #{name} build from #{url}")
 
         {_output, 0} =
           System.shell("tar -xf #{temporary_destination} -C #{package_path} --strip-components 1")
