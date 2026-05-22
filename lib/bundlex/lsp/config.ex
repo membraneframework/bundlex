@@ -39,9 +39,7 @@ defmodule Bundlex.LSP.Config do
           []
       end
 
-    # Root compile_flags.txt with flags common to all variants written to project root only,
-    # avoiding pollution of VCS-tracked source directories.
-    maybe_root_flags =
+    maybe_compile_flags =
       case write_compile_flags_txt(common_flags, project_dir) do
         {:ok, path} ->
           [{:compile_flags_txt, path}]
@@ -51,21 +49,18 @@ defmodule Bundlex.LSP.Config do
           []
       end
 
-    case maybe_commands ++ maybe_root_flags do
+    case maybe_commands ++ maybe_compile_flags do
       [] -> {:error, "No configuration files were generated"}
       generated -> {:ok, generated}
     end
   end
 
   defp parse_compile_commands(commands, project_dir) do
-    entries =
+    {compile_commands, all_flag_sets} =
       commands
       |> Enum.reject(&skip_command?/1)
       |> Enum.flat_map(&parse_entry(&1, project_dir))
-
-    compile_commands = Enum.map(entries, &elem(&1, 0))
-
-    all_flag_sets = Enum.map(entries, &elem(&1, 1))
+      |> Enum.unzip()
 
     common_flags =
       case all_flag_sets do
