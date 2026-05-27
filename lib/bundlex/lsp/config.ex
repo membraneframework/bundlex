@@ -1,8 +1,7 @@
 defmodule Bundlex.LSP.Config do
-  @moduledoc """
-  Generates LSP configuration files (compile_commands.json, compile_flags.txt)
-  for C/C++ code analysis tools like clangd.
-  """
+  @moduledoc false
+  # Generates LSP configuration files (compile_commands.json, compile_flags.txt)
+  # for C/C++ code analysis tools like clangd.
 
   alias Bundlex.Output
 
