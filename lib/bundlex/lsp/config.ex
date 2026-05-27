@@ -13,14 +13,9 @@ defmodule Bundlex.LSP.Config do
           optional(:output) => String.t()
         }
 
-  # Generates LSP configuration files from a list of build commands.
-  #
-  # ## Returns
-  #
-  #   `{:ok, [{:compile_commands_json, path} | {:compile_flags_txt, path}]}`
-  #   or `{:error, reason}` if all writes fail.
   @spec generate(commands :: [String.t()], project_dir :: String.t()) ::
-          {:ok, [{atom, String.t()}]} | {:error, String.t()}
+          {:ok, [{:compile_commands_json, Path.t()} | {:compile_flags_txt, Path.t()}]}
+          | {:error, String.t()}
   def generate(commands, project_dir) do
     project_dir = Path.expand(project_dir)
 
