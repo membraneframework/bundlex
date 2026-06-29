@@ -5,7 +5,6 @@ defmodule Bundlex.Native do
 
   use Bunch
 
-  require Logger
   alias Bundlex.Helper.ErlangHelper
   alias Bundlex.{Output, Platform, Project}
   alias Bundlex.Project.Preprocessor
