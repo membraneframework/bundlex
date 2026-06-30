@@ -1,7 +1,6 @@
 defmodule Bundlex.Toolchain.Common.Unix.OSDeps do
   @moduledoc false
 
-  require Logger
   alias Bundlex.Output
 
   @spec resolve_os_deps(Bundlex.Native.t()) :: Bundlex.Native.t()
