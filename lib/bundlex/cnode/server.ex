@@ -103,7 +103,6 @@ defmodule Bundlex.CNode.Server do
     else
       case Node.start(NameStore.get_self_name(), name_domain: :shortnames) do
         {:ok, _pid} ->
-          Node.set_cookie(:bundlex_cookie)
           :ok
 
         {:error, {:already_started, _pid}} ->
