@@ -67,13 +67,15 @@ defmodule Bundlex.CNode do
   for monitoring the CNode and monitoring calling process to be able to do proper
   cleanup upon a crash. On startup, the server does the following:
   1. Makes current node distributed if it is not done yet (see `Node.start/2`).
+  To control how distribution is set up (name, cookie, interfaces), start the
+  node with `--sname` or `--name` before starting a CNode.
   1. Assigns CNode a unique name.
   1. Starts CNode OS process using `Port.open/2`.
   1. Waits (at most 5 seconds) until a line `ready` is printed out
   (this line is captured and not forwarded to the stdout).
   1. Connects to the CNode.
 
-  The erlang cookie is passed using the BUNDLEX_ERLANG_COOKIE an environment variable.
+  The erlang cookie is passed using the `BUNDLEX_ERLANG_COOKIE` environment variable.
   """
   @spec start_link(app :: atom, native_name :: atom) :: on_start_t
   def start_link(app, native_name) do
